@@ -3,7 +3,7 @@ const router = express.Router();
 const db = require('../config/db');
 
 // Retrieve users by memory ID
-router.get('/memories/:memoryId/users', async (req, res) => {
+router.get('/:memoryId/users', async (req, res) => {
     const memoryId = req.params.memoryId;
   
     try {
@@ -25,7 +25,7 @@ router.get('/memories/:memoryId/users', async (req, res) => {
 });
 
 // Retrieve details of a specific memory by memory ID
-router.get('/memories/:memoryId', async (req, res) => {
+router.get('/:memoryId', async (req, res) => {
     const memoryId = req.params.memoryId;
   
     try {
@@ -44,5 +44,31 @@ router.get('/memories/:memoryId', async (req, res) => {
       res.status(500).json({ message: error.message });
     }
 });
+
+
+router.get('/:memoryID/:userID/friends', async (req, res) => {
+    const memoryID = req.params.memoryID; // Get memory ID from the request parameter
+    const userID = req.params.userID;
+    try {
+      const [rows] = await db.query(`
+        SELECT u.name, u.user_id
+        FROM users u
+        INNER JOIN user_has_memory um ON u.user_id = um.user_id
+        WHERE um.memory_id = ? AND u.user_id != ?`, 
+      [memoryID, userID]);
+
+      if (rows.length > 0) {
+        res.json(rows); // Sending the first user found with that email
+      } else {
+        res.status(404).json({ message: 'Memory not found' });
+      }
+      } catch (error) {
+        res.status(500).json({ message: error.message });
+      }
+});
+
+module.exports = router;
+
+
 
 module.exports = router;
