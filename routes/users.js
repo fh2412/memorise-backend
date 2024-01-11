@@ -114,6 +114,26 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+router.put('/profilepic/:id', async (req, res) => {
+  const userId = req.params.id;
+  const { profilepic } = req.body;
+
+  try {
+    // Update user's name, dob, gender, and location in the database
+    const updateUserPicQuery = `
+      UPDATE users 
+      SET profilepic = ?
+      WHERE user_id = ?
+    `;
+
+    await db.query(updateUserPicQuery, [profilepic, userId]);
+
+    res.status(200).json({ message: 'User updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 
 // DELETE a user by ID
 router.delete('/:id', async (req, res) => {
