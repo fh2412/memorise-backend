@@ -36,11 +36,12 @@ router.get('/email/:email', async (req, res) => {
     SELECT 
         user_id, 
         email,
-		bio,
+		    bio,
         name, 
         gender, 
         location_id, 
-        DATE_FORMAT(dob, '%d/%m/%Y') AS formatted_dob 
+        DATE_FORMAT(dob, '%d/%m/%Y') AS formatted_dob,
+        profilepic 
     FROM 
         users 
     WHERE 
