@@ -18,13 +18,15 @@ router.get('/:userId', async (req, res) => {
       AND NOT u.user_id = ?;
     `;
 
-    const results = await db.query(query, [userId, userId, userId]);
+    const [results] = await db.query(query, [userId, userId, userId]);
     res.json(results);
   } catch (error) {
     console.error('Error fetching user friends:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+
 
 
 router.get('/friend-suggestions/:userId', async (req, res) => {
