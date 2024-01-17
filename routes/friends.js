@@ -119,18 +119,18 @@ router.post('/send_request', async (req, res) => {
 
   try {
     // Check if the friendship request already exists
-    const existingRequest = await db.query(
+    /*const existingRequest = await db.query(
       'SELECT * FROM friendship_requests WHERE sender_id = ? AND receiver_id = ?',
       [senderId, receiverId]
     );
 
     if (existingRequest.rows.length > 0) {
       return res.status(400).json({ error: 'Friendship request already sent' });
-    }
+    }*/
 
     // Insert the friendship request into the database
     await db.query(
-      'INSERT INTO friendships (user_id1, user_id2, status) VALUES ($1, $2, $3)',
+      'INSERT INTO friendships (user_id1, user_id2, status) VALUES (?, ?, ?)',
       [senderId, receiverId, 'pending']
     );
 
