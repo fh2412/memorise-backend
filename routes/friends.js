@@ -101,8 +101,8 @@ router.delete('/remove_friend/:userId1/:userId2', async (req, res) => {
   try {
     // Delete the friendship based on the two user IDs
     await db.query(
-      'DELETE FROM friendships WHERE (user_id1 = $1 AND user_id2 = $2) OR (user_id1 = $2 AND user_id2 = $1)',
-      [userId1, userId2]
+      'DELETE FROM friendships WHERE (user_id1 = ? AND user_id2 = ?) OR (user_id1 = ? AND user_id2 = ?)',
+      [userId1, userId2, userId2, userId1]
     );
 
     res.json({ message: 'Friendship removed successfully' });
