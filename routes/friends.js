@@ -26,6 +26,50 @@ router.get('/:userId', async (req, res) => {
   }
 });
 
+//GET PENDING REQUESTS
+router.get('/pending/:userId', async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    const query = `
+    SELECT u.user_id, u.name, u.dob, u.gender, u.profilepic
+    FROM friendships f
+    JOIN users u ON (f.user_id1 = u.user_id OR f.user_id2 = u.user_id)
+    WHERE (f.user_id1 = ?) 
+      AND f.status = 'pending'
+      AND NOT u.user_id = ?;
+    `;
+
+    const [results] = await db.query(query, [userId, userId, userId]);
+    res.json(results);
+  } catch (error) {
+    console.error('Error fetching user friends:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+//GET INGOING REQUESTS
+router.get('/ingoing/:userId', async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    const query = `
+    SELECT u.user_id, u.name, u.dob, u.gender, u.profilepic
+    FROM friendships f
+    JOIN users u ON (f.user_id1 = u.user_id OR f.user_id2 = u.user_id)
+    WHERE (f.user_id2 = ?) 
+      AND f.status = 'pending'
+      AND NOT u.user_id = ?;
+    `;
+
+    const [results] = await db.query(query, [userId, userId, userId]);
+    res.json(results);
+  } catch (error) {
+    console.error('Error fetching user friends:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 router.get('/friend-suggestions/:userId', async (req, res) => {
   const userId = req.params.userId;
 
@@ -56,7 +100,7 @@ router.delete('/remove_friend/:userId1/:userId2', async (req, res) => {
 
   try {
     // Delete the friendship based on the two user IDs
-    await pool.query(
+    await db.query(
       'DELETE FROM friendships WHERE (user_id1 = $1 AND user_id2 = $2) OR (user_id1 = $2 AND user_id2 = $1)',
       [userId1, userId2]
     );
@@ -75,7 +119,7 @@ router.post('/send_request', async (req, res) => {
 
   try {
     // Check if the friendship request already exists
-    const existingRequest = await pool.query(
+    const existingRequest = await db.query(
       'SELECT * FROM friendship_requests WHERE sender_id = ? AND receiver_id = ?',
       [senderId, receiverId]
     );
@@ -85,7 +129,7 @@ router.post('/send_request', async (req, res) => {
     }
 
     // Insert the friendship request into the database
-    await pool.query(
+    await db.query(
       'INSERT INTO friendships (user_id1, user_id2, status) VALUES ($1, $2, $3)',
       [senderId, receiverId, 'pending']
     );
@@ -105,19 +149,19 @@ router.put('/accept_request/:userId1/:userId2', async (req, res) => {
 
   try {
     // Check if the friendship request exists
-    const friendship = await pool.query(
-      'SELECT * FROM friendships WHERE (user_id1 = $1 AND user_id2 = $2) OR (user_id1 = $2 AND user_id2 = $1)',
-      [userId1, userId2]
+    /*const friendship = await db.query(
+      'SELECT * FROM friendships WHERE (user_id1 = ? AND user_id2 = ?) OR (user_id1 = ? AND user_id2 = ?)',
+      [userId1, userId2, userId2, userId1]
     );
 
     if (friendship.rows.length === 0) {
       return res.status(404).json({ error: 'Friendship request not found' });
-    }
+    }*/
 
     // Update the status of the friendship to "accepted"
-    await pool.query(
-      'UPDATE friendships SET status = $1 WHERE (user_id1 = $2 AND user_id2 = $3) OR (user_id1 = $3 AND user_id2 = $2)',
-      ['accepted', userId1, userId2]
+    await db.query(
+      'UPDATE friendships SET status = ? WHERE (user_id1 = ? AND user_id2 = ?) OR (user_id1 = ? AND user_id2 = ?)',
+      ['accepted', userId1, userId2, userId2, userId1]
     );
 
     res.json({ message: 'Friendship request accepted successfully' });
