@@ -67,8 +67,23 @@ router.get('/:memoryID/:userID/friends', async (req, res) => {
       }
 });
 
+
+router.post('/createMemory', async (req, res) => {
+  const { userID, text, url, location, date } = req.body;
+
+  try {
+    // Insert the friendship request into the database
+    await db.query(
+      'INSERT INTO memories (user_id, text, image_url, location_id, memory_date) VALUES (?, ?, ?, ?, ?)',
+      [userID, text, url, location, date]
+    );
+
+    res.json({ message: 'Memory created successfully' });
+  } catch (error) {
+    console.error('Error creating Memory:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 module.exports = router;
 
-
-
-module.exports = router;
