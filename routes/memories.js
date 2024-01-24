@@ -70,7 +70,6 @@ router.get('/:memoryID/:userID/friends', async (req, res) => {
 
 router.post('/createMemory', async (req, res) => {
   const { creator_id, title, description, firestore_bucket_url, location_id, memory_date } = req.body;
-  console.log(creator_id, title, description, firestore_bucket_url, location_id, memory_date);
   try {
     // Insert the friendship request into the database
     await db.query(
@@ -84,6 +83,30 @@ router.post('/createMemory', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+router.post('/addFriendToMemory', async (req, res) => {
+  const { email, memoryId } = req.body;
+
+  try {
+    // Step 1: Get user_id from email
+    const userResult = await pool.query('SELECT user_id FROM users WHERE email = ?', [email]);
+
+    if (userResult.rows.length > 0) {
+      const userId = userResult.rows[0].user_id;
+
+      // Step 2: Post user_id in "user_has_memory" table
+      await pool.query('INSERT INTO user_has_memory (user_id, memory_id, status) VALUES (?, ?, ?)', [userId, memoryId, 'friend']);
+
+      res.json({ success: true });
+    } else {
+      res.status(404).json({ error: 'User not found' });
+    }
+  } catch (error) {
+    console.error('Error processing request:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 
 module.exports = router;
 
