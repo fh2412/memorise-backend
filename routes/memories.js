@@ -69,13 +69,13 @@ router.get('/:memoryID/:userID/friends', async (req, res) => {
 
 
 router.post('/createMemory', async (req, res) => {
-  const { userID, text, url, location, date } = req.body;
-
+  const { creator_id, title, description, firestore_bucket_url, location_id, memory_date } = req.body;
+  console.log(creator_id, title, description, firestore_bucket_url, location_id, memory_date);
   try {
     // Insert the friendship request into the database
     await db.query(
-      'INSERT INTO memories (user_id, text, image_url, location_id, memory_date) VALUES (?, ?, ?, ?, ?)',
-      [userID, text, url, location, date]
+      'INSERT INTO memories (user_id, title, text, image_url, location_id, memory_date) VALUES (?, ?, ?, ?, ?, ?)',
+      [creator_id, title, description, firestore_bucket_url, 1, memory_date]
     );
 
     res.json({ message: 'Memory created successfully' });
