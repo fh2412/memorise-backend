@@ -72,40 +72,47 @@ router.post('/createMemory', async (req, res) => {
   const { creator_id, title, description, firestore_bucket_url, location_id, memory_date } = req.body;
   try {
     // Insert the friendship request into the database
-    await db.query(
+    const result = await db.query(
       'INSERT INTO memories (user_id, title, text, image_url, location_id, memory_date) VALUES (?, ?, ?, ?, ?, ?)',
       [creator_id, title, description, firestore_bucket_url, 1, memory_date]
     );
 
-    res.json({ message: 'Memory created successfully' });
+    const memoryId = result;
+
+    res.json({ message: 'Memory created successfully', memoryId: memoryId });
   } catch (error) {
     console.error('Error creating Memory:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
-router.post('/addFriendToMemory', async (req, res) => {
-  const { email, memoryId } = req.body;
+router.post('/addFriendsToMemory', async (req, res) => {
+  const { emails, memoryId } = req.body;
 
   try {
-    // Step 1: Get user_id from email
-    const userResult = await pool.query('SELECT user_id FROM users WHERE email = ?', [email]);
+    for (const email of emails) {
+      // Step 1: Get user_id from email
+      const userResult = await db.query('SELECT user_id FROM users WHERE email = ?', [email]);
+      console.log(userResult[0][0]);
+      if (userResult[0][0] != 0) {
+        const userId = userResult[0][0].user_id;
 
-    if (userResult.rows.length > 0) {
-      const userId = userResult.rows[0].user_id;
-
-      // Step 2: Post user_id in "user_has_memory" table
-      await pool.query('INSERT INTO user_has_memory (user_id, memory_id, status) VALUES (?, ?, ?)', [userId, memoryId, 'friend']);
-
-      res.json({ success: true });
-    } else {
-      res.status(404).json({ error: 'User not found' });
+        // Step 2: Post user_id in "user_has_memory" table
+        await db.query('INSERT INTO user_has_memory (user_id, memory_id, status) VALUES (?, ?, ?)', [userId, memoryId, 'friend']);
+      } else {
+        console.error(`User not found for email: ${email}`);
+        // Handle the case where a user is not found for the email
+        // You might choose to continue with other emails or stop the loop based on your requirements
+      }
     }
+
+    res.json({ success: true });
   } catch (error) {
     console.error('Error processing request:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 
 module.exports = router;
