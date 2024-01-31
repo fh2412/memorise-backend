@@ -78,9 +78,9 @@ router.get('/:memoryID/:userID/friends', async (req, res) => {
       [memoryID, userID]);
 
       if (rows.length > 0) {
-        res.json(rows); // Sending the first user found with that email
+        res.json(rows);
       } else {
-        res.status(404).json({ message: 'Memory not found' });
+        res.json({ message: 'No friends added to the Memory' });
       }
       } catch (error) {
         res.status(500).json({ message: error.message });
