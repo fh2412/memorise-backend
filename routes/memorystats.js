@@ -45,5 +45,26 @@ router.get('/createdthisyear/:userId', async (req, res) => {
       res.status(500).json({ message: error.message });
     }
 });
+
+router.get('/friendcount/:userId', async (req, res) => {
+    const userd = req.params.userId;
+  
+    try {
+      const rows = await db.query(`
+      SELECT count(user_id1) as count
+      FROM friendships
+      WHERE (user_id1 = ? OR user_id2 = ?) AND status = ?`, 
+      [userd, userd, 'accepted']
+  );
+      if (rows.length > 0) {
+        res.json(rows[0]); // Sending the first user found with that email
+      } else {
+        res.json({ message: 'No Memories created yet' });
+      }
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+});
+
 module.exports = router;
 
