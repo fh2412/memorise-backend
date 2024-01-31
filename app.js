@@ -14,10 +14,13 @@ app.use(bodyParser.json());
 const usersRoutes = require('./routes/users');
 const memoriesRoutes = require('./routes/memories');
 const friendsRoutes = require('./routes/friends');
+const memoryStatsRoutes = require('./routes/memorystats');
+
 
 app.use('/api/users', usersRoutes); // Mount users routes at /api/users
 app.use('/api/memories', memoriesRoutes); // Mount memories routes at /api/memories
 app.use('/api/friends', friendsRoutes); // Mount memories routes at /api/memories
+app.use('/api/memorystats', memoryStatsRoutes);
 
 
 
