@@ -133,6 +133,35 @@ router.post('/addFriendsToMemory', async (req, res) => {
 });
 
 
+// DELETE request to delete a memory and its associated friends
+router.delete('/:memoryId', async (req, res) => {
+  const memoryId = req.params.memoryId;
+
+  try {
+    // Check if the memory exists
+    const checkMemoryQuery = 'SELECT * FROM memories WHERE memory_id = ?';
+    const existingMemory = await db.query(checkMemoryQuery, [memoryId]);
+
+    if (existingMemory.length === 0) {
+      // Memory not found
+      return res.status(404).json({ error: 'Memory not found' });
+    }
+
+    // Delete friends associated with the memory
+    const deleteFriendsQuery = 'DELETE FROM user_has_memory WHERE memory_id = ?';
+    await db.query(deleteFriendsQuery, [memoryId]);
+
+    // Delete the memory
+    const deleteMemoryQuery = 'DELETE FROM memories WHERE memory_id = ?';
+    await db.query(deleteMemoryQuery, [memoryId]);
+
+    res.json({ message: 'Memory and associated friends deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting memory and friends:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 
 module.exports = router;
 
