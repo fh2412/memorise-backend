@@ -4,8 +4,8 @@ const db = require('../config/db');
 
 
 //GET SINGLE LOCATION BY ID
-router.get('/location/:locId', async (req, res) => {
-    const locId = req.params.userId;
+router.get('/:locId', async (req, res) => {
+    const locId = req.params.locId;
   
     try {
       const rows = await db.query(`
