@@ -24,7 +24,7 @@ router.get('/:locId', async (req, res) => {
     }
 });
 
-
+//CREATE NEW LOCATION
 router.post('/createLocation', async (req, res) => {
     const { long, lat, l_country, l_city, l_street, l_postcode } = req.body;
     try {

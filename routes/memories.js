@@ -30,9 +30,11 @@ router.get('/createdMemories/:userId', async (req, res) => {
   
     try {
       const [rows] = await db.query(`
-      SELECT * 
+      SELECT memories.*, users.name AS username
       FROM memories
-      WHERE user_id = ?`, 
+      JOIN users ON memories.user_id = users.user_id
+      WHERE memories.user_id = ?;
+      `, 
       [userId]
   );
       if (rows.length > 0) {
@@ -65,6 +67,26 @@ router.get('/:memoryId', async (req, res) => {
     }
 });
 
+//GET MEMORY CREATORS NAME
+/*router.get('/getMemoryCreator/:userId', async (req, res) => {
+  const creatorId = req.params.userId;
+
+  try {
+    const [rows] = await db.query(`
+      SELECT name 
+      FROM users 
+      WHERE user_id = ?`, 
+    [creatorId]
+);
+    if (rows.length > 0) {
+      res.json(rows[0]); // Sending the first user found with that email
+    } else {
+      res.status(404).json({ message: 'Memories creator not found!' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});*/
 
 router.get('/:memoryID/:userID/friends', async (req, res) => {
     const memoryID = req.params.memoryID; // Get memory ID from the request parameter
@@ -94,7 +116,7 @@ router.post('/createMemory', async (req, res) => {
     // Insert the friendship request into the database
     const result = await db.query(
       'INSERT INTO memories (user_id, title, text, image_url, location_id, memory_date, memory_end_date, title_pic) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [creator_id, title, description, firestore_bucket_url, 1, memory_date, memory_end_date, title_pic]
+      [creator_id, title, description, firestore_bucket_url, location_id, memory_date, memory_end_date, title_pic]
     );
 
     const memoryId = result;
