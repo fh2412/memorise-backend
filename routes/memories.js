@@ -190,7 +190,6 @@ router.post('/addFriendsToMemory', async (req, res) => {
 router.put('/:memoryId', async (req, res) => {
   const memoryId = req.params.memoryId;
   const { title, description, memory_date, memory_end_date } = req.body; // Assuming these are the fields to be updated
-  console.log(title, description, memory_date, memory_end_date);
   try {
     // Execute the SQL UPDATE query
     const [result] = await db.execute(
