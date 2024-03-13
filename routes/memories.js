@@ -186,6 +186,30 @@ router.post('/addFriendsToMemory', async (req, res) => {
 });
 
 
+//UPDATE a Memory
+router.put('/:memoryId', async (req, res) => {
+  const memoryId = req.params.memoryId;
+  const { title, description, memory_date, memory_end_date } = req.body; // Assuming these are the fields to be updated
+  console.log(title, description, memory_date, memory_end_date);
+  try {
+    // Execute the SQL UPDATE query
+    const [result] = await db.execute(
+      'UPDATE memories SET title = ?, text = ?, memory_date = ?, memory_end_date = ? WHERE memory_id = ?',
+      [title, description, memory_date, memory_end_date, memoryId]
+    );
+
+    // Check if the memory was updated successfully
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Memory updated successfully' });
+    } else {
+      res.status(404).json({ error: 'Memory not found or no changes made' });
+    }
+  } catch (error) {
+    console.error('Error updating memory:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 // DELETE request to delete a memory and its associated friends
 router.delete('/:memoryId', async (req, res) => {
   const memoryId = req.params.memoryId;
