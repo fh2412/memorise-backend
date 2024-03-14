@@ -3,7 +3,6 @@ const router = express.Router();
 const db = require('../config/db'); // Your database connection module
 
 
-//GET Routes
 //GET Friends of User by ID
 router.get('/:userId', async (req, res) => {
   const userId = req.params.userId;
@@ -25,6 +24,36 @@ router.get('/:userId', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+//GET Friends of User by ID who are not part of a Memory yet
+router.get('/missingMemory/:memoryId/:userId', async (req, res) => {
+  const userId = req.params.userId;
+  const memoryId = req.params.memoryId;
+
+  try {
+    const query = `
+    SELECT u.user_id, u.name, u.email, u.dob, u.gender, u.profilepic
+    FROM friendships f
+    JOIN users u ON (f.user_id1 = u.user_id OR f.user_id2 = u.user_id)
+    WHERE (f.user_id1 = ? OR f.user_id2 = ?) 
+    AND f.status = 'accepted'
+    AND NOT u.user_id = ?
+    AND NOT EXISTS (
+      SELECT 1 
+      FROM user_has_memory 
+      WHERE user_id = u.user_id 
+      AND memory_id = ?
+    );
+    `;
+
+    const [results] = await db.query(query, [userId, userId, userId, memoryId]);
+    res.json(results);
+  } catch (error) {
+    console.error('Error fetching user friends:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 
 //GET PENDING REQUESTS
 router.get('/pending/:userId', async (req, res) => {
