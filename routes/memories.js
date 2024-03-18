@@ -238,6 +238,24 @@ router.delete('/:memoryId', async (req, res) => {
   }
 });
 
+// DELETE Friend from Memory
+router.delete('/:memoryId/:userId', async (req, res) => {
+  const memoryId = req.params.memoryId;
+  const userId = req.params.userId;
+
+  try {
+    await db.query(
+      'DELETE FROM user_has_memory WHERE user_id = ? AND memory_id = ?',
+      [userId, memoryId]
+    );
+
+    res.json({ message: 'Friend removed successfully from Memory' });
+  } catch (error) {
+    console.error('Error removing friend from Memory:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 
 module.exports = router;
 
