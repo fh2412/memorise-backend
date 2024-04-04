@@ -148,9 +148,10 @@ router.delete('/:id', async (req, res) => {
 });
 
 //search for users
-router.get('/search/users', async (req, res) => {
+router.get('/search/users/:userId', async (req, res) => {
   try {
     const searchTerm = req.query.term;
+    const userId = req.params.userId;
 
     if (!searchTerm) {
       return res.status(400).json({ message: 'Search term is required' });
@@ -160,13 +161,21 @@ router.get('/search/users', async (req, res) => {
     const escapedTerm = `%${searchTerm.replace(/[\\%_\&,\/;'\*!()+=\${}:'<@\]^~|#?]/g, '\\$&')}%`;
 
     const query = `
-      SELECT *
-      FROM users
-      WHERE email LIKE ? OR username LIKE ? OR name LIKE ?
-      LIMIT 5;
+    SELECT u.email, u.username, u.name, u.user_id
+    FROM users u
+    WHERE u.user_id <> ?
+    AND u.user_id NOT IN (
+      SELECT user_id1 FROM friendships WHERE user_id2 = ?
+      UNION ALL
+      SELECT user_id2 FROM friendships WHERE user_id1 = ?
+    )
+    AND (
+      u.email LIKE ? OR u.username LIKE ? OR u.name LIKE ?
+    )
+    LIMIT 5;
     `;
 
-    const [results] = await db.query(query, [escapedTerm, escapedTerm, escapedTerm]);
+    const [results] = await db.query(query, [userId, userId, userId, escapedTerm, escapedTerm, escapedTerm]);
 
     res.json(results);
   } catch (error) {
