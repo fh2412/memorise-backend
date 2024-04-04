@@ -1,0 +1,16 @@
+{
+    "configurations": [
+        {
+            "name": "Deploy Cloud Function",
+            "type": "cloudcode.cloudfunctions",
+            "request": "launch",
+            "functionName": "memorise-backend",
+            "gen": "GEN_2",
+            "revision": "",
+            "entryPoint": "func1",
+            "testInput": "",
+            "region": "europe-west1",
+            "runtime": "nodejs20"
+        }
+    ]
+}
