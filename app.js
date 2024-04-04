@@ -17,6 +17,7 @@ const friendsRoutes = require('./routes/friends');
 const memoryStatsRoutes = require('./routes/memorystats');
 const locationRoutes = require('./routes/locations');
 const firestoreRoutes = require('./routes/firestore');
+const betaUserRoutes = require('./routes/betaUsers');
 
 
 
@@ -26,7 +27,7 @@ app.use('/api/friends', friendsRoutes); // Mount memories routes at /api/memorie
 app.use('/api/memorystats', memoryStatsRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/firestore', firestoreRoutes);
-
+app.use('/api/betausers', betaUserRoutes);
 
 
 // Start the server

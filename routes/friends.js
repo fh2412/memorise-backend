@@ -199,5 +199,4 @@ router.put('/accept_request/:userId1/:userId2', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 module.exports = router;

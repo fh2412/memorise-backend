@@ -21,7 +21,7 @@ router.get('/:id', async (req, res) => {
     if (rows.length > 0) {
       res.json(rows[0]);
     } else {
-      res.status(404).json({ message: 'User not found' });
+      res.status(404).json({ message: 'User not found (/:id)' });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -45,13 +45,13 @@ router.get('/email/:email', async (req, res) => {
     FROM 
         users 
     WHERE 
-        email = ?`, 
-    [userEmail]
-);
+        email = ?`,
+      [userEmail]
+    );
     if (rows.length > 0) {
       res.json(rows[0]); // Sending the first user found with that email
     } else {
-      res.status(404).json({ message: 'User not found' });
+      res.status(404).json({ message: 'User not found (/email/:email)' });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -60,19 +60,19 @@ router.get('/email/:email', async (req, res) => {
 
 router.get('/:userId/memories', async (req, res) => {
   const userId = req.params.userId;
-	
+
   try {
     const [rows] = await db.query(`
     SELECT m.* 
     FROM memories m 
     INNER JOIN user_has_memory um ON m.memory_id = um.memory_id
-    WHERE um.user_id = ?`, 
-    [userId]
-);
+    WHERE um.user_id = ?`,
+      [userId]
+    );
     if (rows.length > 0) {
       res.json(rows[0]); // Sending the first user found with that email
     } else {
-      res.status(404).json({ message: 'User not found' });
+      res.status(404).json({ message: 'User not found (/:userId/memories)' });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -144,6 +144,34 @@ router.delete('/:id', async (req, res) => {
     res.json({ message: 'User deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+});
+
+//search for users
+router.get('/search/users', async (req, res) => {
+  try {
+    const searchTerm = req.query.term;
+
+    if (!searchTerm) {
+      return res.status(400).json({ message: 'Search term is required' });
+    }
+
+    // Escape the search term to prevent SQL injection attacks
+    const escapedTerm = `%${searchTerm.replace(/[\\%_\&,\/;'\*!()+=\${}:'<@\]^~|#?]/g, '\\$&')}%`;
+
+    const query = `
+      SELECT *
+      FROM users
+      WHERE email LIKE ? OR username LIKE ? OR name LIKE ?
+      LIMIT 5;
+    `;
+
+    const [results] = await db.query(query, [escapedTerm, escapedTerm, escapedTerm]);
+
+    res.json(results);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
