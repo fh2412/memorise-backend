@@ -10,7 +10,7 @@
             "entryPoint": "func1",
             "testInput": "",
             "region": "europe-west1",
-            "runtime": "nodejs20"
+            "runtime": "nodejs18"
         }
     ]
 }
