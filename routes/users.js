@@ -41,7 +41,9 @@ router.get('/email/:email', async (req, res) => {
         gender, 
         location_id, 
         DATE_FORMAT(dob, '%d/%m/%Y') AS formatted_dob,
-        profilepic 
+        profilepic,
+        country,
+        username 
     FROM 
         users 
     WHERE 
@@ -94,7 +96,7 @@ router.post('/', async (req, res) => {
 // PUT (Update) a user by ID
 router.put('/:id', async (req, res) => {
   const userId = req.params.id;
-  const { name, bio, dob, gender, location } = req.body;
+  const { name, bio, dob, gender, country, username } = req.body;
 
   // Extracting DAY, MONTH, YEAR from the provided DOB string (format: DD/MM/YYYY)
   const [day, month, year] = dob.split('/');
@@ -103,11 +105,11 @@ router.put('/:id', async (req, res) => {
     // Update user's name, dob, gender, and location in the database
     const updateUserQuery = `
       UPDATE users 
-      SET name = ?, bio = ?, dob = ?, gender = ?
+      SET name = ?, bio = ?, dob = ?, gender = ?, country = ?, username = ?
       WHERE user_id = ?
     `;
 
-    await db.query(updateUserQuery, [name, bio, `${year}-${month}-${day}`, gender, userId]);
+    await db.query(updateUserQuery, [name, bio, `${year}-${month}-${day}`, gender, country, username, userId]);
 
     res.status(200).json({ message: 'User updated successfully' });
   } catch (error) {

@@ -1,4 +1,4 @@
-{
+/*{
     "configurations": [
         {
             "name": "Deploy Cloud Function",
@@ -13,4 +13,4 @@
             "runtime": "nodejs18"
         }
     ]
-}
+}*/
