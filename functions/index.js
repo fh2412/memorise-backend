@@ -1,19 +1,26 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * const {onCall} = require("firebase-functions/v2/https");
- * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
+const express = require('express');
+const cors = require('cors');
+const app = express();
 
-const {onRequest} = require("firebase-functions/v2/https");
-const logger = require("firebase-functions/logger");
 
-// Create and deploy your first functions
-// https://firebase.google.com/docs/functions/get-started
+app.use(cors());
 
-// exports.helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+// Define routes (separate files for better organization)
+const usersRoutes = require('./routes/users');
+const memoriesRoutes = require('./routes/memories');
+const friendsRoutes = require('./routes/friends');
+const memoryStatsRoutes = require('./routes/memorystats');
+const locationRoutes = require('./routes/locations');
+const firestoreRoutes = require('./routes/firestore');
+const betaUserRoutes = require('./routes/betaUsers');
+
+app.use('/api/users', usersRoutes);
+app.use('/api/memories', memoriesRoutes);
+app.use('/api/friends', friendsRoutes);
+app.use('/api/memorystats', memoryStatsRoutes);
+app.use('/api/locations', locationRoutes);
+app.use('/api/firestore', firestoreRoutes);
+app.use('/api/betausers', betaUserRoutes);
+
+// Wrap in exports for deployment
+exports.api = functions.https.onRequest(app);
