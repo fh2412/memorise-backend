@@ -3,6 +3,7 @@ const cors = require('cors');
 const app = express();
 const bodyParser = require('body-parser');
 const PORT = process.env.PORT || 3000; // Define the port for the server
+const functions = require("firebase-functions/v2");
 
 // Middleware setup (if needed)
 // app.use(...);
@@ -34,3 +35,5 @@ app.use('/api/betausers', betaUserRoutes);
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+exports.api = functions.https.onRequest(app);
