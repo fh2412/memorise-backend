@@ -161,14 +161,12 @@ router.post('/createMemory', async (req, res) => {
 
 router.post('/addFriendsToMemory', async (req, res) => {
   const { emails, memoryId } = req.body;
-
   try {
     for (const email of emails) {
       // Step 1: Get user_id from email
       const userResult = await db.query('SELECT user_id FROM users WHERE email = ?', [email]);
-      if (userResult[0][0] != 0) {
+      if (userResult[0][0]) {
         const userId = userResult[0][0].user_id;
-
         // Step 2: Post user_id in "user_has_memory" table
         await db.query('INSERT INTO user_has_memory (user_id, memory_id, status) VALUES (?, ?, ?)', [userId, memoryId, 'friend']);
       } else {
