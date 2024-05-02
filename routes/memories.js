@@ -233,7 +233,7 @@ router.put('/picturecount/:memoryId', async (req, res) => {
 //UPDATE Location ID
 router.put('/updateMemoryLocation/:memoryId', async (req, res) => {
   const memoryId = req.params.memoryId;
-  const location_id = req.body;
+  const location_id = req.body.locationId;
   try {
     // Execute the SQL UPDATE query
     const [result] = await db.execute(
