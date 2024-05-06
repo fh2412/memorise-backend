@@ -55,29 +55,26 @@ router.get('/getAddedMemories/:userId', async (req, res) => {
 
   try {
     const [rows] = await db.query(`
-    SELECT
-      memories.*,
-      users.name AS username
-    FROM
-      memories
-    JOIN
-      user_has_memory ON memories.memory_id = user_has_memory.memory_id
-    JOIN
-      users ON memories.user_id = users.user_id
-    WHERE
-      user_has_memory.user_id = ?;
-    `,
+      SELECT memories.*, users.name AS username, location.latitude, location.longitude
+      FROM memories
+      JOIN user_has_memory ON memories.memory_id = user_has_memory.memory_id
+      JOIN users ON memories.user_id = users.user_id
+      JOIN location ON memories.location_id = location.location_id  -- Added join with location table
+      WHERE user_has_memory.user_id = ?;
+    `, 
       [userId]
     );
+
     if (rows.length > 0) {
-      res.json(rows); // Sending the first user found with that email
+      res.json(rows); // Sending all memories with location data for the user
     } else {
-      res.status(404).json({ message: 'User has not created any Memories yet' });
+      res.status(404).json({ message: 'User has not added any Memories yet' });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
+
 
 // Retrieve details of a specific memory by memory ID
 router.get('/:memoryId', async (req, res) => {
