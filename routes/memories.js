@@ -26,25 +26,27 @@ router.get('/:memoryId/users', async (req, res) => {
 
 // Get created Memories by userId
 router.get('/createdMemories/:userId', async (req, res) => {
-    const userId = req.params.userId;
-  
-    try {
-      const [rows] = await db.query(`
-      SELECT memories.*, users.name AS username
+  const userId = req.params.userId;
+
+  try {
+    const [rows] = await db.query(`
+      SELECT memories.*, users.name AS username, location.latitude, location.longitude
       FROM memories
       JOIN users ON memories.user_id = users.user_id
+      JOIN location ON memories.location_id = location.location_id
       WHERE memories.user_id = ?;
-      `, 
+    `, 
       [userId]
-  );
-      if (rows.length > 0) {
-        res.json(rows); // Sending the first user found with that email
-      } else {
-        res.status(404).json({ message: 'User has not created any Memories yet' });
-      }
-    } catch (error) {
-      res.status(500).json({ message: error.message });
+    );
+
+    if (rows.length > 0) {
+      res.json(rows); // Sending all memories with location data for the user
+    } else {
+      res.status(404).json({ message: 'User has not created any Memories yet' });
     }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
 // Get Friends created Memories by userId
