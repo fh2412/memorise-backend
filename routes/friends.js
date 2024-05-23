@@ -170,6 +170,22 @@ router.post('/send_request', async (req, res) => {
   }
 });
 
+router.post('/add_friend', async (req, res) => {
+  const { senderId, receiverId } = req.body;
+
+  try {
+    await db.query(
+      'INSERT INTO friendships (user_id1, user_id2, status) VALUES (?, ?, ?)',
+      [senderId, receiverId, 'accepted']
+    );
+
+    res.json({ message: 'Friendship request sent successfully' });
+  } catch (error) {
+    console.error('Error sending friend request:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 
 //PUT
 router.put('/accept_request/:userId1/:userId2', async (req, res) => {
@@ -177,16 +193,6 @@ router.put('/accept_request/:userId1/:userId2', async (req, res) => {
   const userId2 = req.params.userId2;
 
   try {
-    // Check if the friendship request exists
-    /*const friendship = await db.query(
-      'SELECT * FROM friendships WHERE (user_id1 = ? AND user_id2 = ?) OR (user_id1 = ? AND user_id2 = ?)',
-      [userId1, userId2, userId2, userId1]
-    );
-
-    if (friendship.rows.length === 0) {
-      return res.status(404).json({ error: 'Friendship request not found' });
-    }*/
-
     // Update the status of the friendship to "accepted"
     await db.query(
       'UPDATE friendships SET status = ? WHERE (user_id1 = ? AND user_id2 = ?) OR (user_id1 = ? AND user_id2 = ?)',
