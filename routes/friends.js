@@ -25,6 +25,44 @@ router.get('/:userId', async (req, res) => {
   }
 });
 
+//GET STATUS OF A FRIENDSHIP
+router.get('/status/:userId1/:userId2', async (req, res) => {
+  const userId1 = req.params.userId1;
+  const userId2 = req.params.userId2;
+
+  try {
+    const query = `
+      SELECT status, user_id1, user_id2
+      FROM friendships
+      WHERE (user_id1 = ? AND user_id2 = ?)
+         OR (user_id1 = ? AND user_id2 = ?)
+    `;
+
+    const [results] = await db.query(query, [userId1, userId2, userId2, userId1]);
+    let result = 'empty';
+
+    if (results.length > 0) {
+      for (const row of results) {
+        if (row.status === 'accepted') {
+          result = 'accepted';
+          break;
+        } else if (row.status === 'pending') {
+          if (row.user_id1 == userId1) {
+            result = 'pending';
+          } else if (row.user_id1 == userId2) {
+            result = 'waiting';
+          }
+        }
+      }
+    }
+
+    res.json(result);
+  } catch (error) {
+    console.error('Error fetching user friends:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 //GET Friends of User by ID who are not part of a Memory yet
 router.get('/missingMemory/:memoryId/:userId', async (req, res) => {
   const userId = req.params.userId;
