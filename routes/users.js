@@ -60,6 +60,7 @@ router.get('/email/:email', async (req, res) => {
   }
 });
 
+// GET a users Memories
 router.get('/:userId/memories', async (req, res) => {
   const userId = req.params.userId;
 
@@ -78,6 +79,26 @@ router.get('/:userId/memories', async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+});
+
+//GET a users favourite memories
+router.get('/:userId/favourite-memories', async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    const [rows] = await db.query(`
+      SELECT m.*
+      FROM favourite_memories fm
+      INNER JOIN memories m ON fm.memory_id = m.memory_id
+      WHERE fm.user_id = ?`,
+      [userId]
+    );
+
+    res.json(rows);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ message: 'Error fetching favorite memories' });
   }
 });
 
@@ -117,6 +138,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// UPDATE users Profile Picture
 router.put('/profilepic/:id', async (req, res) => {
   const userId = req.params.id;
   const { profilepic } = req.body;
