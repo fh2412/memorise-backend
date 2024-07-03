@@ -19,7 +19,7 @@ const memoryStatsRoutes = require('./routes/memorystats');
 const locationRoutes = require('./routes/locations');
 const firestoreRoutes = require('./routes/firestore');
 const betaUserRoutes = require('./routes/betaUsers');
-
+const pinnedMemoriesRoutes = require('./routes/pinned-memories');
 
 
 app.use('/api/users', usersRoutes); // Mount users routes at /api/users
@@ -29,6 +29,7 @@ app.use('/api/memorystats', memoryStatsRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/firestore', firestoreRoutes);
 app.use('/api/betausers', betaUserRoutes);
+app.use('/api/pinned', pinnedMemoriesRoutes);
 
 
 // Start the server

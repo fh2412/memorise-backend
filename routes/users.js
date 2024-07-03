@@ -82,26 +82,6 @@ router.get('/:userId/memories', async (req, res) => {
   }
 });
 
-//GET a users favourite memories
-router.get('/:userId/favourite-memories', async (req, res) => {
-  const userId = req.params.userId;
-
-  try {
-    const [rows] = await db.query(`
-      SELECT m.*
-      FROM favourite_memories fm
-      INNER JOIN memories m ON fm.memory_id = m.memory_id
-      WHERE fm.user_id = ?`,
-      [userId]
-    );
-
-    res.json(rows);
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ message: 'Error fetching favorite memories' });
-  }
-});
-
 
 // POST a new user
 router.post('/', async (req, res) => {

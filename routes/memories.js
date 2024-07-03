@@ -75,6 +75,39 @@ router.get('/getAddedMemories/:userId', async (req, res) => {
   }
 });
 
+//GET all the memories a user is added to
+router.get('/allMemories/:userId', async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    // Combine queries using UNION ALL to get memories from both sources
+    const [combinedRows] = await db.query(`
+      SELECT memory_id, title
+      FROM memories
+      WHERE user_id = ?
+
+      UNION ALL
+
+      SELECT memories.memory_id, memories.title
+      FROM memories
+      INNER JOIN user_has_memory ON memories.memory_id = user_has_memory.memory_id
+      WHERE user_has_memory.user_id = ?
+    `, [userId, userId]); // Use userId for both queries
+
+    if (combinedRows.length > 0) {
+      // Send only the memoryId and title properties
+      const formattedMemories = combinedRows.map(memory => ({
+        memoryId: memory.memory_id,
+        title: memory.title
+      }));
+      res.json(formattedMemories);
+    } else {
+      res.status(200).json({ message: 'No memories found for this user.' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 // Retrieve details of a specific memory by memory ID
 router.get('/:memoryId', async (req, res) => {
