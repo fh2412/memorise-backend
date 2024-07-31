@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db'); // Your database connection module
+const uuid = require('uuid');
 
 //GET a users company
 router.get('/:userId', async (req, res) => {
@@ -107,5 +108,26 @@ router.delete('/delete/:id', async (req, res) => {
   }
 });
 
+router.post('/generateCode/:companyId', async (req, res) => {
+  const companyId = req.params.companyId;
+
+  const generateCode = async () => {
+    const code = uuid.v4();
+
+    try {
+      const [results] = await db.execute('INSERT INTO company_codes (code, company_id) VALUES (?, ?)', [code, companyId]);
+      return res.status(201).json({ code });
+    } catch (error) {
+      if (error.code === 'ER_DUP_ENTRY') {
+        return generateCode(); // Retry if duplicate code
+      } else {
+        console.error(error);
+        return res.status(500).json({ error: 'Internal server error' });
+      }
+    }
+  };
+  generateCode();
+
+});
 
 module.exports = router;
