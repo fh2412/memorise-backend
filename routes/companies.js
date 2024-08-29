@@ -130,4 +130,36 @@ router.post('/generateCode/:companyId', async (req, res) => {
 
 });
 
+router.put('/joinCompany/:userId', async (req, res) => {
+  try {
+    const { code } = req.body;
+    const userId = req.params.userId;
+
+    // Find the code
+    const companyCode = await CompanyCode.findOne({ code });
+    if (!companyCode) {
+      return res.status(404).json({ error: 'Invalid code' });
+    }
+
+    // Check if code is already used
+    if (companyCode.isUsed) {
+      return res.status(400).json({ error: 'Code already used' });
+    }
+
+    // Update code and user
+    companyCode.isUsed = true;
+    await companyCode.save();
+
+    const user = await User.findByIdAndUpdate(userId, { companyId: companyCode.companyId });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.status(200).json({ message: 'Joined company successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error joining company' });
+  }
+});
+
 module.exports = router;
