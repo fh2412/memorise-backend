@@ -68,7 +68,7 @@ router.get('/getAddedMemories/:userId', async (req, res) => {
     if (rows.length > 0) {
       res.json(rows); // Sending all memories with location data for the user
     } else {
-      res.status(404).json({ message: 'User has not added any Memories yet' });
+      res.json({ message: 'User has not added any Memories yet' });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
