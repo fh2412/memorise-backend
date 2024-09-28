@@ -156,7 +156,7 @@ router.get('/:memoryID/:userID/friends', async (req, res) => {
     const userID = req.params.userID;
     try {
       const [rows] = await db.query(`
-        SELECT u.name, u.user_id
+        SELECT u.name, u.user_id, u.dob, u.profilepic, u.country
         FROM users u
         INNER JOIN user_has_memory um ON u.user_id = um.user_id
         WHERE um.memory_id = ? AND u.user_id != ?`, 
