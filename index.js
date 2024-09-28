@@ -21,6 +21,7 @@ const firestoreRoutes = require('./routes/firestore');
 const betaUserRoutes = require('./routes/betaUsers');
 const pinnedMemoriesRoutes = require('./routes/pinned-memories');
 const companyRoutes = require('./routes/companies');
+const imageGalleryRoutes = require('./routes/image-gallery');
 
 
 app.use('/api/users', usersRoutes); // Mount users routes at /api/users
@@ -32,6 +33,7 @@ app.use('/api/firestore', firestoreRoutes);
 app.use('/api/betausers', betaUserRoutes);
 app.use('/api/pinned', pinnedMemoriesRoutes);
 app.use('/api/company', companyRoutes);
+app.use('/api/gallery', imageGalleryRoutes);
 
 
 // Start the server
