@@ -26,12 +26,12 @@ router.get('/:locId', async (req, res) => {
 
 //CREATE NEW LOCATION
 router.post('/createLocation', async (req, res) => {
-  const { lng, lat } = req.body;
+  const { lng, lat, l_country, l_city } = req.body;
   try {
     // Insert the friendship request into the database
     const result = await db.query(
-      'INSERT INTO location ( longitude, latitude) VALUES (?, ?)',
-      [lng, lat]
+      'INSERT INTO location ( longitude, latitude, country, locality) VALUES (?, ?, ?, ?)',
+      [lng, lat, l_country, l_city]
     );
 
     const locationId = result;
