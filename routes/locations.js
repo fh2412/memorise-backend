@@ -46,12 +46,12 @@ router.post('/createLocation', async (req, res) => {
 //UPDATE LOCATION
 router.put('/updateLocation/:id', async (req, res) => {
   const locationId = req.params.id; // Get the location ID from the URL parameter
-  const { lng, lat } = req.body; // Get updated location details
+  const { lng, lat, l_country, l_city } = req.body;
   try {
     // Update the location in the database
     const updateResult = await db.query(
-      'UPDATE location SET longitude = ?, latitude = ? WHERE location_id = ?',
-      [lng, lat, locationId]
+      'UPDATE location SET longitude = ?, latitude = ?, country = ?, locality = ? WHERE location_id = ?',
+      [lng, lat, l_country, l_city, locationId]
     );
 
     if (updateResult.affectedRows === 0) {
