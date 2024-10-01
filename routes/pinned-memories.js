@@ -105,5 +105,41 @@ router.delete('/:userId/favourite-memories/:memoryId', async (req, res) => {
     }
   });
   
+//Check if Memory is someones pinned Memory
+router.get('/favourite-memorie/:memoryId', async (req, res) => {
+  const memoryId = req.params.memoryId;
+
+  try {
+    const [rows] = await db.query(`
+      SELECT *
+      FROM favourite_memories
+      WHERE memory_id = ?`,
+      [memoryId]
+    );
+
+    res.json(rows);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ message: 'Error fetching favorite memories' });
+  }
+});
+
+//DELETE Memory from all Pins
+router.delete('/favourite-memorie/:memoryId', async (req, res) => {
+  const memoryId = req.params.memoryId;
+
+  try {
+    const [rows] = await db.query(`
+      DELETE FROM favourite_memories
+      WHERE memory_id = ?`,
+      [memoryId]
+    );
+
+    res.json(rows);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ message: 'Error fetching favorite memories' });
+  }
+});
 
 module.exports = router;
