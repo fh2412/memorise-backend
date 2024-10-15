@@ -86,14 +86,27 @@ router.get('/:userId/memories', async (req, res) => {
 
 // POST a new user
 router.post('/', async (req, res) => {
-  const { username, email } = req.body; // Assuming username and email are sent in the request body
+  const { email } = req.body;
+
   try {
-    await db.query('INSERT INTO users (username, email) VALUES (?, ?)', [username, email]);
+    // Check if a user with the same email already exists
+    const [existingUser] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+
+    if (existingUser.length > 0) {
+      // If the email is already taken, return an error response
+      return res.status(400).json({ message: 'Email is already in use' });
+    }
+
+    // If no user exists with that email, proceed to insert the new user
+    await db.query('INSERT INTO users (email) VALUES (?)', [email]);
+
     res.status(201).json({ message: 'User created successfully' });
   } catch (error) {
+    // Handle errors
     res.status(500).json({ message: error.message });
   }
 });
+
 
 // PUT (Update) a user by ID
 router.put('/:id', async (req, res) => {

@@ -285,6 +285,29 @@ router.put('/updateMemoryLocation/:memoryId', async (req, res) => {
   }
 });
 
+//UPDATE Memories Title Picture
+router.put('/updateTitlePic/:imageId', async (req, res) => {
+  const memoryId = req.params.imageId;
+  const imageUrl = req.body.imageUrl;
+  try {
+    // Execute the SQL UPDATE query
+    const [result] = await db.execute(
+      'UPDATE memories SET title_pic = ? WHERE image_url = ?',
+      [imageUrl, memoryId]
+    );
+
+    // Check if the memory was updated successfully
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Memory updated successfully' });
+    } else {
+      res.status(404).json({ error: 'Memory not found or no changes made' });
+    }
+  } catch (error) {
+    console.error('Error updating memory:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 // DELETE request to delete a memory and its associated friends
 router.delete('/:memoryId', async (req, res) => {
   const memoryId = req.params.memoryId;
