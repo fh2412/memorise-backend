@@ -46,6 +46,7 @@ router.get('/createdthisyear/:userId', async (req, res) => {
     }
 });
 
+//GET amount of Friends
 router.get('/friendcount/:userId', async (req, res) => {
     const userd = req.params.userId;
   
@@ -66,5 +67,42 @@ router.get('/friendcount/:userId', async (req, res) => {
     }
 });
 
+//GET shared Memories with Friend
+
+router.get('/shared-memories/:user1Id/:user2Id', async (req, res) => {
+  const { user1Id, user2Id } = req.params;
+
+  try {
+    const query = `
+      SELECT COUNT(DISTINCT m.memory_id) AS sharedMemoriesCount
+      FROM memories AS m
+      LEFT JOIN user_has_memory AS uh1 ON m.memory_id = uh1.memory_id AND uh1.user_id = ?
+      LEFT JOIN user_has_memory AS uh2 ON m.memory_id = uh2.memory_id AND uh2.user_id = ?
+      WHERE 
+        -- Case 1: Both users are in user_has_memory for the same memory
+        (uh1.user_id IS NOT NULL AND uh2.user_id IS NOT NULL)
+        
+        OR
+        
+        -- Case 2: User1 is the creator in memories and User2 is in user_has_memory
+        (m.user_id = ? AND uh2.user_id IS NOT NULL)
+        
+        OR
+        
+        -- Case 3: User2 is the creator in memories and User1 is in user_has_memory
+        (m.user_id = ? AND uh1.user_id IS NOT NULL)
+    `;
+
+    const [rows] = await db.execute(query, [user1Id, user2Id, user1Id, user2Id]);
+    const sharedMemoriesCount = rows[0]?.sharedMemoriesCount || 0;
+
+    res.json({ sharedMemoriesCount });
+  } catch (error) {
+    console.error('Error fetching shared memories count:', error);
+    res.status(500).json({ error: 'An error occurred while fetching shared memories count.' });
+  }
+});
+
 module.exports = router;
+
 

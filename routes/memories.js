@@ -130,27 +130,7 @@ router.get('/:memoryId', async (req, res) => {
     }
 });
 
-//GET MEMORY CREATORS NAME
-/*router.get('/getMemoryCreator/:userId', async (req, res) => {
-  const creatorId = req.params.userId;
-
-  try {
-    const [rows] = await db.query(`
-      SELECT name 
-      FROM users 
-      WHERE user_id = ?`, 
-    [creatorId]
-);
-    if (rows.length > 0) {
-      res.json(rows[0]); // Sending the first user found with that email
-    } else {
-      res.status(404).json({ message: 'Memories creator not found!' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});*/
-
+//GET Memories Friends
 router.get('/:memoryID/:userID/friends', async (req, res) => {
     const memoryID = req.params.memoryID; // Get memory ID from the request parameter
     const userID = req.params.userID;
@@ -172,6 +152,46 @@ router.get('/:memoryID/:userID/friends', async (req, res) => {
       }
 });
 
+//GET Memories Friends with Shared Memories
+router.get('/:memoryId/:userId/friends-with-shared-count', async (req, res) => {
+  const { memoryId, userId } = req.params;
+
+  try {
+    // Step 1: Get friends for this memory
+    const friendsQuery = `
+      SELECT u.user_id, u.name, u.dob, u.profilepic, u.country
+      FROM user_has_memory AS uh
+      JOIN users AS u ON uh.user_id = u.user_id
+      WHERE uh.memory_id = ? AND u.user_id != ?
+    `;
+    const [friends] = await db.execute(friendsQuery, [memoryId, userId]);
+
+    // Step 2: Get shared memories count for each friend
+    const promises = friends.map(async (friend) => {
+      const sharedCountQuery = `
+        SELECT COUNT(DISTINCT m.memory_id) AS sharedMemoriesCount
+        FROM memories AS m
+        LEFT JOIN user_has_memory AS uh1 ON m.memory_id = uh1.memory_id AND uh1.user_id = ?
+        LEFT JOIN user_has_memory AS uh2 ON m.memory_id = uh2.memory_id AND uh2.user_id = ?
+        WHERE 
+          (uh1.user_id IS NOT NULL AND uh2.user_id IS NOT NULL)
+          OR (m.user_id = ? AND uh2.user_id IS NOT NULL)
+          OR (m.user_id = ? AND uh1.user_id IS NOT NULL)
+      `;
+      const [sharedCountResult] = await db.execute(sharedCountQuery, [userId, friend.user_id, userId, friend.user_id]);
+      return { ...friend, sharedMemoriesCount: sharedCountResult[0].sharedMemoriesCount || 0 };
+    });
+
+    // Wait for all shared count queries to resolve
+    const friendsWithSharedCount = await Promise.all(promises);
+
+    // Respond with the combined data
+    res.json(friendsWithSharedCount);
+  } catch (error) {
+    console.error('Error fetching friends with shared memories count:', error);
+    res.status(500).json({ error: 'An error occurred while fetching data.' });
+  }
+});
 
 router.post('/createMemory', async (req, res) => {
   const { creator_id, title, description, firestore_bucket_url, location_id, memory_date, memory_end_date, title_pic } = req.body;
