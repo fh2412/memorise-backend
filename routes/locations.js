@@ -15,7 +15,7 @@ router.get('/:locId', async (req, res) => {
       [locId]
     );
     if (rows.length > 0) {
-      res.json(rows[0]); // Sending the first user found with that email
+      res.json(rows[0][0]);
     } else {
       res.json({ message: 'No Location with this ID' });
     }
