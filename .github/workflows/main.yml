@@ -16,12 +16,12 @@ jobs:
       - name: Run Tests
         run: npm test
       - name: Build Docker Image
-        run: docker build -t my-node-app .
+        run: docker build -t memorise-backend-node-app .
       - name: Push Docker Image to Registry
         uses: docker/build-push-action@v3
         with:
           push: true
-          tags: my-node-app:latest
+          tags: memorise-backend-node-app:latest
           
   deploy:
     needs: build-and-test
