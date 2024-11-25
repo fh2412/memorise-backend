@@ -114,7 +114,6 @@ router.put('/:id', async (req, res) => {
   const { name, bio, dob, gender, country, username, instagram } = req.body;
 
   // Extracting DAY, MONTH, YEAR from the provided DOB string (format: DD/MM/YYYY)
-  const [day, month, year] = dob.split('/');
 
   try {
     // Update user's name, dob, gender, and location in the database
@@ -124,7 +123,7 @@ router.put('/:id', async (req, res) => {
       WHERE user_id = ?
     `;
 
-    await db.query(updateUserQuery, [name, bio, `${year}-${month}-${day}`, gender, country, username, instagram, userId]);
+    await db.query(updateUserQuery, [name, bio, dob, gender, country, username, instagram, userId]);
 
     res.status(200).json({ message: 'User updated successfully' });
   } catch (error) {
@@ -177,7 +176,7 @@ router.get('/search/users/:userId', async (req, res) => {
     const escapedTerm = `%${searchTerm.replace(/[\\%_\&,\/;'\*!()+=\${}:'<@\]^~|#?]/g, '\\$&')}%`;
 
     const query = `
-    SELECT u.email, u.username, u.name, u.user_id
+    SELECT u.email, u.username, u.name, u.user_id, u.dob
     FROM users u
     WHERE u.user_id <> ?
     AND u.user_id NOT IN (
