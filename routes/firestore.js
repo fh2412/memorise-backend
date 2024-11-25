@@ -1,13 +1,50 @@
 const express = require('express');
 const admin = require('firebase-admin');
 const router = express.Router();
+const archiver = require('archiver');
 
-var serviceAccount = require("A:/programming/memorise-910c3-firebase-adminsdk-c4phi-bb250db9f3.json");
+var serviceAccount = require('A:/programming/memorise-910c3-firebase-adminsdk-c4phi-bb250db9f3.json');
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+  credential: admin.credential.cert(serviceAccount),
+  storageBucket: 'gs://memorise-910c3.appspot.com'
 });
 
-const storage = admin.storage();  
+
+const bucket = admin.storage().bucket();
+
+router.get('/download-zip/:folder', async (req, res) => {
+  const folderName = req.params.folder;
+
+  try {
+    // Get all files in the specified folder
+    const [files] = await bucket.getFiles({ prefix: 'memories/' + folderName + '/' });
+    if (files.length === 0) {
+      return res.status(404).send({ error: 'No files found in the folder.' });
+    }
+
+    // Create a zip archive
+    const archive = archiver('zip', { zlib: { level: 9 } });
+
+    // Stream the archive to the client
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename=${folderName}.zip`);
+    archive.pipe(res);
+
+    // Add files to the archive
+    for (const file of files) {
+      const fileStream = file.createReadStream();
+      archive.append(fileStream, { name: file.name.replace(folderName + '/', '') });
+    }
+
+    // Finalize the archive
+    await archive.finalize();
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ error: 'Failed to generate zip.' });
+  }
+});
+
+
 
 
 router.post('/delete-images', async (req, res) => {
