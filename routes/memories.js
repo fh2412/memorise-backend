@@ -194,12 +194,12 @@ router.get('/:memoryId/:userId/friends-with-shared-count', async (req, res) => {
 });
 
 router.post('/createMemory', async (req, res) => {
-  const { creator_id, title, description, firestore_bucket_url, location_id, memory_date, memory_end_date, title_pic } = req.body;
+  const { creator_id, title, description, firestore_bucket_url, location_id, memory_date, memory_end_date, title_pic, activity_id } = req.body;
   try {
     // Insert the friendship request into the database
     const result = await db.query(
-      'INSERT INTO memories (user_id, title, text, image_url, location_id, memory_date, memory_end_date, title_pic) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [creator_id, title, description, firestore_bucket_url, location_id, memory_date, memory_end_date, title_pic]
+      'INSERT INTO memories (user_id, title, text, image_url, location_id, memory_date, memory_end_date, title_pic, activity_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [creator_id, title, description, firestore_bucket_url, location_id, memory_date, memory_end_date, title_pic, activity_id]
     );
 
     const memoryId = result;

@@ -22,6 +22,7 @@ const betaUserRoutes = require('./routes/betaUsers');
 const pinnedMemoriesRoutes = require('./routes/pinned-memories');
 const companyRoutes = require('./routes/companies');
 const imageGalleryRoutes = require('./routes/image-gallery');
+const activityRoutes = require('./routes/activity');
 
 
 app.use('/api/users', usersRoutes); // Mount users routes at /api/users
@@ -34,6 +35,8 @@ app.use('/api/betausers', betaUserRoutes);
 app.use('/api/pinned', pinnedMemoriesRoutes);
 app.use('/api/company', companyRoutes);
 app.use('/api/gallery', imageGalleryRoutes);
+app.use('/api/activity', activityRoutes);
+
 
 
 // Start the server
