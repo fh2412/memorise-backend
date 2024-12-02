@@ -1,27 +1,47 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../config/db');
+const db = require('../config/db');  
 
-router.post('/add-activity', (req, res) => {
-    const { title } = req.body; // Extract title from request body
-    console.log(req.body);
-    // Check if title is provided
-    if (!title || title.trim() === '') {
-      return res.status(400).json({ message: 'Title is required.' });
-    }
-    
-    // Insert new activity into the database
-    const query = 'INSERT INTO activity (title) VALUES (?)';
-    db.query(query, [title], (err, result) => {
-      if (err) {
-        console.error('Error inserting activity: ', err);
-        return res.status(500).json({ message: 'Internal server error' });
-      }
+  router.post('/add-activity', async (req, res) => {
+    const { title } = req.body;
+    try {
+      // Insert the friendship request into the database
+      const result = await db.query(
+        'INSERT INTO activity (title) VALUES (?)',
+        [title]
+      );
   
-      // Successfully inserted, return the new activity ID
-      const activityId = result.insertId;
-      res.status(201).json({ activityId: activityId });
-    });
+      const activityId = result;
+  
+      res.json({ message: 'Activity created successfully', activityId: activityId });
+    } catch (error) {
+      console.error('Error creating Activity:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+
+
+  router.get('/:id', async (req, res) => {
+    const activityId = req.params.id;
+    try {
+      const [rows] = await db.query('SELECT * FROM activity WHERE id = ?', [activityId]);
+      if (rows.length > 0) {
+        res.json(rows[0]);
+      } else {
+        res.status(404).json({ message: 'Activity not found'});
+      }
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  router.get('/', async (req, res) => {
+    try {
+      const [rows] = await db.query('SELECT * FROM activity');
+      res.json(rows);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
   });
 
 module.exports = router;
