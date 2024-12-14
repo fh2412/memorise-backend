@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../config/db');  
+const db = require('../config/db');
+const authenticateFirebaseToken = require('../middleware/authMiddleware');
 
   router.post('/add-activity', async (req, res) => {
     const { title } = req.body;
@@ -21,7 +22,7 @@ const db = require('../config/db');
   });
 
 
-  router.get('/:id', async (req, res) => {
+  router.get('/:id', authenticateFirebaseToken, async (req, res) => {
     const activityId = req.params.id;
     try {
       const [rows] = await db.query('SELECT * FROM activity WHERE id = ?', [activityId]);
@@ -35,7 +36,7 @@ const db = require('../config/db');
     }
   });
 
-  router.get('/', async (req, res) => {
+  router.get('/', authenticateFirebaseToken, async (req, res) => {
     try {
       const [rows] = await db.query('SELECT * FROM activity');
       res.json(rows);

@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const authenticateFirebaseToken = require('../middleware/authMiddleware');
 
 // Route to retrieve the first 5 images
 /*router.get('/previewimages/:folderId', async (req, res) => {
@@ -32,7 +33,7 @@ const router = express.Router();
 
 
 //GET all images with dimensions
-router.get('/images/:folderId', async (req, res) => {
+router.get('/images/:folderId', authenticateFirebaseToken, async (req, res) => {
   const folderId = req.params.folderId;
 
   try {
@@ -64,7 +65,7 @@ router.get('/images/:folderId', async (req, res) => {
   }
 });
 
-router.post('/classify-images', async (req, res) => {
+router.post('/classify-images', authenticateFirebaseToken, async (req, res) => {
   const { imageUrls } = req.body; // Expecting an array of image URLs
 
   if (!Array.isArray(imageUrls) || imageUrls.length === 0) {

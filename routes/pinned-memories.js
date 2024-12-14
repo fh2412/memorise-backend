@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db'); // Your database connection module
+const authenticateFirebaseToken = require('../middleware/authMiddleware');
+
 
 //GET a users favourite memories
-router.get('/:userId/favourite-memories', async (req, res) => {
+router.get('/:userId/favourite-memories', authenticateFirebaseToken, async (req, res) => {
   const userId = req.params.userId;
 
   try {
@@ -23,7 +25,7 @@ router.get('/:userId/favourite-memories', async (req, res) => {
 });
 
 //UPDATE a users favourite memories
-router.put('/:userId/favourite-memories/:memoryId', async (req, res) => {
+router.put('/:userId/favourite-memories/:memoryId', authenticateFirebaseToken, async (req, res) => {
     const userId = req.params.userId;
     const memoryIdToUpdate = req.params.memoryId;
     const updatedMemoryId = req.body.memoryId;
@@ -54,7 +56,7 @@ router.put('/:userId/favourite-memories/:memoryId', async (req, res) => {
   
 
 //SET a users favourite memories
-router.post('/:userId/favourite-memories', async (req, res) => {
+router.post('/:userId/favourite-memories', authenticateFirebaseToken, async (req, res) => {
     const userId = req.params.userId;
     const memoryId = req.body.memoryId; // Assuming 'memoryId' is the property name in the request body
   
@@ -78,7 +80,7 @@ router.post('/:userId/favourite-memories', async (req, res) => {
   });
   
 //DELETE
-router.delete('/:userId/favourite-memories/:memoryId', async (req, res) => {
+router.delete('/:userId/favourite-memories/:memoryId', authenticateFirebaseToken, async (req, res) => {
     const userId = req.params.userId;
     const memoryIdToDelete = req.params.memoryId;
   
@@ -125,7 +127,7 @@ router.get('/favourite-memorie/:memoryId', async (req, res) => {
 });
 
 //DELETE Memory from all Pins
-router.delete('/favourite-memorie/:memoryId', async (req, res) => {
+router.delete('/favourite-memorie/:memoryId', authenticateFirebaseToken, async (req, res) => {
   const memoryId = req.params.memoryId;
 
   try {

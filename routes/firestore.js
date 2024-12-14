@@ -1,18 +1,14 @@
 const express = require('express');
-const admin = require('firebase-admin');
+const admin = require('../config/firebaseAdmin');
 const router = express.Router();
 const archiver = require('archiver');
+const authenticateFirebaseToken = require('../middleware/authMiddleware');
 
-var serviceAccount = require('A:/programming/memorise-910c3-firebase-adminsdk-c4phi-bb250db9f3.json');
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  storageBucket: 'gs://memorise-910c3.appspot.com'
-});
 
 
 const bucket = admin.storage().bucket();
 
-router.get('/download-zip/:folder', async (req, res) => {
+router.get('/download-zip/:folder', authenticateFirebaseToken, async (req, res) => {
   const folderName = req.params.folder;
 
   try {

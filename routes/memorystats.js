@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
+const authenticateFirebaseToken = require('../middleware/authMiddleware');
+
 
 // Get total number of Memories created
-router.get('/created/:userId', async (req, res) => {
+router.get('/created/:userId', authenticateFirebaseToken, async (req, res) => {
     const userd = req.params.userId;
   
     try {
@@ -24,7 +26,7 @@ router.get('/created/:userId', async (req, res) => {
 });
 
 // Get number of Memories in this Year
-router.get('/createdthisyear/:userId', async (req, res) => {
+router.get('/createdthisyear/:userId', authenticateFirebaseToken, async (req, res) => {
     const userd = req.params.userId;
   
     try {
@@ -47,7 +49,7 @@ router.get('/createdthisyear/:userId', async (req, res) => {
 });
 
 //GET amount of Friends
-router.get('/friendcount/:userId', async (req, res) => {
+router.get('/friendcount/:userId', authenticateFirebaseToken, async (req, res) => {
     const userd = req.params.userId;
   
     try {
@@ -69,7 +71,7 @@ router.get('/friendcount/:userId', async (req, res) => {
 
 //GET shared Memories with Friend
 
-router.get('/shared-memories/:user1Id/:user2Id', async (req, res) => {
+router.get('/shared-memories/:user1Id/:user2Id', authenticateFirebaseToken, async (req, res) => {
   const { user1Id, user2Id } = req.params;
 
   try {

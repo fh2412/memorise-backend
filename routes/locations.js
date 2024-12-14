@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
+const authenticateFirebaseToken = require('../middleware/authMiddleware');
 
 
 //GET SINGLE LOCATION BY ID
-router.get('/:locId', async (req, res) => {
+router.get('/:locId', authenticateFirebaseToken, async (req, res) => {
   const locId = req.params.locId;
 
   try {
@@ -25,7 +26,7 @@ router.get('/:locId', async (req, res) => {
 });
 
 //CREATE NEW LOCATION
-router.post('/createLocation', async (req, res) => {
+router.post('/createLocation', authenticateFirebaseToken, async (req, res) => {
   const { lng, lat, l_country, l_city } = req.body;
   try {
     // Insert the friendship request into the database
@@ -44,7 +45,7 @@ router.post('/createLocation', async (req, res) => {
 });
 
 //UPDATE LOCATION
-router.put('/updateLocation/:id', async (req, res) => {
+router.put('/updateLocation/:id', authenticateFirebaseToken, async (req, res) => {
   const locationId = req.params.id; // Get the location ID from the URL parameter
   const { lng, lat, l_country, l_city } = req.body;
   try {

@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db'); // Your database connection module
+const authenticateFirebaseToken = require('../middleware/authMiddleware');
 
 
 // GET all users
-router.get('/', async (req, res) => {
+router.get('/', authenticateFirebaseToken, async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM users');
     res.json(rows);
@@ -14,7 +15,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET a single user by ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', authenticateFirebaseToken, async (req, res) => {
   const userId = req.params.id;
   try {
     const [rows] = await db.query('SELECT * FROM users WHERE user_id = ?', [userId]);
@@ -62,7 +63,7 @@ router.get('/email/:email', async (req, res) => {
 });
 
 // GET a users Memories
-router.get('/:userId/memories', async (req, res) => {
+router.get('/:userId/memories', authenticateFirebaseToken, async (req, res) => {
   const userId = req.params.userId;
 
   try {
@@ -109,7 +110,7 @@ router.post('/', async (req, res) => {
 
 
 // PUT (Update) a user by ID
-router.put('/:id', async (req, res) => {
+router.put('/:id', authenticateFirebaseToken, async (req, res) => {
   const userId = req.params.id;
   const { name, bio, dob, gender, country, username, instagram } = req.body;
 
@@ -132,7 +133,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // UPDATE users Profile Picture
-router.put('/profilepic/:id', async (req, res) => {
+router.put('/profilepic/:id', authenticateFirebaseToken, async (req, res) => {
   const userId = req.params.id;
   const { profilepic } = req.body;
 
@@ -152,7 +153,7 @@ router.put('/profilepic/:id', async (req, res) => {
 
 
 // DELETE a user by ID
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticateFirebaseToken, async (req, res) => {
   const userId = req.params.id;
   try {
     await db.query('DELETE FROM users WHERE id = ?', [userId]);
@@ -163,7 +164,7 @@ router.delete('/:id', async (req, res) => {
 });
 
 //search for users
-router.get('/search/users/:userId', async (req, res) => {
+router.get('/search/users/:userId', authenticateFirebaseToken, async (req, res) => {
   try {
     const searchTerm = req.query.term;
     const userId = req.params.userId;

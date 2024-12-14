@@ -2,9 +2,11 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db'); // Your database connection module
 const uuid = require('uuid');
+const authenticateFirebaseToken = require('../middleware/authMiddleware');
+
 
 //GET a users company
-router.get('/:userId', async (req, res) => {
+router.get('/:userId', authenticateFirebaseToken, async (req, res) => {
   const userId = req.params.userId;
   try {
     const [rows] = await db.query(`
@@ -26,7 +28,7 @@ router.get('/:userId', async (req, res) => {
 });
 
 // Create a new company
-router.post('/create/:userId', async (req, res) => {
+router.post('/create/:userId', authenticateFirebaseToken, async (req, res) => {
   const userId = req.params.userId;
   const { name, phone, email, website } = req.body;
   try {
@@ -40,7 +42,7 @@ router.post('/create/:userId', async (req, res) => {
 
 
 // Update an existing company
-router.put('/update/:id', (req, res) => {
+router.put('/update/:id', authenticateFirebaseToken, (req, res) => {
   const { id } = req.params;
   const { name, phone, email, website } = req.body;
   const query = 'UPDATE companies SET name = ?, phone = ?, email = ?, website = ? WHERE id = ?';
@@ -56,7 +58,7 @@ router.put('/update/:id', (req, res) => {
 });
 
 //Leave Company
-router.put('/leave/:id', async (req, res) => {
+router.put('/leave/:id', authenticateFirebaseToken, async (req, res) => {
   const userId = req.params.id;
   try {
     const updateUserQuery = `
@@ -73,7 +75,7 @@ router.put('/leave/:id', async (req, res) => {
 });
 
 //SET emplyee TODO
-router.put('/owner/:id', async (req, res) => {
+router.put('/owner/:id', authenticateFirebaseToken, async (req, res) => {
   const userId = req.params.id;
   const companyId = req.body
 
@@ -92,7 +94,7 @@ router.put('/owner/:id', async (req, res) => {
 });
 
 //Delete Company
-router.delete('/delete/:id', async (req, res) => {
+router.delete('/delete/:id', authenticateFirebaseToken, async (req, res) => {
   const companyId = req.params.id;
 
   try {
@@ -108,7 +110,7 @@ router.delete('/delete/:id', async (req, res) => {
   }
 });
 
-router.post('/generateCode/:companyId', async (req, res) => {
+router.post('/generateCode/:companyId', authenticateFirebaseToken, async (req, res) => {
   const companyId = req.params.companyId;
 
   const generateCode = async () => {
@@ -130,7 +132,7 @@ router.post('/generateCode/:companyId', async (req, res) => {
 
 });
 
-router.put('/joinCompany/:userId', async (req, res) => {
+router.put('/joinCompany/:userId', authenticateFirebaseToken, async (req, res) => {
   try {
     const { code } = req.body;
     const userId = req.params.userId;
