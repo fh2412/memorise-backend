@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db'); // Your database connection module
 const authenticateFirebaseToken = require('../middleware/authMiddleware');
-
+const admin = require('firebase-admin');
 
 // GET all users
 router.get('/', authenticateFirebaseToken, async (req, res) => {
@@ -75,7 +75,7 @@ router.get('/:userId/memories', authenticateFirebaseToken, async (req, res) => {
       [userId]
     );
     if (rows.length > 0) {
-      res.json(rows[0]); // Sending the first user found with that email
+      res.json(rows);
     } else {
       res.status(404).json({ message: 'User not found (/:userId/memories)' });
     }
@@ -85,26 +85,43 @@ router.get('/:userId/memories', authenticateFirebaseToken, async (req, res) => {
 });
 
 
-// POST a new user
+/**
+ * POST a new user
+ * @route POST /
+ * @description Creates a new user in the MySQL database and associates it with a Firebase UID
+ */
 router.post('/', async (req, res) => {
-  const { email } = req.body;
+  const { email, displayName, password } = req.body;
 
   try {
-    // Check if a user with the same email already exists
-    const [existingUser] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+    const firebaseUser = await admin.auth().createUser({
+      email,
+      displayName,
+      password,
+    });
 
-    if (existingUser.length > 0) {
-      // If the email is already taken, return an error response
-      return res.status(400).json({ message: 'Email is already in use' });
+    // Generate a custom token for the created Firebase user
+    const customToken = await admin.auth().createCustomToken(firebaseUser.uid);
+
+    // Save the user in the MySQL database
+    await db.query('INSERT INTO users (user_id, email) VALUES (?, ?)', [
+      firebaseUser.uid,
+      email,
+    ]);
+
+    res.status(201).json({
+      message: 'User created successfully',
+      firebaseUid: firebaseUser.uid,
+      token: customToken,
+    });
+  } catch (error) {
+    console.error('Error creating user:', error);
+
+    if (error.code === 'auth/email-already-exists') {
+      return res.status(400).json({ message: 'Email is already in use in Firebase' });
     }
 
-    // If no user exists with that email, proceed to insert the new user
-    await db.query('INSERT INTO users (email) VALUES (?)', [email]);
-
-    res.status(201).json({ message: 'User created successfully' });
-  } catch (error) {
-    // Handle errors
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
