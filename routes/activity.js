@@ -32,7 +32,8 @@ const authenticateFirebaseToken = require('../middleware/authMiddleware');
         res.status(404).json({ message: 'Activity not found'});
       }
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('Database error:', error.message);
+    res.status(500).json({ message: 'An unexpected error occurred' });
     }
   });
 
@@ -41,7 +42,8 @@ const authenticateFirebaseToken = require('../middleware/authMiddleware');
       const [rows] = await db.query('SELECT * FROM activity');
       res.json(rows);
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('Database error:', error.message);
+    res.status(500).json({ message: 'An unexpected error occurred' });
     }
   });
 

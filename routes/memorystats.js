@@ -21,7 +21,8 @@ router.get('/created/:userId', authenticateFirebaseToken, async (req, res) => {
         res.json({ message: 'No Memories created yet' });
       }
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('Database error:', error.message);
+    res.status(500).json({ message: 'An unexpected error occurred' });
     }
 });
 
@@ -44,7 +45,8 @@ router.get('/createdthisyear/:userId', authenticateFirebaseToken, async (req, re
         res.json({ message: 'No Memories created yet' });
       }
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('Database error:', error.message);
+      res.status(500).json({ message: 'An unexpected error occurred' });
     }
 });
 
@@ -65,7 +67,8 @@ router.get('/friendcount/:userId', authenticateFirebaseToken, async (req, res) =
         res.json({ message: 'No Memories created yet' });
       }
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('Database error:', error.message);
+      res.status(500).json({ message: 'An unexpected error occurred' });
     }
 });
 
@@ -100,8 +103,8 @@ router.get('/shared-memories/:user1Id/:user2Id', authenticateFirebaseToken, asyn
 
     res.json({ sharedMemoriesCount });
   } catch (error) {
-    console.error('Error fetching shared memories count:', error);
-    res.status(500).json({ error: 'An error occurred while fetching shared memories count.' });
+    console.error('Database error:', error.message);
+    res.status(500).json({ message: 'An unexpected error occurred' });
   }
 });
 

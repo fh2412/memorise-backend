@@ -21,7 +21,8 @@ router.get('/:locId', authenticateFirebaseToken, async (req, res) => {
       res.json({ message: 'No Location with this ID' });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Database error:', error.message);
+    res.status(500).json({ message: 'An unexpected error occurred' });
   }
 });
 

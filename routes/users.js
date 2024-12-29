@@ -10,7 +10,8 @@ router.get('/', authenticateFirebaseToken, async (req, res) => {
     const [rows] = await db.query('SELECT * FROM users');
     res.json(rows);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Database error:', error.message);
+    res.status(500).json({ message: 'An unexpected error occurred' });
   }
 });
 
@@ -25,7 +26,8 @@ router.get('/:id', authenticateFirebaseToken, async (req, res) => {
       res.status(404).json({ message: 'User not found (/:id)' });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Database error:', error.message);
+    res.status(500).json({ message: 'An unexpected error occurred' });
   }
 });
 
@@ -58,7 +60,8 @@ router.get('/email/:email', async (req, res) => {
       res.status(404).json({ message: 'User not found (/email/:email)' });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Database error:', error.message);
+    res.status(500).json({ message: 'An unexpected error occurred' });
   }
 });
 
@@ -150,7 +153,8 @@ router.put('/:id', authenticateFirebaseToken, async (req, res) => {
 
     res.status(200).json({ message: 'User updated successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Database error:', error.message);
+    res.status(500).json({ message: 'An unexpected error occurred' });
   }
 });
 
@@ -169,7 +173,8 @@ router.put('/profilepic/:id', authenticateFirebaseToken, async (req, res) => {
 
     res.status(200).json({ message: 'User updated successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Database error:', error.message);
+    res.status(500).json({ message: 'An unexpected error occurred' });
   }
 });
 
@@ -181,7 +186,8 @@ router.delete('/:id', authenticateFirebaseToken, async (req, res) => {
     await db.query('DELETE FROM users WHERE id = ?', [userId]);
     res.json({ message: 'User deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Database error:', error.message);
+    res.status(500).json({ message: 'An unexpected error occurred' });
   }
 });
 

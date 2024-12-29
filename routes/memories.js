@@ -22,7 +22,8 @@ router.get('/:memoryId/users', authenticateFirebaseToken, async (req, res) => {
         res.status(404).json({ message: 'Memory not found' });
       }
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('Database error:', error.message);
+      res.status(500).json({ message: 'An unexpected error occurred' });
     }
 });
 
@@ -47,7 +48,8 @@ router.get('/createdMemories/:userId', authenticateFirebaseToken, async (req, re
       res.status(200).json({ message: 'You haven\'t created any memories yet!' }); // Informative message
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Database error:', error.message);
+    res.status(500).json({ message: 'An unexpected error occurred' });
   }
 });
 
@@ -73,7 +75,8 @@ router.get('/getAddedMemories/:userId', authenticateFirebaseToken, async (req, r
       res.json({ message: 'User has not added any Memories yet' });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Database error:', error.message);
+    res.status(500).json({ message: 'An unexpected error occurred' });
   }
 });
 
@@ -107,7 +110,8 @@ router.get('/allMemories/:userId', authenticateFirebaseToken, async (req, res) =
       res.status(200).json({ message: 'No memories found for this user.' });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Database error:', error.message);
+    res.status(500).json({ message: 'An unexpected error occurred' });
   }
 });
 
@@ -128,7 +132,8 @@ router.get('/:memoryId', authenticateFirebaseToken, async (req, res) => {
         res.status(404).json({ message: 'Memory not found' });
       }
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('Database error:', error.message);
+      res.status(500).json({ message: 'An unexpected error occurred' });
     }
 });
 
@@ -150,7 +155,8 @@ router.get('/:memoryID/:userID/friends', authenticateFirebaseToken, async (req, 
         res.json({ message: 'No friends added to the Memory' });
       }
       } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Database error:', error.message);
+        res.status(500).json({ message: 'An unexpected error occurred' });
       }
 });
 

@@ -23,7 +23,7 @@ router.get('/:userId', authenticateFirebaseToken, async (req, res) => {
     res.json(rows[0]);
   } catch (error) {
     console.error(error.message);
-    res.status(500).json({ message: 'Error fetching favorite memories' });
+    res.status(500).json({ message: 'Error fetching users company' });
   }
 });
 
@@ -36,7 +36,8 @@ router.post('/create/:userId', authenticateFirebaseToken, async (req, res) => {
     await db.query('UPDATE users SET company_id = ? WHERE user_id = ?', [result[0].insertId, userId]);
     res.status(201).json({ message: 'Company created successfully'});
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Database error:', error.message);
+    res.status(500).json({ message: 'An unexpected error occurred' });
   }
 });
 
@@ -70,7 +71,8 @@ router.put('/leave/:id', authenticateFirebaseToken, async (req, res) => {
 
     res.status(200).json({ message: 'User left company successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Database error:', error.message);
+    res.status(500).json({ message: 'An unexpected error occurred' });
   }
 });
 
@@ -89,7 +91,8 @@ router.put('/owner/:id', authenticateFirebaseToken, async (req, res) => {
 
     res.status(200).json({ message: 'User set as company owner successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Database error:', error.message);
+    res.status(500).json({ message: 'An unexpected error occurred' });
   }
 });
 
@@ -106,7 +109,8 @@ router.delete('/delete/:id', authenticateFirebaseToken, async (req, res) => {
 
     res.status(200).json({ message: 'Company deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Database error:', error.message);
+    res.status(500).json({ message: 'An unexpected error occurred' });
   }
 });
 
@@ -158,8 +162,8 @@ router.put('/joinCompany/:userId', authenticateFirebaseToken, async (req, res) =
     }
 
     res.status(200).json({ message: 'Joined company successfully' });
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Error joining company' });
   }
 });
