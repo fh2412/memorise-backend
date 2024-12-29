@@ -1,5 +1,9 @@
-const admin = require('../config/firebaseAdmin');
+const admin = require('firebase-admin');
 
+/**
+ * Middleware to authenticate Firebase token
+ * @description Verifies the token and adds user data to the request object
+ */
 const authenticateFirebaseToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -11,11 +15,11 @@ const authenticateFirebaseToken = async (req, res, next) => {
 
   try {
     const decodedToken = await admin.auth().verifyIdToken(token);
-    req.user = decodedToken; // Add user data to request object
+    req.user = decodedToken; // Attach user info to the request object
     next(); // Proceed to the next middleware/route
   } catch (error) {
     console.error('Error verifying Firebase token:', error);
-    return res.status(401).json({ message: 'Unauthorized: Invalid token' });
+    res.status(401).json({ message: 'Unauthorized: Invalid token' });
   }
 };
 

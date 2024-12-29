@@ -3,13 +3,14 @@ const cors = require('cors');
 const app = express();
 const bodyParser = require('body-parser');
 const PORT = process.env.PORT || 3000; // Define the port for the server
-const functions = require("firebase-functions/v2");
+const functions = require('firebase-functions/v2');
+const apiLimiter = require('../memorise-backend/middleware/rateLimiter');
 
-// Middleware setup (if needed)
-// app.use(...);
-
+// Middleware setup
 app.use(cors());
 app.use(bodyParser.json());
+app.use('/api/', apiLimiter);
+
 
 // Define routes (separate files for better organization)
 const usersRoutes = require('./routes/users');
@@ -23,7 +24,6 @@ const pinnedMemoriesRoutes = require('./routes/pinned-memories');
 const companyRoutes = require('./routes/companies');
 const imageGalleryRoutes = require('./routes/image-gallery');
 const activityRoutes = require('./routes/activity');
-
 
 app.use('/api/users', usersRoutes); // Mount users routes at /api/users
 app.use('/api/memories', memoriesRoutes); // Mount memories routes at /api/memories

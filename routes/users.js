@@ -66,6 +66,10 @@ router.get('/email/:email', async (req, res) => {
 router.get('/:userId/memories', authenticateFirebaseToken, async (req, res) => {
   const userId = req.params.userId;
 
+  if (userId !== req.user.uid) {
+    return res.status(403).json({ message: 'Forbidden: Access denied' });
+  }
+
   try {
     const [rows] = await db.query(`
     SELECT m.* 
@@ -75,12 +79,13 @@ router.get('/:userId/memories', authenticateFirebaseToken, async (req, res) => {
       [userId]
     );
     if (rows.length > 0) {
-      res.json(rows);
+      res.json(rows[0]);
     } else {
-      res.status(404).json({ message: 'User not found (/:userId/memories)' });
+      res.status(404).json({ message: 'No memories found for this user' });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Database error:', error.message);
+    res.status(500).json({ message: 'An unexpected error occurred' });
   }
 });
 
