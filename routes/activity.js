@@ -2,8 +2,10 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const authenticateFirebaseToken = require('../middleware/authMiddleware');
+const { validateActivityId, validateCreateActivity } = require('../middleware/validation/validateActivity');
 
-  router.post('/add-activity', async (req, res) => {
+
+  router.post('/add-activity', validateCreateActivity, async (req, res) => {
     const { title } = req.body;
     try {
       // Insert the friendship request into the database
@@ -21,9 +23,8 @@ const authenticateFirebaseToken = require('../middleware/authMiddleware');
     }
   });
 
-
-  router.get('/:id', authenticateFirebaseToken, async (req, res) => {
-    const activityId = req.params.id;
+  router.get('/:activityId', authenticateFirebaseToken, validateActivityId, async (req, res) => {
+    const activityId = req.params.activityId;
     try {
       const [rows] = await db.query('SELECT * FROM activity WHERE id = ?', [activityId]);
       if (rows.length > 0) {
