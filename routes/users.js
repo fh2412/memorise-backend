@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db'); // Your database connection module
 const authenticateFirebaseToken = require('../middleware/authMiddleware');
-const { validateFirebaseUID } = require('../middleware/validation/validateUID');
+const { validateFirebaseUID, validateUserEmail, validateUserPassword, validateProfilePicUrl, validateUserUpdate } = require('../middleware/validation/validateUsers');
 const admin = require('firebase-admin');
 
 // GET all users
@@ -17,14 +17,14 @@ router.get('/', authenticateFirebaseToken, async (req, res) => {
 });
 
 // GET a single user by ID
-router.get('/:id', authenticateFirebaseToken, validateFirebaseUID, async (req, res) => {
-  const userId = req.params.id;
+router.get('/:userId', authenticateFirebaseToken, validateFirebaseUID, async (req, res) => {
+  const userId = req.params.userId;
   try {
     const [rows] = await db.query('SELECT * FROM users WHERE user_id = ?', [userId]);
     if (rows.length > 0) {
       res.json(rows[0]);
     } else {
-      res.status(404).json({ message: 'User not found (/:id)' });
+      res.status(404).json({ message: 'User not found (/:userId)' });
     }
   } catch (error) {
     console.error('Database error:', error.message);
@@ -32,42 +32,9 @@ router.get('/:id', authenticateFirebaseToken, validateFirebaseUID, async (req, r
   }
 });
 
-router.get('/email/:email', async (req, res) => {
-  const userEmail = req.params.email;
-
-  try {
-    const [rows] = await db.query(`
-    SELECT 
-        user_id, 
-        email,
-		    bio,
-        name, 
-        gender, 
-        location_id, 
-        DATE_FORMAT(dob, '%d/%m/%Y') AS formatted_dob,
-        profilepic,
-        country,
-        username,
-        instagram 
-    FROM 
-        users 
-    WHERE 
-        email = ?`,
-      [userEmail]
-    );
-    if (rows.length > 0) {
-      res.json(rows[0]); // Sending the first user found with that email
-    } else {
-      res.status(404).json({ message: 'User not found (/email/:email)' });
-    }
-  } catch (error) {
-    console.error('Database error:', error.message);
-    res.status(500).json({ message: 'An unexpected error occurred' });
-  }
-});
 
 // GET a users Memories
-router.get('/:userId/memories', authenticateFirebaseToken, async (req, res) => {
+router.get('/:userId/memories', authenticateFirebaseToken, validateFirebaseUID, async (req, res) => {
   const userId = req.params.userId;
 
   if (userId !== req.user.uid) {
@@ -99,7 +66,7 @@ router.get('/:userId/memories', authenticateFirebaseToken, async (req, res) => {
  * @route POST /
  * @description Creates a new user in the MySQL database and associates it with a Firebase UID
  */
-router.post('/', async (req, res) => {
+router.post('/', validateUserEmail, validateUserPassword, async (req, res) => {
   const { email, displayName, password } = req.body;
 
   try {
@@ -136,8 +103,8 @@ router.post('/', async (req, res) => {
 
 
 // PUT (Update) a user by ID
-router.put('/:id', authenticateFirebaseToken, async (req, res) => {
-  const userId = req.params.id;
+router.put('/:userId', authenticateFirebaseToken, validateFirebaseUID, validateUserUpdate, async (req, res) => {
+  const userId = req.params.userId;
   const { name, bio, dob, gender, country, username, instagram } = req.body;
 
   // Extracting DAY, MONTH, YEAR from the provided DOB string (format: DD/MM/YYYY)
@@ -160,8 +127,8 @@ router.put('/:id', authenticateFirebaseToken, async (req, res) => {
 });
 
 // UPDATE users Profile Picture
-router.put('/profilepic/:id', authenticateFirebaseToken, async (req, res) => {
-  const userId = req.params.id;
+router.put('/profilepic/:userId', authenticateFirebaseToken, validateFirebaseUID, validateProfilePicUrl, async (req, res) => {
+  const userId = req.params.userId;
   const { profilepic } = req.body;
 
   try {
@@ -181,10 +148,10 @@ router.put('/profilepic/:id', authenticateFirebaseToken, async (req, res) => {
 
 
 // DELETE a user by ID
-router.delete('/:id', authenticateFirebaseToken, async (req, res) => {
-  const userId = req.params.id;
+router.delete('/:userId', authenticateFirebaseToken, validateFirebaseUID, async (req, res) => {
+  const userId = req.params.userId;
   try {
-    await db.query('DELETE FROM users WHERE id = ?', [userId]);
+    await db.query('DELETE FROM users WHERE user_id = ?', [userId]);
     res.json({ message: 'User deleted successfully' });
   } catch (error) {
     console.error('Database error:', error.message);
@@ -193,7 +160,7 @@ router.delete('/:id', authenticateFirebaseToken, async (req, res) => {
 });
 
 //search for users
-router.get('/search/users/:userId', authenticateFirebaseToken, async (req, res) => {
+router.get('/search/users/:userId', authenticateFirebaseToken, validateFirebaseUID, async (req, res) => {
   try {
     const searchTerm = req.query.term;
     const userId = req.params.userId;
