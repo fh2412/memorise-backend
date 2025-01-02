@@ -8,3 +8,5 @@ const apiLimiter = rateLimit({
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   message: { message: 'Too many requests, please try again later.' }, // Response when limit is exceeded
 });
+
+module.exports = apiLimiter;

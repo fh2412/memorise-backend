@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db'); // Your database connection module
 const authenticateFirebaseToken = require('../middleware/authMiddleware');
+const { validateFirebaseUID } = require('../middleware/validation/validateUID');
 const admin = require('firebase-admin');
 
 // GET all users
@@ -16,7 +17,7 @@ router.get('/', authenticateFirebaseToken, async (req, res) => {
 });
 
 // GET a single user by ID
-router.get('/:id', authenticateFirebaseToken, async (req, res) => {
+router.get('/:id', authenticateFirebaseToken, validateFirebaseUID, async (req, res) => {
   const userId = req.params.id;
   try {
     const [rows] = await db.query('SELECT * FROM users WHERE user_id = ?', [userId]);
