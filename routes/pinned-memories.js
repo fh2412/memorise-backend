@@ -2,10 +2,13 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db'); // Your database connection module
 const authenticateFirebaseToken = require('../middleware/authMiddleware');
+const { validateFirebaseUID } = require('../middleware/validation/validateUsers');
+const { validateMemoryId } = require('../middleware/validation/validateMemory');
+const { validatePinnedMemoryId } = require('../middleware/validation/validatePinnedMemory');
 
 
 //GET a users favourite memories
-router.get('/:userId/favourite-memories', authenticateFirebaseToken, async (req, res) => {
+router.get('/:userId/favourite-memories', authenticateFirebaseToken, validateFirebaseUID, async (req, res) => {
   const userId = req.params.userId;
 
   try {
@@ -25,7 +28,7 @@ router.get('/:userId/favourite-memories', authenticateFirebaseToken, async (req,
 });
 
 //UPDATE a users favourite memories
-router.put('/:userId/favourite-memories/:memoryId', authenticateFirebaseToken, async (req, res) => {
+router.put('/:userId/favourite-memories/:memoryId', authenticateFirebaseToken, validateFirebaseUID, validateMemoryId, validatePinnedMemoryId, async (req, res) => {
     const userId = req.params.userId;
     const memoryIdToUpdate = req.params.memoryId;
     const updatedMemoryId = req.body.memoryId;
@@ -56,7 +59,7 @@ router.put('/:userId/favourite-memories/:memoryId', authenticateFirebaseToken, a
   
 
 //SET a users favourite memories
-router.post('/:userId/favourite-memories', authenticateFirebaseToken, async (req, res) => {
+router.post('/:userId/favourite-memories', authenticateFirebaseToken, validateFirebaseUID, validatePinnedMemoryId, async (req, res) => {
     const userId = req.params.userId;
     const memoryId = req.body.memoryId; // Assuming 'memoryId' is the property name in the request body
   
@@ -80,7 +83,7 @@ router.post('/:userId/favourite-memories', authenticateFirebaseToken, async (req
   });
   
 //DELETE
-router.delete('/:userId/favourite-memories/:memoryId', authenticateFirebaseToken, async (req, res) => {
+router.delete('/:userId/favourite-memories/:memoryId', authenticateFirebaseToken, validateFirebaseUID, validateMemoryId, async (req, res) => {
     const userId = req.params.userId;
     const memoryIdToDelete = req.params.memoryId;
   
@@ -108,7 +111,7 @@ router.delete('/:userId/favourite-memories/:memoryId', authenticateFirebaseToken
   });
   
 //Check if Memory is someones pinned Memory
-router.get('/favourite-memorie/:memoryId', async (req, res) => {
+router.get('/favourite-memorie/:memoryId', validateMemoryId, async (req, res) => {
   const memoryId = req.params.memoryId;
 
   try {
@@ -127,7 +130,7 @@ router.get('/favourite-memorie/:memoryId', async (req, res) => {
 });
 
 //DELETE Memory from all Pins
-router.delete('/favourite-memorie/:memoryId', authenticateFirebaseToken, async (req, res) => {
+router.delete('/favourite-memorie/:memoryId', authenticateFirebaseToken, validateMemoryId, async (req, res) => {
   const memoryId = req.params.memoryId;
 
   try {

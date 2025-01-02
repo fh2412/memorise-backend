@@ -2,10 +2,12 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const authenticateFirebaseToken = require('../middleware/authMiddleware');
+const { validateMemoryId, validateCreateMemory, validateAddFriendsToMemory, validateUpdateMemory, validateUpdatePictureCount, validateUpdateMemoryLocation, validateUpdateTitlePic } = require('../middleware/validation/validateMemory');
+const { validateFirebaseUID } = require('../middleware/validation/validateUsers');
 
 
 // Retrieve users by memory ID
-router.get('/:memoryId/users', authenticateFirebaseToken, async (req, res) => {
+router.get('/:memoryId/users', authenticateFirebaseToken, validateMemoryId, async (req, res) => {
     const memoryId = req.params.memoryId;
   
     try {
@@ -28,7 +30,7 @@ router.get('/:memoryId/users', authenticateFirebaseToken, async (req, res) => {
 });
 
 // Get created Memories by userId
-router.get('/createdMemories/:userId', authenticateFirebaseToken, async (req, res) => {
+router.get('/createdMemories/:userId', authenticateFirebaseToken, validateFirebaseUID, async (req, res) => {
   const userId = req.params.userId;
 
   try {
@@ -54,7 +56,7 @@ router.get('/createdMemories/:userId', authenticateFirebaseToken, async (req, re
 });
 
 // Get Friends created Memories by userId
-router.get('/getAddedMemories/:userId', authenticateFirebaseToken, async (req, res) => {
+router.get('/getAddedMemories/:userId', authenticateFirebaseToken, validateFirebaseUID, async (req, res) => {
   const userId = req.params.userId;
 
   try {
@@ -81,7 +83,7 @@ router.get('/getAddedMemories/:userId', authenticateFirebaseToken, async (req, r
 });
 
 //GET all the memories a user is added to
-router.get('/allMemories/:userId', authenticateFirebaseToken, async (req, res) => {
+router.get('/allMemories/:userId', authenticateFirebaseToken, validateFirebaseUID, async (req, res) => {
   const userId = req.params.userId;
 
   try {
@@ -116,7 +118,7 @@ router.get('/allMemories/:userId', authenticateFirebaseToken, async (req, res) =
 });
 
 // Retrieve details of a specific memory by memory ID
-router.get('/:memoryId', authenticateFirebaseToken, async (req, res) => {
+router.get('/:memoryId', authenticateFirebaseToken, validateMemoryId, async (req, res) => {
     const memoryId = req.params.memoryId;
   
     try {
@@ -138,9 +140,9 @@ router.get('/:memoryId', authenticateFirebaseToken, async (req, res) => {
 });
 
 //GET Memories Friends
-router.get('/:memoryID/:userID/friends', authenticateFirebaseToken, async (req, res) => {
-    const memoryID = req.params.memoryID; // Get memory ID from the request parameter
-    const userID = req.params.userID;
+router.get('/:memoryId/:userId/friends', authenticateFirebaseToken, validateMemoryId, validateFirebaseUID, async (req, res) => {
+    const memoryID = req.params.memoryId; // Get memory ID from the request parameter
+    const userID = req.params.userId;
     try {
       const [rows] = await db.query(`
         SELECT u.name, u.user_id, u.dob, u.profilepic, u.country
@@ -161,7 +163,7 @@ router.get('/:memoryID/:userID/friends', authenticateFirebaseToken, async (req, 
 });
 
 //GET Memories Friends with Shared Memories
-router.get('/:memoryId/:userId/friends-with-shared-count', authenticateFirebaseToken, async (req, res) => {
+router.get('/:memoryId/:userId/friends-with-shared-count', authenticateFirebaseToken, validateMemoryId, validateFirebaseUID, async (req, res) => {
   const { memoryId, userId } = req.params;
 
   try {
@@ -201,7 +203,7 @@ router.get('/:memoryId/:userId/friends-with-shared-count', authenticateFirebaseT
   }
 });
 
-router.post('/createMemory', authenticateFirebaseToken, async (req, res) => {
+router.post('/createMemory', authenticateFirebaseToken, validateCreateMemory, async (req, res) => {
   const { creator_id, title, description, firestore_bucket_url, location_id, memory_date, memory_end_date, title_pic, activity_id } = req.body;
   try {
     // Insert the friendship request into the database
@@ -219,7 +221,7 @@ router.post('/createMemory', authenticateFirebaseToken, async (req, res) => {
   }
 });
 
-router.post('/addFriendsToMemory', authenticateFirebaseToken, async (req, res) => {
+router.post('/addFriendsToMemory', authenticateFirebaseToken, validateAddFriendsToMemory, async (req, res) => {
   const { emails, memoryId } = req.body;
   try {
     for (const email of emails) {
@@ -243,9 +245,8 @@ router.post('/addFriendsToMemory', authenticateFirebaseToken, async (req, res) =
   }
 });
 
-
 //UPDATE a Memory
-router.put('/:memoryId', authenticateFirebaseToken, async (req, res) => {
+router.put('/:memoryId', authenticateFirebaseToken, validateUpdateMemory, async (req, res) => {
   const memoryId = req.params.memoryId;
   const { title, description, memory_date, memory_end_date } = req.body; // Assuming these are the fields to be updated
   try {
@@ -268,7 +269,7 @@ router.put('/:memoryId', authenticateFirebaseToken, async (req, res) => {
 });
 
 //UPDATE PictureCount
-router.put('/picturecount/:memoryId', authenticateFirebaseToken, async (req, res) => {
+router.put('/picturecount/:memoryId', authenticateFirebaseToken, validateUpdatePictureCount, async (req, res) => {
   const memoryId = req.params.memoryId;
   const picture_count = req.body.picture_count;
   try {
@@ -291,7 +292,7 @@ router.put('/picturecount/:memoryId', authenticateFirebaseToken, async (req, res
 });
 
 //UPDATE Location ID
-router.put('/updateMemoryLocation/:memoryId', authenticateFirebaseToken, async (req, res) => {
+router.put('/updateMemoryLocation/:memoryId', authenticateFirebaseToken, validateUpdateMemoryLocation, async (req, res) => {
   const memoryId = req.params.memoryId;
   const location_id = req.body.locationId;
   try {
@@ -314,7 +315,7 @@ router.put('/updateMemoryLocation/:memoryId', authenticateFirebaseToken, async (
 });
 
 //UPDATE Memories Title Picture
-router.put('/updateTitlePic/:imageId', authenticateFirebaseToken, async (req, res) => {
+router.put('/updateTitlePic/:imageId', authenticateFirebaseToken, validateUpdateTitlePic, async (req, res) => {
   const memoryId = req.params.imageId;
   const imageUrl = req.body.imageUrl;
   try {
@@ -337,7 +338,7 @@ router.put('/updateTitlePic/:imageId', authenticateFirebaseToken, async (req, re
 });
 
 // DELETE request to delete a memory and its associated friends
-router.delete('/:memoryId', authenticateFirebaseToken, async (req, res) => {
+router.delete('/:memoryId', authenticateFirebaseToken, validateMemoryId, async (req, res) => {
   const memoryId = req.params.memoryId;
 
   try {
@@ -366,7 +367,7 @@ router.delete('/:memoryId', authenticateFirebaseToken, async (req, res) => {
 });
 
 // DELETE Friend from Memory
-router.delete('/:memoryId/:userId', authenticateFirebaseToken, async (req, res) => {
+router.delete('/:memoryId/:userId', authenticateFirebaseToken, validateMemoryId, validateFirebaseUID, async (req, res) => {
   const memoryId = req.params.memoryId;
   const userId = req.params.userId;
 
