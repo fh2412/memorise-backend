@@ -1,13 +1,14 @@
 // validation.js
 const { body, check } = require('express-validator');
+const firebaseUUIDRegex = /^[A-Za-z0-9_-]{28}$/;
 
 
 const validateFirebaseUID = [
   check('userId')
     .exists()
     .withMessage('Firebase UID is required')
-    .isUUID('v4')
-    .withMessage('Invalid Firebase UID format')
+    .matches(firebaseUUIDRegex)
+    .withMessage('Invalid UUID format. Must be a 28-character base64 URL-safe string.'),
 ];
 
 const validateUserEmail = [
@@ -16,7 +17,7 @@ const validateUserEmail = [
     .withMessage('Email is required')
     .isEmail()
     .withMessage('Invalid email format')
-    .normalizeEmail() 
+    .normalizeEmail()
 ];
 
 const validateUserPassword = [
@@ -25,8 +26,8 @@ const validateUserPassword = [
     .withMessage('Password is required')
     .isLength({ min: 8 }) // Minimum length of 8 characters
     .withMessage('Password must be at least 8 characters long')
-    // Optionally add more rules for password complexity
-    // .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/) // Example for complex password pattern
+  // Optionally add more rules for password complexity
+  // .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/) // Example for complex password pattern
 ];
 
 const validateProfilePicUrl = [

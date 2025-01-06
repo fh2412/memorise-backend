@@ -1,9 +1,11 @@
+require('dotenv').config();
+
 const admin = require('firebase-admin');
 
-const serviceAccount = require('A:/programming/memorise-910c3-firebase-adminsdk-c4phi-bb250db9f3.json');
+const serviceAccount = require(process.env.FB_SERVICEACCOUNT);
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  storageBucket: 'gs://memorise-910c3.appspot.com'
+  storageBucket: process.env.FB_BUCKET
 });
 
 module.exports = admin;
