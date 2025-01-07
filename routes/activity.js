@@ -3,9 +3,10 @@ const router = express.Router();
 const db = require('../config/db');
 const authenticateFirebaseToken = require('../middleware/authMiddleware');
 const { validateActivityId, validateCreateActivity } = require('../middleware/validation/validateActivity');
+const handleValidationErrors = require('../middleware/validationMiddleware');
 
 
-  router.post('/add-activity', validateCreateActivity, async (req, res) => {
+  router.post('/add-activity', validateCreateActivity, handleValidationErrors, async (req, res) => {
     const { title } = req.body;
     try {
       // Insert the friendship request into the database
@@ -23,7 +24,7 @@ const { validateActivityId, validateCreateActivity } = require('../middleware/va
     }
   });
 
-  router.get('/:activityId', authenticateFirebaseToken, validateActivityId, async (req, res) => {
+  router.get('/:activityId', authenticateFirebaseToken, validateActivityId, handleValidationErrors, async (req, res) => {
     const activityId = req.params.activityId;
     try {
       const [rows] = await db.query('SELECT * FROM activity WHERE id = ?', [activityId]);
