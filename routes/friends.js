@@ -6,9 +6,10 @@ const { validateFirebaseUID } = require('../middleware/validation/validateUsers'
 const { validateMemoryId } = require('../middleware/validation/validateMemory');
 const { validateStatsUID } = require('../middleware/validation/validateMemorystats');
 const { validateFriendsUID } = require('../middleware/validation/validateFriends');
+const handleValidationErrors = require('../middleware/validationMiddleware');
 
 //GET Friends of User by ID
-router.get('/:userId', authenticateFirebaseToken, validateFirebaseUID, async (req, res) => {
+router.get('/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
   const userId = req.params.userId;
 
   try {
@@ -30,7 +31,7 @@ router.get('/:userId', authenticateFirebaseToken, validateFirebaseUID, async (re
 });
 
 //GET STATUS OF A FRIENDSHIP
-router.get('/status/:userId1/:userId2', authenticateFirebaseToken, validateStatsUID, async (req, res) => {
+router.get('/status/:userId1/:userId2', authenticateFirebaseToken, validateStatsUID, handleValidationErrors, async (req, res) => {
   const userId1 = req.params.userId1;
   const userId2 = req.params.userId2;
 
@@ -68,7 +69,7 @@ router.get('/status/:userId1/:userId2', authenticateFirebaseToken, validateStats
 });
 
 //GET Friends of User by ID who are not part of a Memory yet
-router.get('/missingMemory/:memoryId/:userId', authenticateFirebaseToken, validateFirebaseUID, validateMemoryId, async (req, res) => {
+router.get('/missingMemory/:memoryId/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, validateMemoryId, async (req, res) => {
   const userId = req.params.userId;
   const memoryId = req.params.memoryId;
 
@@ -98,7 +99,7 @@ router.get('/missingMemory/:memoryId/:userId', authenticateFirebaseToken, valida
 
 
 //GET PENDING REQUESTS
-router.get('/pending/:userId', authenticateFirebaseToken, validateFirebaseUID, async (req, res) => {
+router.get('/pending/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
   const userId = req.params.userId;
 
   try {
@@ -120,7 +121,7 @@ router.get('/pending/:userId', authenticateFirebaseToken, validateFirebaseUID, a
 });
 
 //GET INGOING REQUESTS
-router.get('/ingoing/:userId', authenticateFirebaseToken, validateFirebaseUID, async (req, res) => {
+router.get('/ingoing/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
   const userId = req.params.userId;
 
   try {
@@ -141,7 +142,7 @@ router.get('/ingoing/:userId', authenticateFirebaseToken, validateFirebaseUID, a
   }
 });
 
-router.get('/friend-suggestions/:userId', authenticateFirebaseToken, validateFirebaseUID, async (req, res) => {
+router.get('/friend-suggestions/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
   const userId = req.params.userId;
 
   try {
@@ -165,7 +166,7 @@ router.get('/friend-suggestions/:userId', authenticateFirebaseToken, validateFir
 });
 
 //DELETE
-router.delete('/remove_friend/:userId1/:userId2', authenticateFirebaseToken, validateStatsUID, async (req, res) => {
+router.delete('/remove_friend/:userId1/:userId2', authenticateFirebaseToken, validateStatsUID, handleValidationErrors, async (req, res) => {
   const userId1 = req.params.userId1;
   const userId2 = req.params.userId2;
 
@@ -185,7 +186,7 @@ router.delete('/remove_friend/:userId1/:userId2', authenticateFirebaseToken, val
 
 
 //POST
-router.post('/send_request', authenticateFirebaseToken, validateFriendsUID, async (req, res) => {
+router.post('/send_request', authenticateFirebaseToken, validateFriendsUID, handleValidationErrors, async (req, res) => {
   const { senderId, receiverId } = req.body;
 
   try {
@@ -202,7 +203,7 @@ router.post('/send_request', authenticateFirebaseToken, validateFriendsUID, asyn
   }
 });
 
-router.post('/add_friend', authenticateFirebaseToken, validateFriendsUID, async (req, res) => {
+router.post('/add_friend', authenticateFirebaseToken, validateFriendsUID, handleValidationErrors, async (req, res) => {
   const { senderId, receiverId } = req.body;
 
   try {
@@ -220,7 +221,7 @@ router.post('/add_friend', authenticateFirebaseToken, validateFriendsUID, async 
 
 
 //PUT
-router.put('/accept_request/:userId1/:userId2', authenticateFirebaseToken, validateStatsUID, async (req, res) => {
+router.put('/accept_request/:userId1/:userId2', authenticateFirebaseToken, validateStatsUID, handleValidationErrors, async (req, res) => {
   const userId1 = req.params.userId1;
   const userId2 = req.params.userId2;
 

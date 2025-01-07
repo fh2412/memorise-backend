@@ -1,17 +1,18 @@
-const { param } = require('express-validator');
+const { body } = require('express-validator');
+const firebaseUUIDRegex = /^[A-Za-z0-9_-]{28}$/;
 
 
 const validateFriendsUID = [
-  param('senderId')
+  body('senderId')
     .exists()
     .withMessage('Firebase UID is required')
-    .isUUID('v4')
-    .withMessage('Invalid Firebase UID format'),
-  param('receiverId')
+    .matches(firebaseUUIDRegex)
+    .withMessage('Invalid UUID format. Must be a 28-character base64 URL-safe string.'),
+  body('receiverId')
     .exists()
     .withMessage('Firebase UID is required')
-    .isUUID('v4')
-    .withMessage('Invalid Firebase UID format')
+    .matches(firebaseUUIDRegex)
+    .withMessage('Invalid UUID format. Must be a 28-character base64 URL-safe string.'),
 ];
 
 module.exports = { validateFriendsUID }

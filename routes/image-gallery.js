@@ -2,10 +2,11 @@ const express = require('express');
 const router = express.Router();
 const authenticateFirebaseToken = require('../middleware/authMiddleware');
 const { validateGetImagesByFolderId } = require('../middleware/validation/validateImageGallery');
+const handleValidationErrors = require('../middleware/validationMiddleware');
 
 
 //GET all images with dimensions
-router.get('/images/:folderId', authenticateFirebaseToken, validateGetImagesByFolderId, async (req, res) => {
+router.get('/images/:folderId', authenticateFirebaseToken, validateGetImagesByFolderId, handleValidationErrors, async (req, res) => {
   const folderId = req.params.folderId;
 
   try {
