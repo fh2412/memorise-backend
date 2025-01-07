@@ -24,7 +24,7 @@ const validateUserPassword = [
   body('password')
     .exists()
     .withMessage('Password is required')
-    .isLength({ min: 8 }) // Minimum length of 8 characters
+    .isLength({ min: 8 })
     .withMessage('Password must be at least 8 characters long')
   // Optionally add more rules for password complexity
   // .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/) // Example for complex password pattern
@@ -62,7 +62,7 @@ const validateUserUpdate = [
   body('gender')
     .optional({ nullable: true })
     .isIn(['male', 'female', 'divers'])
-    .withMessage('Invalid gender. Allowed values: male, female, divers'),
+    .withMessage('Invalid gender. Allowed values: Male, Female, Divers'),
 
   body('username')
     .optional({ nullable: true })

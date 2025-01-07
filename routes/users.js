@@ -4,6 +4,8 @@ const db = require('../config/db'); // Your database connection module
 const authenticateFirebaseToken = require('../middleware/authMiddleware');
 const { validateFirebaseUID, validateUserEmail, validateUserPassword, validateProfilePicUrl, validateUserUpdate } = require('../middleware/validation/validateUsers');
 const admin = require('firebase-admin');
+const handleValidationErrors = require('../middleware/validationMiddleware');
+
 
 // GET all users
 router.get('/', authenticateFirebaseToken, async (req, res) => {
@@ -17,7 +19,7 @@ router.get('/', authenticateFirebaseToken, async (req, res) => {
 });
 
 // GET a single user by ID
-router.get('/:userId', authenticateFirebaseToken, validateFirebaseUID, async (req, res) => {
+router.get('/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
   const userId = req.params.userId;
   try {
     const [rows] = await db.query('SELECT * FROM users WHERE user_id = ?', [userId]);
@@ -34,7 +36,7 @@ router.get('/:userId', authenticateFirebaseToken, validateFirebaseUID, async (re
 
 
 // GET a users Memories
-router.get('/:userId/memories', authenticateFirebaseToken, validateFirebaseUID, async (req, res) => {
+router.get('/:userId/memories', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
   const userId = req.params.userId;
 
   if (userId !== req.user.uid) {
@@ -66,7 +68,7 @@ router.get('/:userId/memories', authenticateFirebaseToken, validateFirebaseUID, 
  * @route POST /
  * @description Creates a new user in the MySQL database and associates it with a Firebase UID
  */
-router.post('/', validateUserEmail, validateUserPassword, async (req, res) => {
+router.post('/', validateUserEmail, validateUserPassword, handleValidationErrors, async (req, res) => {
   const { email, displayName, password } = req.body;
 
   try {
@@ -103,7 +105,7 @@ router.post('/', validateUserEmail, validateUserPassword, async (req, res) => {
 
 
 // PUT (Update) a user by ID
-router.put('/:userId', authenticateFirebaseToken, validateFirebaseUID, validateUserUpdate, async (req, res) => {
+router.put('/:userId', authenticateFirebaseToken, validateFirebaseUID, validateUserUpdate, handleValidationErrors, async (req, res) => {
   const userId = req.params.userId;
   const { name, bio, dob, gender, country, username, instagram } = req.body;
 
@@ -127,7 +129,7 @@ router.put('/:userId', authenticateFirebaseToken, validateFirebaseUID, validateU
 });
 
 // UPDATE users Profile Picture
-router.put('/profilepic/:userId', authenticateFirebaseToken, validateFirebaseUID, validateProfilePicUrl, async (req, res) => {
+router.put('/profilepic/:userId', authenticateFirebaseToken, validateFirebaseUID, validateProfilePicUrl, handleValidationErrors, async (req, res) => {
   const userId = req.params.userId;
   const { profilepic } = req.body;
 
@@ -148,7 +150,7 @@ router.put('/profilepic/:userId', authenticateFirebaseToken, validateFirebaseUID
 
 
 // DELETE a user by ID
-router.delete('/:userId', authenticateFirebaseToken, validateFirebaseUID, async (req, res) => {
+router.delete('/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
   const userId = req.params.userId;
   try {
     await db.query('DELETE FROM users WHERE user_id = ?', [userId]);
@@ -160,7 +162,7 @@ router.delete('/:userId', authenticateFirebaseToken, validateFirebaseUID, async 
 });
 
 //search for users
-router.get('/search/users/:userId', authenticateFirebaseToken, validateFirebaseUID, async (req, res) => {
+router.get('/search/users/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
   try {
     const searchTerm = req.query.term;
     const userId = req.params.userId;
