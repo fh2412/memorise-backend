@@ -4,17 +4,11 @@ const db = require('../config/db');
 const authenticateFirebaseToken = require('../middleware/authMiddleware');
 const { validateFirebaseUID } = require('../middleware/validation/validateUsers');
 const { validateStatsUID } = require('../middleware/validation/validateMemorystats');
-const { validationResult } = require('express-validator');
+const handleValidationErrors = require('../middleware/validationMiddleware');
 
 
 // Get total number of Memories created
-router.get('/created/:userId', authenticateFirebaseToken, validateFirebaseUID, async (req, res) => {
-
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
+router.get('/created/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
   const userd = req.params.userId;
 
   try {
@@ -36,13 +30,7 @@ router.get('/created/:userId', authenticateFirebaseToken, validateFirebaseUID, a
 });
 
 // Get number of Memories in this Year
-router.get('/createdthisyear/:userId', authenticateFirebaseToken, validateFirebaseUID, async (req, res) => {
-
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
+router.get('/createdthisyear/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
   const userd = req.params.userId;
 
   try {
@@ -66,13 +54,7 @@ router.get('/createdthisyear/:userId', authenticateFirebaseToken, validateFireba
 });
 
 //GET amount of Friends
-router.get('/friendcount/:userId', authenticateFirebaseToken, validateFirebaseUID, async (req, res) => {
-
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
+router.get('/friendcount/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
   const userd = req.params.userId;
 
   try {
@@ -94,13 +76,7 @@ router.get('/friendcount/:userId', authenticateFirebaseToken, validateFirebaseUI
 });
 
 //GET shared Memories with Friend
-router.get('/shared-memories/:user1Id/:user2Id', authenticateFirebaseToken, validateStatsUID, async (req, res) => {
-  
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
+router.get('/shared-memories/:user1Id/:user2Id', authenticateFirebaseToken, validateStatsUID, handleValidationErrors, async (req, res) => {
   const { user1Id, user2Id } = req.params;
 
   try {

@@ -1,4 +1,4 @@
-const { validationResult } = require('express-validator');
+ const handleValidationErrors = require('../middleware/validationMiddleware');
 
 const validateRequest = (req, res, next) => {
   const errors = validationResult(req);
