@@ -4,77 +4,103 @@ const db = require('../config/db');
 const authenticateFirebaseToken = require('../middleware/authMiddleware');
 const { validateFirebaseUID } = require('../middleware/validation/validateUsers');
 const { validateStatsUID } = require('../middleware/validation/validateMemorystats');
+const { validationResult } = require('express-validator');
+
 
 // Get total number of Memories created
 router.get('/created/:userId', authenticateFirebaseToken, validateFirebaseUID, async (req, res) => {
-    const userd = req.params.userId;
-  
-    try {
-      const rows = await db.query(`
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const userd = req.params.userId;
+
+  try {
+    const rows = await db.query(`
       SELECT count(memory_id) as count
       FROM memories
-      WHERE user_id = ?`, 
+      WHERE user_id = ?`,
       [userd]
-  );
-      if (rows.length > 0) {
-        res.json(rows[0]); // Sending the first user found with that email
-      } else {
-        res.json({ message: 'No Memories created yet' });
-      }
-    } catch (error) {
-      console.error('Database error:', error.message);
-    res.status(500).json({ message: 'An unexpected error occurred' });
+    );
+    if (rows.length > 0) {
+      res.json(rows[0]); // Sending the first user found with that email
+    } else {
+      res.json({ message: 'No Memories created yet' });
     }
+  } catch (error) {
+    console.error('Database error:', error.message);
+    res.status(500).json({ message: 'An unexpected error occurred' });
+  }
 });
 
 // Get number of Memories in this Year
 router.get('/createdthisyear/:userId', authenticateFirebaseToken, validateFirebaseUID, async (req, res) => {
-    const userd = req.params.userId;
-  
-    try {
-      const currentYear = new Date().getFullYear();
 
-      const rows = await db.query(`
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const userd = req.params.userId;
+
+  try {
+    const currentYear = new Date().getFullYear();
+
+    const rows = await db.query(`
       SELECT count(memory_id) as count
       FROM memories
-      WHERE user_id = ? AND YEAR(memory_date) = ?`, 
+      WHERE user_id = ? AND YEAR(memory_date) = ?`,
       [userd, currentYear]
-  );
-      if (rows.length > 0) {
-        res.json(rows[0]); // Sending the first user found with that email
-      } else {
-        res.json({ message: 'No Memories created yet' });
-      }
-    } catch (error) {
-      console.error('Database error:', error.message);
-      res.status(500).json({ message: 'An unexpected error occurred' });
+    );
+    if (rows.length > 0) {
+      res.json(rows[0]); // Sending the first user found with that email
+    } else {
+      res.json({ message: 'No Memories created yet' });
     }
+  } catch (error) {
+    console.error('Database error:', error.message);
+    res.status(500).json({ message: 'An unexpected error occurred' });
+  }
 });
 
 //GET amount of Friends
 router.get('/friendcount/:userId', authenticateFirebaseToken, validateFirebaseUID, async (req, res) => {
-    const userd = req.params.userId;
-  
-    try {
-      const rows = await db.query(`
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const userd = req.params.userId;
+
+  try {
+    const rows = await db.query(`
       SELECT count(user_id1) as count
       FROM friendships
-      WHERE (user_id1 = ? OR user_id2 = ?) AND status = ?`, 
+      WHERE (user_id1 = ? OR user_id2 = ?) AND status = ?`,
       [userd, userd, 'accepted']
-  );
-      if (rows.length > 0) {
-        res.json(rows[0]); // Sending the first user found with that email
-      } else {
-        res.json({ message: 'No Memories created yet' });
-      }
-    } catch (error) {
-      console.error('Database error:', error.message);
-      res.status(500).json({ message: 'An unexpected error occurred' });
+    );
+    if (rows.length > 0) {
+      res.json(rows[0]); // Sending the first user found with that email
+    } else {
+      res.json({ message: 'No Memories created yet' });
     }
+  } catch (error) {
+    console.error('Database error:', error.message);
+    res.status(500).json({ message: 'An unexpected error occurred' });
+  }
 });
 
 //GET shared Memories with Friend
 router.get('/shared-memories/:user1Id/:user2Id', authenticateFirebaseToken, validateStatsUID, async (req, res) => {
+  
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   const { user1Id, user2Id } = req.params;
 
   try {
