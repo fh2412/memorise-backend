@@ -3,9 +3,11 @@ const router = express.Router();
 const db = require('../config/db');
 const authenticateFirebaseToken = require('../middleware/authMiddleware');
 const { validateLocationId, validateCreateLocation } = require('../middleware/validation/validateLocation');
+const handleValidationErrors = require('../middleware/validationMiddleware');
+
 
 //GET SINGLE LOCATION BY ID
-router.get('/:locationId', authenticateFirebaseToken, validateLocationId, async (req, res) => {
+router.get('/:locationId', authenticateFirebaseToken, validateLocationId, handleValidationErrors, async (req, res) => {
   const locId = req.params.locationId;
 
   try {
@@ -27,7 +29,7 @@ router.get('/:locationId', authenticateFirebaseToken, validateLocationId, async 
 });
 
 //CREATE NEW LOCATION
-router.post('/createLocation', authenticateFirebaseToken, validateCreateLocation, async (req, res) => {
+router.post('/createLocation', authenticateFirebaseToken, validateCreateLocation, handleValidationErrors, async (req, res) => {
   const { lng, lat, l_country, l_city } = req.body;
   try {
     // Insert the friendship request into the database
@@ -46,7 +48,7 @@ router.post('/createLocation', authenticateFirebaseToken, validateCreateLocation
 });
 
 //UPDATE LOCATION
-router.put('/updateLocation/:id', authenticateFirebaseToken, validateLocationId, validateCreateLocation, async (req, res) => {
+router.put('/updateLocation/:locationId', authenticateFirebaseToken, validateLocationId, validateCreateLocation, handleValidationErrors, async (req, res) => {
   const locationId = req.params.id; // Get the location ID from the URL parameter
   const { lng, lat, l_country, l_city } = req.body;
   try {
