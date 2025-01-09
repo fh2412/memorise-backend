@@ -61,7 +61,7 @@ const validateUserUpdate = [
 
   body('gender')
     .optional({ nullable: true })
-    .isIn(['male', 'female', 'divers'])
+    .isIn(['Male', 'Female', 'Divers'])
     .withMessage('Invalid gender. Allowed values: Male, Female, Divers'),
 
   body('username')

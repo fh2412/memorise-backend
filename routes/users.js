@@ -62,6 +62,22 @@ router.get('/:userId/memories', authenticateFirebaseToken, validateFirebaseUID, 
   }
 });
 
+//GET a users Country
+router.get('/country/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
+  const userId = req.params.userId;
+  try {
+    const [rows] = await db.query('SELECT country FROM users WHERE user_id = ?', [userId]);
+    if (rows.length > 0) {
+      res.json(rows[0]);
+    } else {
+      res.status(404).json({ message: 'User not found (/:userId)' });
+    }
+  } catch (error) {
+    console.error('Database error:', error.message);
+    res.status(500).json({ message: 'An unexpected error occurred' });
+  }
+});
+
 
 /**
  * POST a new user
