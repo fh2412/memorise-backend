@@ -174,9 +174,6 @@ router.get('/:memoryId/:userId/friends', authenticateFirebaseToken, validateMemo
 
 //GET Memories Friends with Shared Memories
 router.get('/:memoryId/:userId/friends-with-shared-count', authenticateFirebaseToken, validateMemoryId, validateFirebaseUID, handleValidationErrors, async (req, res) => {
-  
- 
-
   const { memoryId, userId } = req.params;
 
   try {
@@ -185,9 +182,9 @@ router.get('/:memoryId/:userId/friends-with-shared-count', authenticateFirebaseT
       SELECT u.user_id, u.name, u.dob, u.profilepic, u.country
       FROM user_has_memory AS uh
       JOIN users AS u ON uh.user_id = u.user_id
-      WHERE uh.memory_id = ? AND u.user_id != ?
+      WHERE uh.memory_id = ?
     `;
-    const [friends] = await db.execute(friendsQuery, [memoryId, userId]);
+    const [friends] = await db.execute(friendsQuery, [memoryId]);
 
     // Step 2: Get shared memories count for each friend
     const promises = friends.map(async (friend) => {
