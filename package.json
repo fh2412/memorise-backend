@@ -26,6 +26,7 @@
     "express-validator": "^7.2.1",
     "firebase-admin": "^12.7.0",
     "firebase-functions": "^4.9.0",
+    "helmet": "^8.0.0",
     "mysql2": "^3.9.4"
   },
   "devDependencies": {

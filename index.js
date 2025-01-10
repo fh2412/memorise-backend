@@ -5,12 +5,13 @@ const bodyParser = require('body-parser');
 const PORT = process.env.PORT || 3000; // Define the port for the server
 const functions = require('firebase-functions/v2');
 const apiLimiter = require('./middleware/rateLimiter');
+const helmetConfig = require('./middleware/helmetConfig');
 
 // Middleware setup
 app.use(cors());
 app.use(bodyParser.json());
 app.use(apiLimiter);
-
+app.use(helmetConfig);
 
 // Define routes (separate files for better organization)
 const usersRoutes = require('./routes/users');
