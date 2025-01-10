@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../config/db'); // Your database connection module
-const authenticateFirebaseToken = require('../middleware/authMiddleware');
-const { validateFirebaseUID, validateUserEmail, validateUserPassword, validateProfilePicUrl, validateUserUpdate } = require('../middleware/validation/validateUsers');
+const db = require('../../config/db'); // Your database connection module
+const authenticateFirebaseToken = require('../../middleware/authMiddleware');
+const { validateFirebaseUID, validateUserEmail, validateUserPassword, validateProfilePicUrl, validateUserUpdate } = require('../../middleware/validation/validateUsers');
 const admin = require('firebase-admin');
-const handleValidationErrors = require('../middleware/validationMiddleware');
+const handleValidationErrors = require('../../middleware/validationMiddleware');
 
 
 // GET all users
