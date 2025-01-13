@@ -1,4 +1,5 @@
 const admin = require('firebase-admin');
+const logger = require('./logger');
 
 /**
  * Middleware to authenticate Firebase token
@@ -8,6 +9,7 @@ const authenticateFirebaseToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    logger.error('Attempted API connect without Firebase token');
     return res.status(401).json({ message: 'Unauthorized: No token provided' });
   }
 
@@ -18,7 +20,7 @@ const authenticateFirebaseToken = async (req, res, next) => {
     req.user = decodedToken; // Attach user info to the request object
     next(); // Proceed to the next middleware/route
   } catch (error) {
-    console.error('Error verifying Firebase token:', error);
+    logger.error('Error verifying Firebase token:', error);
     res.status(401).json({ message: 'Unauthorized: Invalid token' });
   }
 };

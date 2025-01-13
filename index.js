@@ -11,14 +11,14 @@ const logger = require('./middleware/logger');
 const errorHandler = require('./middleware/errorHandling/errorHandler');
 
 // Middleware setup
-app.use(pinoHttp({ logger }));
+//app.use(pinoHttp({ logger }));
 app.use(cors());
 app.use(bodyParser.json());
 app.use(apiLimiter);
 app.use(helmetConfig);
 
 // Define components (separate files for better organization)
-const usersRoutes = require('./components/users/users');
+const usersRoutes = require('./components/users/usersController');
 const memoriesRoutes = require('./components/memories');
 const friendsRoutes = require('./components/friends');
 const memoryStatsRoutes = require('./components/memorystats');
