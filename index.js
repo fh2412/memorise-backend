@@ -27,7 +27,7 @@ const firestoreRoutes = require('./components/firestore');
 const pinnedMemoriesRoutes = require('./components/pinned-memories');
 const companyRoutes = require('./components/companies');
 const imageGalleryRoutes = require('./components/image-gallery');
-const activityRoutes = require('./components/activity');
+const activityRoutes = require('./components/activities/activitiesController');
 
 app.use('/api/users', usersRoutes); // Mount users components at /api/users
 app.use('/api/memories', memoriesRoutes); // Mount memories components at /api/memories
