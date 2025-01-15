@@ -20,7 +20,7 @@ app.use(helmetConfig);
 // Define components (separate files for better organization)
 const usersRoutes = require('./components/users/usersController');
 const memoriesRoutes = require('./components/memories');
-const friendsRoutes = require('./components/friends/friends');
+const friendsRoutes = require('./components/friends/friendsController');
 const memoryStatsRoutes = require('./components/memorystats');
 const locationRoutes = require('./components/locations');
 const firestoreRoutes = require('./components/firestore');

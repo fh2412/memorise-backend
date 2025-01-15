@@ -2,8 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const logger = require('../../middleware/logger');
-//const handleValidationErrors = require('../../middleware/validationMiddleware');
-const { getCompanyByUserId, createCompanyForUser, generateUniqueCompanyCode, updateCompanyDetails, leaveCompany, setCompanyOwner, joinCompanyService, deleteCompanyService } = require('./activitiesService');
+const { getCompanyByUserId, createCompanyForUser, generateUniqueCompanyCode, updateCompanyDetails, leaveCompany, setCompanyOwner, joinCompanyService, deleteCompanyService } = require('./companiesService');
 
 /**
  * GET users company
