@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../config/db');
-const authenticateFirebaseToken = require('../middleware/authMiddleware');
-const { validateLocationId, validateCreateLocation } = require('../middleware/validation/validateLocation');
-const handleValidationErrors = require('../middleware/validationMiddleware');
+const db = require('../../config/db');
+const authenticateFirebaseToken = require('../../middleware/authMiddleware');
+const { validateLocationId, validateCreateLocation } = require('../../middleware/validation/validateLocation');
+const handleValidationErrors = require('../../middleware/validationMiddleware');
 
 
 //GET SINGLE LOCATION BY ID

@@ -22,7 +22,7 @@ const validateCreateLocation = [
     .isString().withMessage('Country must be a string'),
 
   body('l_city')
-    .exists().withMessage('City is required')
+    .optional()
     .isString().withMessage('City must be a string'),
 ];
 

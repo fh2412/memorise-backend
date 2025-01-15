@@ -31,14 +31,14 @@ const validateCreateMemory = [
     .withMessage('Firebase Storage bucket URL must be in the correct format'),
 
   body('location_id')
-    .exists().withMessage('Memory ID is required')
-    .notEmpty().withMessage('Title must not be empty')
-    .isInt().withMessage('Memory ID must be an INT'),
+    .exists().withMessage('Location ID is required')
+    .notEmpty().withMessage('Location ID must not be empty')
+    .isInt().withMessage('Location ID must be an INT'),
 
   body('activity_id')
-    .exists().withMessage('Memory ID is required')
-    .notEmpty().withMessage('Title must not be empty')
-    .isInt().withMessage('Memory ID must be an INT'),
+    .exists().withMessage('Activity ID is required')
+    .notEmpty().withMessage('Activity ID must not be empty')
+    .isInt().withMessage('Activity ID must be an INT'),
 
   body('memory_date')
     .exists().withMessage('Memory date is required')
