@@ -6,9 +6,9 @@ const addActivityToDatabase = async (title) => {
 
     try {
         const result = await db.query(query, [title]);
-        return result.insertId;
+        return result[0].insertId;
     } catch (error) {
-        logger.error('Data Access error:', error.message);
+        logger.error(`Data Access error; Error creating activity (${query}): ${error.message}`);
         throw error;
     }
 };
@@ -20,7 +20,7 @@ const fetchActivityFromDatabase = async (activityId) => {
         const [rows] = await db.query(query, [activityId]);
         return rows.length > 0 ? rows[0] : null;
     } catch (error) {
-        logger.error('Data Access error:', error.message);
+        logger.error(`Data Access error; Error selecting users comapny (${query}): ${error.message}`);
         throw error;
     }
 };
@@ -32,7 +32,7 @@ const fetchAllActivitiesFromDatabase = async () => {
         const [rows] = await db.query(query);
         return rows;
     } catch (error) {
-        logger.error('Data Access error:', error.message);
+        logger.error(`Data Access error; Error selecting all activities (${query}): ${error.message}`);
         throw error;
     }
 };

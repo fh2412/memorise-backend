@@ -5,7 +5,7 @@ const createActivity = async (title) => {
     try {
         return await addActivityToDatabase(title);
     } catch (error) {
-        logger.error('Service error:', error.message);
+        logger.error(`Service error; Error createActivity: ${error.message}`);
         throw error;
     }
 };
@@ -14,7 +14,7 @@ const getActivityById = async (activityId) => {
     try {
         return await fetchActivityFromDatabase(activityId);
     } catch (error) {
-        logger.error('Service error:', error.message);
+        logger.error(`Service error; Error getActivityById: ${error.message}`);
         throw error;
     }
 };
@@ -23,7 +23,7 @@ const getAllActivities = async () => {
     try {
         return await fetchAllActivitiesFromDatabase();
     } catch (error) {
-        logger.error('Service error:', error.message);
+        logger.error(`Service error; Error getAllActivities: ${error.message}`);
         throw error;
     }
 };
