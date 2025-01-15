@@ -18,7 +18,7 @@ router.get('/:userId', authenticateFirebaseToken, async (req, res) => {
         }
         res.json(company);
     } catch (error) {
-        logger.error('Controller error:', error.message);
+        logger.error(`Controller error; COMPANY GET /:userId ${error.message}`);
         res.status(500).json({ message: 'Error fetching user\'s company' });
     }
 });
@@ -36,7 +36,7 @@ router.post('/create/:userId', authenticateFirebaseToken, async (req, res) => {
         await createCompanyForUser(userId, { name, phone, email, website });
         res.status(201).json({ message: 'Company created successfully' });
     } catch (error) {
-        console.error('Controller error:', error.message);
+        logger.error(`Controller error; COMPANY POST /create/:userId ${error.message}`);
         res.status(500).json({ message: 'An unexpected error occurred' });
     }
 });
@@ -53,39 +53,39 @@ router.post('/generateCode/:companyId', authenticateFirebaseToken, async (req, r
         const code = await generateUniqueCompanyCode(companyId);
         res.status(201).json({ code });
     } catch (error) {
-        console.error('Controller error:', error.message);
+        logger.error(`Controller error; COMPANY PUT /generateCode/:companyId ${error.message}`);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 
 /**
  * PUT updates company
- * @route PUT /update/:id
+ * @route PUT /update/:companyId
  * @description updates the data of an company
  */
-router.put('/update/:id', authenticateFirebaseToken, async (req, res) => {
-    const { id } = req.params;
+router.put('/update/:companyId', authenticateFirebaseToken, async (req, res) => {
+    const { companyId } = req.params;
     const { name, phone, email, website } = req.body;
 
     try {
-        const updatedCompany = await updateCompanyDetails(id, { name, phone, email, website });
+        const updatedCompany = await updateCompanyDetails(companyId, { name, phone, email, website });
         if (!updatedCompany) {
             return res.status(404).json({ error: 'Company not found' });
         }
         res.status(200).json(updatedCompany);
     } catch (error) {
-        console.error('Controller error:', error.message);
+        logger.error(`Controller error; COMPANY PUT /update/:companyId ${error.message}`);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 
 /**
  * PUT user leaves company
- * @route PUT /leave/:id
+ * @route PUT /leave/:companyId
  * @description updates users company to zero when he leafes his current
  */
-router.put('/leave/:id', authenticateFirebaseToken, async (req, res) => {
-    const userId = req.params.id;
+router.put('/leave/:companyId', authenticateFirebaseToken, async (req, res) => {
+    const userId = req.params.companyId;
 
     try {
         const result = await leaveCompany(userId);
@@ -95,18 +95,18 @@ router.put('/leave/:id', authenticateFirebaseToken, async (req, res) => {
             res.status(404).json({ message: 'User not found' });
         }
     } catch (error) {
-        console.error('Controller error:', error.message);
+        logger.error(`Controller error; COMPANY PUT /leave/:companyId ${error.message}`);
         res.status(500).json({ message: 'An unexpected error occurred' });
     }
 });
 
 /**
  * PUT updates company owner
- * @route PUT /owner/:id
+ * @route PUT /owner/:companyId
  * @description updates a companies owner
  */
-router.put('/owner/:id', authenticateFirebaseToken, async (req, res) => {
-    const userId = req.params.id;
+router.put('/owner/:companyId', authenticateFirebaseToken, async (req, res) => {
+    const userId = req.params.companyId;
     const { companyId } = req.body;
 
     try {
@@ -117,7 +117,7 @@ router.put('/owner/:id', authenticateFirebaseToken, async (req, res) => {
             res.status(404).json({ message: 'User or Company not found' });
         }
     } catch (error) {
-        console.error('Controller error:', error.message);
+        logger.error(`Controller error; COMPANY PUT /owner/:companyId ${error.message}`);
         res.status(500).json({ message: 'An unexpected error occurred' });
     }
 });
@@ -125,7 +125,7 @@ router.put('/owner/:id', authenticateFirebaseToken, async (req, res) => {
 /**
  * PUT user joins company
  * @route PUT /joinCompany/:userId
- * @description puts a companies id to the users table to let him join the company
+ * @description puts a companies companyId to the users table to let him join the company
  */
 router.put('/joinCompany/:userId', authenticateFirebaseToken, async (req, res) => {
     const { code } = req.body;
@@ -139,18 +139,18 @@ router.put('/joinCompany/:userId', authenticateFirebaseToken, async (req, res) =
             res.status(result.status).json({ error: result.error });
         }
     } catch (error) {
-        console.error('Controller error:', error.message);
+        logger.error(`Controller error; COMPANY PUT /joinCompany/:companyId ${error.message}`);
         res.status(500).json({ error: 'Error joining company' });
     }
 });
 
 /**
  * DELETE deletes a company
- * @route DELETE /delete/:id
- * @description deletes a company by id
+ * @route DELETE /delete/:companyId
+ * @description deletes a company by companyId
  */
-router.delete('/delete/:id', authenticateFirebaseToken, async (req, res) => {
-    const companyId = req.params.id;
+router.delete('/delete/:companyId', authenticateFirebaseToken, async (req, res) => {
+    const companyId = req.params.companyId;
 
     try {
         const result = await deleteCompanyService(companyId);
@@ -160,7 +160,7 @@ router.delete('/delete/:id', authenticateFirebaseToken, async (req, res) => {
             res.status(result.status).json({ error: result.error });
         }
     } catch (error) {
-        console.error('Controller error:', error.message);
+        logger.error(`Controller error; COMPANY DELETE /delete/:companyId ${error.message}`);
         res.status(500).json({ error: 'An unexpected error occurred' });
     }
 });
