@@ -40,9 +40,6 @@ router.get('/download-zip/:folder', authenticateFirebaseToken, async (req, res) 
   }
 });
 
-
-
-
 router.post('/delete-images', async (req, res) => {
   const imageUrls = req.body.urls;
 
@@ -72,4 +69,3 @@ router.post('/delete-images', async (req, res) => {
 });
 
 module.exports = router;
-

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../../config/db');
+const logger = require('../../middleware/logger');
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const { validateLocationId, validateCreateLocation } = require('../../middleware/validation/validateLocation');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
