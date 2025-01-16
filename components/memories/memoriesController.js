@@ -26,6 +26,7 @@ const { getUsersForMemory,
  * @route GET /:memoryId/users
  * @description Get the users associated with a given memory
  */
+/* UNUSED!
 router.get('/:memoryId/users', authenticateFirebaseToken, validateMemoryId, handleValidationErrors, async (req, res) => {
     const memoryId = req.params.memoryId;
 
@@ -41,6 +42,7 @@ router.get('/:memoryId/users', authenticateFirebaseToken, validateMemoryId, hand
         res.status(500).json({ message: 'An unexpected error occurred' });
     }
 });
+*/
 
 /**
  * GET created memories for a user
@@ -276,11 +278,11 @@ router.put('/updateMemoryLocation/:memoryId', authenticateFirebaseToken, validat
  * @description Update the title picture for a specific memory
  */
 router.put('/updateTitlePic/:imageId', authenticateFirebaseToken, validateUpdateTitlePic, handleValidationErrors, async (req, res) => {
-    const memoryId = req.params.imageId;
+    const imageId = req.params.imageId;
     const imageUrl = req.body.imageUrl;
 
     try {
-        const updateResult = await updateTitlePic(memoryId, imageUrl);
+        const updateResult = await updateTitlePic(imageId, imageUrl);
 
         if (updateResult) {
             res.json({ message: 'Memory updated successfully' });
