@@ -12,7 +12,7 @@ const { getMemoryCountByUser, getMemoryCountByUserForYear, getFriendCountByUser,
  * @route GET /created/:userId
  * @description Get the count of memories created by a specific user
  */
-router.get('/created/:userId', validateFirebaseUID, handleValidationErrors, async (req, res) => {
+router.get('/created/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
     const userId = req.params.userId;
 
     try {
@@ -34,7 +34,7 @@ router.get('/created/:userId', validateFirebaseUID, handleValidationErrors, asyn
  * @route GET /createdthisyear/:userId
  * @description Get the count of memories created by a specific user in the current year
  */
-router.get('/createdthisyear/:userId', validateFirebaseUID, handleValidationErrors, async (req, res) => {
+router.get('/createdthisyear/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
     const userId = req.params.userId;
 
     try {
@@ -56,7 +56,7 @@ router.get('/createdthisyear/:userId', validateFirebaseUID, handleValidationErro
  * @route GET /friendcount/:userId
  * @description Get the count of friends for a specific user
  */
-router.get('/friendcount/:userId', validateFirebaseUID, handleValidationErrors, async (req, res) => {
+router.get('/friendcount/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
     const userId = req.params.userId;
 
     try {
@@ -77,7 +77,7 @@ router.get('/friendcount/:userId', validateFirebaseUID, handleValidationErrors, 
  * @route GET /shared-memories/:user1Id/:user2Id
  * @description Get the count of shared memories between two specified users
  */
-router.get('/shared-memories/:user1Id/:user2Id', validateStatsUID, handleValidationErrors, async (req, res) => {
+router.get('/shared-memories/:user1Id/:user2Id', authenticateFirebaseToken, validateStatsUID, handleValidationErrors, async (req, res) => {
     const { user1Id, user2Id } = req.params;
 
     try {
