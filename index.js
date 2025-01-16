@@ -21,7 +21,7 @@ app.use(helmetConfig);
 const usersRoutes = require('./components/users/usersController');
 const memoriesRoutes = require('./components/memories');
 const friendsRoutes = require('./components/friends/friendsController');
-const memoryStatsRoutes = require('./components/memorystats');
+const memoryStatsRoutes = require('./components/memorystats/memoryStatsController');
 const locationRoutes = require('./components/locations/locationsController');
 const firestoreRoutes = require('./components/firestore');
 const pinnedMemoriesRoutes = require('./components/pinned-memories/pinnedMemoriesController');
