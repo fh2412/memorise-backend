@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../config/db');
-const authenticateFirebaseToken = require('../middleware/authMiddleware');
-const { validateFirebaseUID } = require('../middleware/validation/validateUsers');
-const { validateStatsUID } = require('../middleware/validation/validateMemorystats');
-const handleValidationErrors = require('../middleware/validationMiddleware');
+const db = require('../../config/db');
+const authenticateFirebaseToken = require('../../middleware/authMiddleware');
+const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
+const { validateStatsUID } = require('../../middleware/validation/validateMemorystats');
+const handleValidationErrors = require('../../middleware/validationMiddleware');
 
 
 // Get total number of Memories created
