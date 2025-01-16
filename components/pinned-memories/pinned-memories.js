@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../config/db'); // Your database connection module
-const authenticateFirebaseToken = require('../middleware/authMiddleware');
-const { validateFirebaseUID } = require('../middleware/validation/validateUsers');
-const { validateMemoryId } = require('../middleware/validation/validateMemory');
-const { validatePinnedMemoryId } = require('../middleware/validation/validatePinnedMemory');
-const handleValidationErrors = require('../middleware/validationMiddleware');
+const db = require('../../config/db'); // Your database connection module
+const authenticateFirebaseToken = require('../../middleware/authMiddleware');
+const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
+const { validateMemoryId } = require('../../middleware/validation/validateMemory');
+const { validatePinnedMemoryId } = require('../../middleware/validation/validatePinnedMemory');
+const handleValidationErrors = require('../../middleware/validationMiddleware');
 
 
 //GET a users favourite memories

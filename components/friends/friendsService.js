@@ -1,4 +1,4 @@
-const { getFriendsFromDB, getFriendshipStatusFromDB, getMissingMemoryFriendsFromDB, getPendingFriendsFromDB, getIngoingFriendRequestsFromDB, getFriendSuggestionsFromDB, insertFriendRequest, insertFriend, updateFriendRequestStatus } = require('./friendsDataAccess')
+const { getFriendsFromDB, getFriendshipStatusFromDB, getMissingMemoryFriendsFromDB, getPendingFriendsFromDB, getIngoingFriendRequestsFromDB, getFriendSuggestionsFromDB, insertFriendRequest, insertFriend, updateFriendRequestStatus, removeFriendFromDB } = require('./friendsDataAccess')
 const logger = require('../../middleware/logger');
 
 const getFriendsService = async (userId) => {
@@ -101,6 +101,16 @@ const acceptFriendRequestService = async (userId1, userId2) => {
     }
 };
 
+const removeFriend = async (userId1, userId2) => {
+    try {
+        return await removeFriendFromDB(userId1, userId2);
+    } catch (error) {
+        logger.error(`Service error; Error removeFriend: ${error.message}`);
+        throw error;
+    }
+};
+
+
 module.exports = {
     getFriendsService,
     getFriendshipStatusService,
@@ -111,4 +121,5 @@ module.exports = {
     sendFriendRequestService,
     addFriendService,
     acceptFriendRequestService,
+    removeFriend,
 }

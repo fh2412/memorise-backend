@@ -165,6 +165,18 @@ const updateFriendRequestStatus = async (userId1, userId2) => {
     }
 };
 
+const removeFriendFromDB = async (userId1, userId2) => {
+    const query = `DELETE FROM friendships WHERE (user_id1 = ? AND user_id2 = ?) OR (user_id1 = ? AND user_id2 = ?)`;
+
+    try {
+        await db.query(query, [userId1, userId2, userId2, userId1]);
+        return { message: 'Friendship removed successfully' };
+    } catch (error) {
+        logger.error(`Data Access error; Error accepting friend request (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
 
 module.exports = {
     getFriendsFromDB,
@@ -176,4 +188,5 @@ module.exports = {
     insertFriendRequest,
     insertFriend,
     updateFriendRequestStatus,
+    removeFriendFromDB,
 }

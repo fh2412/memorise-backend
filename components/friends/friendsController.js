@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const logger = require('../../middleware/logger');
-const { getFriendsService, getFriendshipStatusService, getMissingMemoryFriendsService, getPendingFriendsService, getIngoingFriendRequestsService, getFriendSuggestionsService, sendFriendRequestService, addFriendService, acceptFriendRequestService } = require('./friendsService');
+const { getFriendsService, getFriendshipStatusService, getMissingMemoryFriendsService, getPendingFriendsService, getIngoingFriendRequestsService, getFriendSuggestionsService, sendFriendRequestService, addFriendService, acceptFriendRequestService, removeFriend } = require('./friendsService');
 const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
 const { validateMemoryId } = require('../../middleware/validation/validateMemory');
 const { validateStatsUID } = require('../../middleware/validation/validateMemorystats');
@@ -163,6 +163,23 @@ router.put('/accept_request/:userId1/:userId2', authenticateFirebaseToken, valid
     }
 });
 
+/**
+ * DELETE accepts a friend request
+ * @route DELETE /remove_friend/:userId1/:userId2
+ * @description inserts a database entry for an accepted request from uid1 to uid2
+ */
+router.delete('/remove_friend/:userId1/:userId2', authenticateFirebaseToken, async (req, res) => {
+    const userId1 = req.params.userId1;
+    const userId2 = req.params.userId2;
+
+    try {
+        const result = await removeFriend(userId1, userId2);
+        res.json(result);
+    } catch (error) {
+        logger.error(`Controller error; FRIENDS DELETE /remove_friend/:userId1/:userId2 ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
 
 
 module.exports = router;  
