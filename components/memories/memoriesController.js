@@ -1,3 +1,26 @@
+const express = require('express');
+const router = express.Router();
+const logger = require('../../middleware/logger');
+const authenticateFirebaseToken = require('../../middleware/authMiddleware');
+const { validateMemoryId, validateCreateMemory, validateAddFriendsToMemory, validateUpdateMemory, validateUpdatePictureCount, validateUpdateMemoryLocation, validateUpdateTitlePic } = require('../../middleware/validation/validateMemory');
+const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
+const handleValidationErrors = require('../../middleware/validationMiddleware');
+const { getUsersForMemory,
+    getCreatedMemories,
+    getAddedMemories,
+    getAllMemories,
+    getMemoryById,
+    getMemoryFriends,
+    getFriendsWithSharedCount,
+    createMemory,
+    addFriendsToMemory,
+    updateMemory,
+    updateMemoryPictureCount,
+    updateMemoryLocation,
+    updateTitlePic,
+    deleteMemoryAndFriends,
+    removeFriendFromMemory } = require('./memoriesService');
+
 /**
  * GET users associated with a memory
  * @route GET /:memoryId/users
@@ -142,3 +165,171 @@ router.get('/:memoryId/:userId/friends-with-shared-count', authenticateFirebaseT
     }
 });
 
+/**
+ * POST Create a new memory
+ * @route POST /createMemory
+ * @description Create a new memory and store it in the database
+ */
+router.post('/createMemory', authenticateFirebaseToken, validateCreateMemory, handleValidationErrors, async (req, res) => {
+    const { creator_id, title, description, firestore_bucket_url, location_id, memory_date, memory_end_date, title_pic, activity_id } = req.body;
+
+    try {
+        const memoryId = await createMemory({
+            creator_id, title, description, firestore_bucket_url, location_id, memory_date, memory_end_date, title_pic, activity_id
+        });
+        res.json({ message: 'Memory created successfully', memoryId });
+    } catch (error) {
+        logger.error(`Controller error; CREATE MEMORY POST /createMemory ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * POST Add friends to a memory
+ * @route POST /addFriendsToMemory
+ * @description Add friends to a memory by their emails
+ */
+router.post('/addFriendsToMemory', authenticateFirebaseToken, validateAddFriendsToMemory, handleValidationErrors, async (req, res) => {
+    const { emails, memoryId } = req.body;
+
+    try {
+        await addFriendsToMemory(emails, memoryId);
+        res.json({ success: true });
+    } catch (error) {
+        logger.error(`Controller error; ADD FRIENDS POST /addFriendsToMemory ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * PUT Update a memory
+ * @route PUT /:memoryId
+ * @description Update memory details for a specific memory
+ */
+router.put('/:memoryId', authenticateFirebaseToken, validateUpdateMemory, handleValidationErrors, async (req, res) => {
+    const memoryId = req.params.memoryId;
+    const { title, description, memory_date, memory_end_date } = req.body;
+
+    try {
+        const updateResult = await updateMemory(memoryId, { title, description, memory_date, memory_end_date });
+
+        if (updateResult) {
+            res.json({ message: 'Memory updated successfully' });
+        } else {
+            res.status(404).json({ error: 'Memory not found or no changes made' });
+        }
+    } catch (error) {
+        logger.error(`Controller error; UPDATE PUT /:memoryId ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * PUT Update the picture count for a memory
+ * @route PUT /picturecount/:memoryId
+ * @description Update the picture count for a specific memory
+ */
+router.put('/picturecount/:memoryId', authenticateFirebaseToken, validateUpdatePictureCount, handleValidationErrors, async (req, res) => {
+    const memoryId = req.params.memoryId;
+    const pictureCount = req.body.picture_count;
+
+    try {
+        const updateResult = await updateMemoryPictureCount(memoryId, pictureCount);
+
+        if (updateResult) {
+            res.json({ message: 'Memory updated successfully' });
+        } else {
+            res.status(404).json({ error: 'Memory not found or no changes made' });
+        }
+    } catch (error) {
+        logger.error(`Controller error; UPDATE PUT /picturecount/:memoryId ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * Update the location of a memory
+ * @route PUT /updateMemoryLocation/:memoryId
+ * @description Update the location ID for a specific memory
+ */
+router.put('/updateMemoryLocation/:memoryId', authenticateFirebaseToken, validateUpdateMemoryLocation, handleValidationErrors, async (req, res) => {
+    const memoryId = req.params.memoryId;
+    const locationId = req.body.locationId;
+
+    try {
+        const updateResult = await updateMemoryLocation(memoryId, locationId);
+
+        if (updateResult) {
+            res.json({ message: 'Memory updated successfully' });
+        } else {
+            res.status(404).json({ error: 'Memory not found or no changes made' });
+        }
+    } catch (error) {
+        logger.error(`Controller error; UPDATE PUT /updateMemoryLocation/:memoryId ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * Update the title picture of a memory
+ * @route PUT /updateTitlePic/:imageId
+ * @description Update the title picture for a specific memory
+ */
+router.put('/updateTitlePic/:imageId', authenticateFirebaseToken, validateUpdateTitlePic, handleValidationErrors, async (req, res) => {
+    const memoryId = req.params.imageId;
+    const imageUrl = req.body.imageUrl;
+
+    try {
+        const updateResult = await updateTitlePic(memoryId, imageUrl);
+
+        if (updateResult) {
+            res.json({ message: 'Memory updated successfully' });
+        } else {
+            res.status(404).json({ error: 'Memory not found or no changes made' });
+        }
+    } catch (error) {
+        logger.error(`Controller error; UPDATE PUT /updateTitlePic/:imageId ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * Delete a memory and its associated friends
+ * @route DELETE /:memoryId
+ * @description Deletes a memory and all associated friends
+ */
+router.delete('/:memoryId', authenticateFirebaseToken, validateMemoryId, handleValidationErrors, async (req, res) => {
+    const memoryId = req.params.memoryId;
+
+    try {
+        const deleteResult = await deleteMemoryAndFriends(memoryId);
+
+        if (deleteResult) {
+            res.json({ message: 'Memory and associated friends deleted successfully' });
+        } else {
+            res.status(404).json({ error: 'Memory not found' });
+        }
+    } catch (error) {
+        logger.error(`Controller error; DELETE /:memoryId ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * Remove a friend from a memory
+ * @route DELETE /:memoryId/:userId
+ * @description Deletes a friend from the specified memory
+ */
+router.delete('/:memoryId/:userId', authenticateFirebaseToken, validateMemoryId, validateFirebaseUID, handleValidationErrors, async (req, res) => {
+    const { memoryId, userId } = req.params;
+
+    try {
+        await removeFriendFromMemory(userId, memoryId);
+        res.json({ message: 'Friend removed successfully from Memory' });
+    } catch (error) {
+        logger.error(`Controller error; DELETE /:memoryId/:userId ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+module.exports = router;

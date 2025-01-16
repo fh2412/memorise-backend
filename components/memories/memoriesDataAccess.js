@@ -1,3 +1,6 @@
+const db = require('../../config/db');
+const logger = require('../../middleware/logger');
+
 const fetchUsersForMemoryFromDB = async (memoryId) => {
     const query = `
         SELECT u.* 
@@ -142,3 +145,157 @@ const getSharedMemoriesCount = async (userId1, userId2) => {
         throw error;
     }
 };
+
+const createMemoryInDB = async ({ creator_id, title, description, firestore_bucket_url, location_id, memory_date, memory_end_date, title_pic, activity_id }) => {
+    const query = `
+        INSERT INTO memories (user_id, title, text, image_url, location_id, memory_date, memory_end_date, title_pic, activity_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    try {
+        const [result] = await db.query(query, [creator_id, title, description, firestore_bucket_url, location_id, memory_date, memory_end_date, title_pic, activity_id]);
+        return result.insertId;
+    } catch (error) {
+        logger.error(`Data Access error; Error inserting memory (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
+const getUserIdByEmail = async (email) => {
+    const query = 'SELECT user_id FROM users WHERE email = ?';
+
+    try {
+        const [result] = await db.query(query, [email]);
+        return result.length > 0 ? result[0].user_id : null;
+    } catch (error) {
+        logger.error(`Data Access error; Error fetching user ID by email (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
+const addUserToMemory = async (userId, memoryId) => {
+    const query = 'INSERT INTO user_has_memory (user_id, memory_id, status) VALUES (?, ?, ?)';
+
+    try {
+        await db.query(query, [userId, memoryId, 'friend']);
+    } catch (error) {
+        logger.error(`Data Access error; Error adding user to memory (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
+const updateMemoryInDB = async (memoryId, updateData) => {
+    const { title, description, memory_date, memory_end_date } = updateData;
+    const query = 'UPDATE memories SET title = ?, text = ?, memory_date = ?, memory_end_date = ? WHERE memory_id = ?';
+
+    try {
+        const [result] = await db.execute(query, [title, description, memory_date, memory_end_date, memoryId]);
+        return result;
+    } catch (error) {
+        logger.error(`Data Access error; Error updating memory (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
+const updatePictureCountInDB = async (memoryId, pictureCount) => {
+    const query = 'UPDATE memories SET picture_count = ? WHERE memory_id = ?';
+
+    try {
+        const [result] = await db.execute(query, [pictureCount, memoryId]);
+        return result;
+    } catch (error) {
+        logger.error(`Data Access error; Error updating picture count (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
+const updateLocationInDB = async (memoryId, locationId) => {
+    const query = 'UPDATE memories SET location_id = ? WHERE memory_id = ?';
+
+    try {
+        const [result] = await db.execute(query, [locationId, memoryId]);
+        return result;
+    } catch (error) {
+        logger.error(`Data Access error; Error updating location (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
+const updateTitlePicInDB = async (memoryId, imageUrl) => {
+    const query = 'UPDATE memories SET title_pic = ? WHERE memory_id = ?';
+
+    try {
+        const [result] = await db.execute(query, [imageUrl, memoryId]);
+        return result;
+    } catch (error) {
+        logger.error(`Data Access error; Error updating title picture (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
+const checkMemoryExists = async (memoryId) => {
+    const query = 'SELECT * FROM memories WHERE memory_id = ?';
+
+    try {
+        const [result] = await db.query(query, [memoryId]);
+        return result.length > 0;
+    } catch (error) {
+        logger.error(`Data Access error; Error checking memory existence (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
+const deleteFriendsByMemoryId = async (memoryId) => {
+    const query = 'DELETE FROM user_has_memory WHERE memory_id = ?';
+
+    try {
+        await db.query(query, [memoryId]);
+    } catch (error) {
+        logger.error(`Data Access error; Error deleting friends (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
+const deleteMemoryById = async (memoryId) => {
+    const query = 'DELETE FROM memories WHERE memory_id = ?';
+
+    try {
+        await db.query(query, [memoryId]);
+    } catch (error) {
+        logger.error(`Data Access error; Error deleting memory (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
+const deleteFriendFromMemory = async (userId, memoryId) => {
+    const query = 'DELETE FROM user_has_memory WHERE user_id = ? AND memory_id = ?';
+
+    try {
+        await db.query(query, [userId, memoryId]);
+    } catch (error) {
+        logger.error(`Data Access error; Error deleting friend from memory (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
+module.exports = {
+    fetchUsersForMemoryFromDB,
+    fetchCreatedMemoriesFromDB,
+    fetchAddedMemoriesFromDB,
+    fetchAllMemoriesFromDB,
+    fetchMemoryByIdFromDB,
+    fetchMemoryFriendsFromDB,
+    fetchMemoryFriends,
+    getSharedMemoriesCount,
+    createMemoryInDB,
+    getUserIdByEmail,
+    addUserToMemory,
+    updateMemoryInDB,
+    updatePictureCountInDB,
+    updateLocationInDB,
+    updateTitlePicInDB,
+    checkMemoryExists,
+    deleteFriendsByMemoryId,
+    deleteMemoryById,
+    deleteFriendFromMemory,
+}
