@@ -59,7 +59,7 @@ const searchUsersData = async (userId, searchTerm) => {
     const escapedTerm = `%${searchTerm.replace(/[\\%_\&,\/;'\*!()+=\${}:'<@\]^~|#?]/g, '\\$&')}%`;
 
     const query = `
-      SELECT u.email, u.username, u.name, u.user_id, u.dob
+      SELECT u.email, u.username, u.name, u.user_id, u.dob, u.profilepic
       FROM users u
       WHERE u.user_id <> ?
       AND u.user_id NOT IN (
