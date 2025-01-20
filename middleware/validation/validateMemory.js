@@ -115,8 +115,10 @@ const validateUpdateMemoryLocation = [
     .isInt().withMessage('Memory ID must be an INT'),
 
   body('locationId')
-    .exists().withMessage('Location ID is required')
-    .isMongoId().withMessage('Location ID must be a valid MongoDB ObjectId'),
+    .exists().withMessage('location ID is required')
+    .notEmpty().withMessage('location ID must not be empty')
+    .isInt().withMessage('location ID must be an INT'),
+
 ];
 
 const validateUpdateTitlePic = [

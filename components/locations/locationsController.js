@@ -37,7 +37,6 @@ router.post('/createLocation', authenticateFirebaseToken, validateCreateLocation
 
     try {
         const locationId = await createLocationService({ lng, lat, l_country, l_city });
-        console.log("Controller: ", locationId);
         res.json({ message: 'Location created successfully', locationId: locationId });
     } catch (error) {
         logger.error(`Controller error; LOCATION POST /createLocation: ${error.message}`);

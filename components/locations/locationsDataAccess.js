@@ -25,7 +25,6 @@ const insertLocation = async ({ lng, lat, l_country, l_city }) => {
 
     try {
         const [result] = await db.query(query, [lng, lat, l_country, l_city]);
-        console.log("Data Access: ", result);
         return result.insertId;
     } catch (error) {
         logger.error(`Data Access error; Error inserting location (${query}): ${error.message}`);

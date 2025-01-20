@@ -225,7 +225,6 @@ const updateTitlePicInDB = async (imageId, imageUrl) => {
     const query = 'UPDATE memories SET title_pic = ? WHERE image_url = ?';
     try {
         const [result] = await db.execute(query, [imageUrl, imageId]);
-        console.log("DATA: ", result);
         return result;
     } catch (error) {
         logger.error(`Data Access error; Error updating title picture (${query}): ${error.message}`);

@@ -1,6 +1,6 @@
 const db = require('../../config/db');
 const logger = require('../../middleware/logger');
-const admin = require('firebase-admin');
+const admin = require('../../config/firebaseAdmin');
 
 
 const fetchAllUsers = async () => {
