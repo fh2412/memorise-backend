@@ -18,7 +18,7 @@ const getFavouriteUserMemoryFromDB = async (userId) => {
 };
 
 const getFavouriteMemoryFromDB = async (memoryId) => {
-    query = `SELECT * FROM favourite_memories WHERE memory_id = ?`;
+    const query = `SELECT * FROM favourite_memories WHERE memory_id = ?`;
 
     try {
         const [rows] = await db.query(query, [memoryId]);

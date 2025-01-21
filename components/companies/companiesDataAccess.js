@@ -88,7 +88,7 @@ const updateUserCompanyId = async (userId, companyId) => {
 };
 
 const findCompanyCode = async (code) => {
-    return CompanyCode.findOne({ code });
+    return code; //CompanyCode.findOne({ code });
 };
 
 const saveCompanyCode = async (companyCode) => {
@@ -96,17 +96,17 @@ const saveCompanyCode = async (companyCode) => {
 };
 
 const updateUserCompany = async (userId, companyId) => {
-    return User.findByIdAndUpdate(userId, { companyId });
+    return userId, companyId;//User.findByIdAndUpdate(userId, { companyId });
 };
 
 const deleteCompanyFromDB = async (companyId) => {
-    const deleteQuery = `
+    const query = `
       DELETE FROM companies
       WHERE id = ?
     `;
 
     try{
-        await db.query(deleteQuery, [companyId]);
+        await db.query(query, [companyId]);
     } catch (error) {
         logger.error(`Data Access error; Error deleting company (${query}): ${error.message}`);
         throw error;

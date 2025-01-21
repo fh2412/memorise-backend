@@ -6,7 +6,6 @@ const PORT = process.env.PORT || 3000; // Define the port for the server
 const functions = require('firebase-functions/v2');
 const apiLimiter = require('./middleware/rateLimiter');
 const helmetConfig = require('./middleware/helmetConfig');
-const pinoHttp = require('pino-http');
 const logger = require('./middleware/logger');
 const errorHandler = require('./middleware/errorHandling/errorHandler');
 
@@ -47,12 +46,16 @@ app.get('/health', (req, res) => {
 //Central Error Handler after all Route Handlers
 app.use(errorHandler);
 
+// Start the server
+const server = app.listen(PORT, () => {
+  logger.info(`Server is running on port ${PORT}`);
+});
+
 // Graceful Shutdown Logic
 const gracefulShutdown = (signal) => {
   logger.info(`Received ${signal}. Shutting down gracefully...`);
 
   // Optionally, close database connections or other services here
-
   server.close(() => {
       logger.info('Closed all connections.');
       process.exit(0);
@@ -69,11 +72,6 @@ const gracefulShutdown = (signal) => {
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
-// Start the server
-app.listen(PORT, () => {
-  logger.info(`Server is running on port ${PORT}`);
-});
-
 exports.api = functions.https.onRequest(app);
 
 // In case of uncaught exceptions or unhandled rejections, log them and gracefully shutdown
@@ -82,7 +80,7 @@ process.on('uncaughtException', (err) => {
   gracefulShutdown('uncaughtException');
 });
 
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', (reason) => {
   logger.error('Unhandled Rejection:', reason);
   gracefulShutdown('unhandledRejection');
 });

@@ -40,7 +40,7 @@ router.get('/download-zip/:folder', authenticateFirebaseToken, async (req, res) 
   }
 });
 
-router.post('/delete-images', async (req, res) => {
+/*router.post('/delete-images', async (req, res) => {
   const imageUrls = req.body.urls;
 
   try {
@@ -66,6 +66,6 @@ router.post('/delete-images', async (req, res) => {
     console.error('Error deleting images:', error);
     res.status(500).json({ message: 'Error deleting images' });
   }
-});
+});*/
 
 module.exports = router;

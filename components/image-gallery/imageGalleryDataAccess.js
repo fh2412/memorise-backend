@@ -1,9 +1,9 @@
 const logger = require('../../middleware/logger');
-//const { storage } = require('../firebase');
-//const { ref, listAll, getDownloadURL } = require('firebase/storage');
-//const sharp = require('sharp'); // Assuming sharp is set up to handle URLs or using another service for metadata extraction
-//const axios = require('axios');
-//const sizeOf = require('image-size');
+const { storage } = require('../firebase');
+const { ref, listAll, getDownloadURL } = require('firebase/storage');
+const sharp = require('sharp'); // Assuming sharp is set up to handle URLs or using another service for metadata extraction
+const axios = require('axios');
+const sizeOf = require('image-size');
 
 const listImageItems = async (folderId) => {
     try {

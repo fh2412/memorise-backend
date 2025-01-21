@@ -5,7 +5,7 @@ const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const { validateMemoryId, validateCreateMemory, validateAddFriendsToMemory, validateUpdateMemory, validateUpdatePictureCount, validateUpdateMemoryLocation, validateUpdateTitlePic } = require('../../middleware/validation/validateMemory');
 const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
-const { getUsersForMemory,
+const { 
     getCreatedMemories,
     getAddedMemories,
     getAllMemories,
@@ -20,29 +20,6 @@ const { getUsersForMemory,
     updateTitlePic,
     deleteMemoryAndFriends,
     removeFriendFromMemory } = require('./memoriesService');
-
-/**
- * GET users associated with a memory
- * @route GET /:memoryId/users
- * @description Get the users associated with a given memory
- */
-/* UNUSED!
-router.get('/:memoryId/users', authenticateFirebaseToken, validateMemoryId, handleValidationErrors, async (req, res) => {
-    const memoryId = req.params.memoryId;
-
-    try {
-        const users = await getUsersForMemory(memoryId);
-        if (users.length > 0) {
-            res.json(users);
-        } else {
-            res.status(404).json({ message: 'Memory not found' });
-        }
-    } catch (error) {
-        logger.error(`Controller error; USERS GET /:memoryId/users ${error.message}`);
-        res.status(500).json({ message: 'An unexpected error occurred' });
-    }
-});
-*/
 
 /**
  * GET created memories for a user

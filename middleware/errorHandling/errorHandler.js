@@ -16,7 +16,7 @@ const formatErrorResponse = (err, req, res, isProduction) => {
 };
 
 // Central Error Handler Middleware
-const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res) => {
     const isProduction = process.env.NODE_ENV === 'production';
 
     // Log the error

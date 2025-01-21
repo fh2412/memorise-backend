@@ -56,7 +56,7 @@ const fetchUserCountry = async (userId) => {
 };
 
 const searchUsersData = async (userId, searchTerm) => {
-    const escapedTerm = `%${searchTerm.replace(/[\\%_\&,\/;'\*!()+=\${}:'<@\]^~|#?]/g, '\\$&')}%`;
+    const escapedTerm = `%${searchTerm.replace(/[\\%_&,/;'*!()+=${}:'<@\]^~|#?]/g, '\\$&')}%`;
 
     const query = `
       SELECT u.email, u.username, u.name, u.user_id, u.dob, u.profilepic

@@ -110,7 +110,7 @@ router.delete('/:userId/favourite-memories/:memoryId', authenticateFirebaseToken
 });
 
 /**
- * DELETE a memory from a ll favourite users memories
+ * DELETE a memory from all favourite users memories
  * @route DELETE /favourite-memorie/:memoryId
  * @description when a memory gets deleted, thsi makes sure it does not remain as a favourite anywhere
  */
@@ -118,7 +118,7 @@ router.delete('/favourite-memorie/:memoryId', authenticateFirebaseToken, validat
     const memoryId = req.params.memoryId;
 
     try {
-        const result = await deleteFavouriteMemory(memoryId);
+        const result = await deleteFavouriteMemoryAll(memoryId);
         res.json(result);
     } catch (error) {
         logger.error(`Controller error; FAV MEMORIES DELETE /favourite-memorie/:memoryId ${error.message}`);
