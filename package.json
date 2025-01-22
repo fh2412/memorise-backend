@@ -20,16 +20,23 @@
     "archiver": "^7.0.1",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
     "express-validator": "^7.2.1",
     "firebase-admin": "^12.7.0",
     "firebase-functions": "^4.9.0",
-    "mysql2": "^3.9.4"
+    "helmet": "^8.0.0",
+    "mysql2": "^3.9.4",
+    "pino": "^9.6.0",
+    "pino-http": "^10.3.0",
+    "pino-pretty": "^13.0.0"
   },
   "devDependencies": {
-    "firebase-functions-test": "^3.1.0"
+    "@eslint/js": "^9.18.0",
+    "eslint": "^9.18.0",
+    "firebase-functions-test": "^3.1.0",
+    "globals": "^15.14.0"
   },
   "engines": {
     "node": "18"
