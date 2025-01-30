@@ -43,6 +43,7 @@ jobs:
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy ${{ env.SERVICE_NAME }} \
-            --image gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
+            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
             --region ${{ env.REGION }} \
-            --set-env-vars NODE_ENV=production,GCP_PROJECT_ID=${{ env.PROJECT_ID }},FB_SERVICEACCOUNT_SECRET_NAME=${{ env.FB_SERVICEACCOUNT_SECRET_NAME }},FB_BUCKET=${{ env.FB_BUCKET }}
+            --project=${{ secrets.GCP_PROJECT_ID }} \ # Add this line!
+            --set-env-vars NODE_ENV=production,GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }},FB_SERVICEACCOUNT_SECRET_NAME=${{ secrets.FB_SERVICEACCOUNT_SECRET_NAME }},FB_BUCKET=${{ secrets.FB_BUCKET }}
