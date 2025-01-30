@@ -39,8 +39,8 @@ jobs:
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v2'
 
-      - name: 'Use gcloud CLI'
-        run: 'gcloud info'
+      - name: Set Project
+        run: gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Build and push Docker image
         run: |
