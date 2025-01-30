@@ -5,6 +5,7 @@ on:
     branches: [ "main" ]
 
 env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   SERVICE_NAME: memoriseapi
   REGION: europe-west4
   FB_SERVICEACCOUNT_SECRET_NAME: ${{ secrets.FB_SERVICEACCOUNT_SECRET_NAME }}
@@ -41,17 +42,20 @@ jobs:
       - name: 'Use gcloud CLI'
         run: 'gcloud info'
       
+      - name: Unset CLOUDSDK_CORE_PROJECT
+        run: unset CLOUDSDK_CORE_PROJECT
+      
       - name: Set Project
-        run: gcloud config set project ${{ GOOGLE_CLOUD_PROJECT }}
+        run: gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Build and push Docker image
         run: |
-          gcloud builds submit --tag gcr.io/${{ GOOGLE_CLOUD_PROJECT }}/${{ env.SERVICE_NAME }}:${{ github.sha }} .
+          gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }} .
 
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy ${{ env.SERVICE_NAME }} \
-            --image gcr.io/${{ GOOGLE_CLOUD_PROJECT }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
+            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
             --region ${{ env.REGION }} \
-            --project=${{ GOOGLE_CLOUD_PROJECT }} \
-            --set-env-vars NODE_ENV=production,GCP_PROJECT_ID=${{ GOOGLE_CLOUD_PROJECT }},FB_SERVICEACCOUNT_SECRET_NAME=${{ secrets.FB_SERVICEACCOUNT_SECRET_NAME }},FB_BUCKET=${{ secrets.FB_BUCKET }}
+            --project=${{ secrets.GCP_PROJECT_ID }} \
+            --set-env-vars NODE_ENV=production,GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }},FB_SERVICEACCOUNT_SECRET_NAME=${{ secrets.FB_SERVICEACCOUNT_SECRET_NAME }},FB_BUCKET=${{ secrets.FB_BUCKET }}
