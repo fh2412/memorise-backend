@@ -35,7 +35,7 @@ jobs:
         uses: google-github-actions/setup-gcloud@v1
 
       - name: Authenticate with Google Cloud
-        uses: google-github-actions/auth@v1  # <--- Add this crucial step
+        uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }} # Use credentials_json
 
