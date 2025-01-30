@@ -39,12 +39,11 @@ jobs:
       - name: Set up Google Cloud CLI
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Unset CLOUDSDK_CORE_PROJECT
+        run: unset CLOUDSDK_CORE_PROJECT
+      
       - name: Set Project
-        run: |
-          echo "Environment Variables:"
-          env | sort  # Print all environment variables
-          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
-          gcloud config get-value project
+        run: gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Build and push Docker image
         run: |
