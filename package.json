@@ -4,13 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "serve": "firebase emulators:start --only functions",
-    "build": "webpack --mode production",
-    "shell": "firebase functions:shell",
-    "start": "npm run shell",
-    "deploy": "firebase deploy --only functions:api",
-    "logs": "firebase functions:log"
+    "start": "node index.js",
   },
   "keywords": [],
   "author": "",
