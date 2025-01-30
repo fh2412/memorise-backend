@@ -6,10 +6,10 @@ on:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  SERVICE_NAME: your-cloud-run-service-name  # Consider making this a secret too if it's sensitive
-  REGION: us-central1
-  FB_SERVICEACCOUNT_SECRET_NAME: firebase-admin-key # Example secret name
-  FB_BUCKET: your-firebase-bucket # Example secret name
+  SERVICE_NAME: memoriseapi
+  REGION: europe-west4
+  FB_SERVICEACCOUNT_SECRET_NAME: ${{ secrets.FB_SERVICEACCOUNT_SECRET_NAME }}
+  FB_BUCKET: ${{ secrets.FB_BUCKET }}
 
 jobs:
   lint:
@@ -34,7 +34,7 @@ jobs:
       - name: Set up Google Cloud CLI
         uses: google-github-actions/setup-gcloud@v1
         with:
-          service_account_key: ${{ secrets.GCP_SA_KEY }} # Service account key as a secret
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
 
       - name: Build and push Docker image
         run: |
