@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
 
 env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  PROJECT_ID: memorise-414417    # ${{ secrets.GCP_PROJECT_ID }}
   SERVICE_NAME: memoriseapi
   REGION: europe-west4
   FB_SERVICEACCOUNT_SECRET_NAME: ${{ secrets.FB_SERVICEACCOUNT_SECRET_NAME }}
