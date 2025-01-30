@@ -39,6 +39,14 @@ jobs:
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v2'
 
+      - name: Unset Project Environment Variables  # <-- Add this crucial step
+        run: |
+          unset CLOUDSDK_CORE_PROJECT
+          unset CLOUDSDK_PROJECT
+          unset GCLOUD_PROJECT
+          unset GCP_PROJECT
+          unset GOOGLE_CLOUD_PROJECT
+
       - name: Set Project
         run: gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
 
