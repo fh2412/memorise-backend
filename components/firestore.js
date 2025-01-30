@@ -1,11 +1,11 @@
 const express = require('express');
-const admin = require('../config/firebaseAdmin');
+const { getFirebaseAdmin } = require('./firebaseAdmin');
 const router = express.Router();
 const archiver = require('archiver');
 const authenticateFirebaseToken = require('../middleware/authMiddleware');
 
 
-
+const admin = getFirebaseAdmin();
 const bucket = admin.storage().bucket();
 
 router.get('/download-zip/:folder', authenticateFirebaseToken, async (req, res) => {
