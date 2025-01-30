@@ -40,7 +40,11 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Set Project
-        run: gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          echo "Environment Variables:"
+          env | sort  # Print all environment variables
+          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+          gcloud config get-value project
 
       - name: Build and push Docker image
         run: |
