@@ -41,17 +41,6 @@ jobs:
 
       - name: 'Use gcloud CLI'
         run: 'gcloud info'
-      
-      - name: Unset CLOUDSDK_CORE_PROJECT
-        run: unset CLOUDSDK_CORE_PROJECT
-
-      - name: Unset gcloud project (and env variable)
-        run: |
-          gcloud config unset project
-          unset CLOUDSDK_CORE_PROJECT
-
-      - name: Set Project
-        run: gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Build and push Docker image
         run: |
