@@ -1,5 +1,5 @@
 const express = require('express');
-const { getFirebaseAdmin } = require('./firebaseAdmin');
+const { getFirebaseAdmin } = require('../config/firebaseAdmin');
 const router = express.Router();
 const archiver = require('archiver');
 const authenticateFirebaseToken = require('../middleware/authMiddleware');
