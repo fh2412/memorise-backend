@@ -29,6 +29,14 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint
     steps:
+      - name: Unset Project Environment Variables  # <--- Do this FIRST
+        run: |
+          unset CLOUDSDK_CORE_PROJECT
+          unset CLOUDSDK_PROJECT
+          unset GCLOUD_PROJECT
+          unset GCP_PROJECT
+          unset GOOGLE_CLOUD_PROJECT
+          
       - uses: actions/checkout@v4
 
       - id: 'auth'
