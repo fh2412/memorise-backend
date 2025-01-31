@@ -1,13 +1,16 @@
 require('dotenv').config(); // Keep this for local development
-
+const logger = require('../middleware/logger');
 const admin = require('firebase-admin');
+
 
 async function initializeFirebaseAdmin() {
   try {
     let serviceAccountKey;
 
+
     if (process.env.NODE_ENV === 'production') { // Check if in Cloud Run
-      // 1. Get the secret from Secret Manager (Cloud Run)
+      logger.info("Get the secret from Secret Manager (Cloud Run)");
+
       const {SecretManagerServiceClient} = require('@google-cloud/secret-manager');
       const client = new SecretManagerServiceClient();
 
@@ -15,7 +18,7 @@ async function initializeFirebaseAdmin() {
       const [version] = await client.accessSecretVersion({name});
       serviceAccountKey = JSON.parse(version.payload.data.toString());
     } else {
-      // 2. Load service account key locally (for local development)
+      logger.warn("Loading service account key locally (for local development)");
       serviceAccountKey = require(process.env.FB_SERVICEACCOUNT); // From file path
     }
 

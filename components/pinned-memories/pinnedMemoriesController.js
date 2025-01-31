@@ -80,6 +80,7 @@ router.post('/:userId/favourite-memories', authenticateFirebaseToken, validateFi
 
     try {
         const insertResult = await createFavouriteMemory(userId, memoryId);
+        logger.info(insertResult);
         res.status(201).json(insertResult);
     } catch (error) {
         logger.error(`Controller error; FAV MEMORIES POST /:userId/favourite-memories ${error.message}`);
@@ -102,6 +103,7 @@ router.delete('/:userId/favourite-memories/:memoryId', authenticateFirebaseToken
 
     try {
         const deleteResult = await deleteFavouriteMemory(userId, memoryIdToDelete);
+        logger.info(deleteResult);
         res.json(deleteResult);
     } catch (error) {
         logger.error(`Controller error; FAV MEMORIES DELETE /:userId/favourite-memories/:memoryId ${error.message}`);

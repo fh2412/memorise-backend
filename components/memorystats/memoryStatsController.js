@@ -20,7 +20,7 @@ router.get('/created/:userId', authenticateFirebaseToken, validateFirebaseUID, h
         if (memoryCount) {
             res.json(memoryCount);
         } else {
-            res.json({ message: 'No Memories created yet' });
+            res.json({ count: 0 });
         }
     } catch (error) {
         logger.error(`Controller error; MEMORY STATS GET /created/:userId ${error.message}`);
