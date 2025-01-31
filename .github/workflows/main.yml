@@ -7,7 +7,7 @@ on:
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: europe-west4
-  GAR_LOCATION: europe-west4-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/memorise-repo/
+  GAR_LOCATION: europe-west4-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/memorise-repo
 jobs:
   build-and-push:
     name: Build && Push && Deploy
