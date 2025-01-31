@@ -48,5 +48,5 @@ jobs:
         with:
           service: ${{ env.SERVICE }}
           region: ${{ env.REGION }}
-          image: ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/memorise-repo:${{ github.sha }} # Corrected image path
+          image: europe-west4-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/memorise-repo/memorise-repo:${{ github.sha }} # Corrected image path
           flags: '--platform managed --allow-unauthenticated' # Flags go here
