@@ -6,58 +6,48 @@ on:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  GAR_LOCATION: europe-west4
-  REPOSITORY: memorise-repo
-  SERVICE: memoriseapi
   REGION: europe-west4
-
+  GAR_LOCATION: europe-west4-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/memorise-repo/
 jobs:
-  lint:
+  build-and-push:
+    name: Build && Push && Deploy
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - name: Install dependencies
-        run: npm install
-      - name: Run ESLint
-        run: npx eslint .
-  
-  deploy:
-    permissions:
-      contents: 'read'
-      id-token: 'write'
 
-    runs-on: ubuntu-latest
-    needs: lint
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-        with:
-          driver-opts: image=moby/buildkit:v0.11.1-rootless
+      - name: Set Docker image tag
+        id: set_tag
+        run: echo "::set-output name=tag::${GITHUB_REF#refs/tags/}"
 
-      - name: Login to Google Cloud
-        uses: google-github-actions/auth@v2
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0.3.0
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-          token_format: access_token
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v4
+          service_account_email: ${{ secrets.GCP_SA_EMAIL }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+     
+      - name: Configure Docker
+        uses: docker/login-action@v2
         with:
-          context: .
-          file: Dockerfile # Ensure the path is correct if not in the root of the repo
-          push: true
-          tags: ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:${{ github.sha }}
+          registry: me-central1-docker.pkg.dev
+          username: _json_key
+          password: ${{ secrets.GCP_SA_KEY }}
 
+      - name: Build Docker image
+        run: |
+          docker build -t me-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/chain-service/chain-service:${{ steps.set_tag.outputs.tag }} -f Dockerfile .
+      
+      - name: Push Docker image to Artifact Registry
+        run: |
+          docker push me-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/chain-service/chain-service:${{ steps.set_tag.outputs.tag }}
+      
       - name: Deploy to Cloud Run
-        uses: google-github-actions/deploy-cloudrun@v2
-        with:
-          service: ${{ env.SERVICE }}
-          region: ${{ env.REGION }}
-          image: ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:${{ github.sha }} --platform managed --allow-unauthenticated
+        run: gcloud run deploy chain-service --image me-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/chain-service/chain-service:${{ steps.set_tag.outputs.tag }}  \
+             --platform managed --region me-central1 --concurrency 1 \
+             --min-instances 1 --max-instances 1 \
+             --vpc-connector=redis-connector \
+             --set-secrets=LOG_LEVEL=LOG_LEVEL:latest,CLIENT_ID=CLIENT_ID:latest,CLIENT_SECRET=CLIENT_SECRET:latest,ENOKI_KEY=ENOKI_KEY:latest,ENOKI_ZKPROOF_URL=ENOKI_ZKPROOF_URL:latest,ENOKI_ZKLOGIN_URL=ENOKI_ZKLOGIN_URL:latest,SHINAMI_KEY=SHINAMI_KEY:latest,SMARTCONTRACT_KEY=SMARTCONTRACT_KEY:latest
+
