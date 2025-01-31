@@ -32,22 +32,22 @@ jobs:
       - name: Configure Docker
         uses: docker/login-action@v2
         with:
-          registry: me-central1-docker.pkg.dev
+          registry: europe-west4-docker.pkg.dev
           username: _json_key
           password: ${{ secrets.GCP_SA_KEY }}
 
       - name: Build Docker image
         run: |
-          docker build -t me-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/chain-service/chain-service:${{ steps.set_tag.outputs.tag }} -f Dockerfile .
+          docker build -t europe-west4-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/memorise-repo/memorise-repo:${{ steps.set_tag.outputs.tag }} -f Dockerfile .
       
       - name: Push Docker image to Artifact Registry
         run: |
-          docker push me-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/chain-service/chain-service:${{ steps.set_tag.outputs.tag }}
+          docker push europe-west4-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/memorise-repo/memorise-repo:${{ steps.set_tag.outputs.tag }}
+      
       
       - name: Deploy to Cloud Run
-        run: gcloud run deploy chain-service --image me-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/chain-service/chain-service:${{ steps.set_tag.outputs.tag }}  \
-             --platform managed --region me-central1 --concurrency 1 \
-             --min-instances 1 --max-instances 1 \
-             --vpc-connector=redis-connector \
-             --set-secrets=LOG_LEVEL=LOG_LEVEL:latest,CLIENT_ID=CLIENT_ID:latest,CLIENT_SECRET=CLIENT_SECRET:latest,ENOKI_KEY=ENOKI_KEY:latest,ENOKI_ZKPROOF_URL=ENOKI_ZKPROOF_URL:latest,ENOKI_ZKLOGIN_URL=ENOKI_ZKLOGIN_URL:latest,SHINAMI_KEY=SHINAMI_KEY:latest,SMARTCONTRACT_KEY=SMARTCONTRACT_KEY:latest
-
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE }}
+          region: ${{ env.REGION }}
+          image: memorise-repo-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/memorise-repo/memorise-repo:${{ steps.set_tag.outputs.tag }} --platform managed --allow-unauthenticated
