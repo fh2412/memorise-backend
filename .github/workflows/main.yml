@@ -42,14 +42,6 @@ jobs:
       - name: Push Docker image to Artifact Registry
         run: |
           docker push ${{ env.GAR_LOCATION }}/memorise-repo:${{ github.sha }}
-      
-      
-      - name: Deploy to Cloud Run
-        uses: google-github-actions/deploy-cloudrun@v2
-        with:
-          service: ${{ env.SERVICE }}
-          region: ${{ env.REGION }}
-          image: ${{ env.GAR_LOCATION }}/memorise-repo:${{ github.sha }} --platform managed --allow-unauthenticated
 
       - name: Deploy to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v2
