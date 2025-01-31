@@ -1,4 +1,4 @@
-const express = require('express');
+/*const express = require('express');
 const { getFirebaseAdmin } = require('../config/firebaseAdmin');
 const router = express.Router();
 const archiver = require('archiver');
@@ -38,7 +38,7 @@ router.get('/download-zip/:folder', authenticateFirebaseToken, async (req, res) 
     console.error(error);
     res.status(500).send({ error: 'Failed to generate zip.' });
   }
-});
+});*/
 
 /*router.post('/delete-images', async (req, res) => {
   const imageUrls = req.body.urls;
@@ -68,4 +68,4 @@ router.get('/download-zip/:folder', authenticateFirebaseToken, async (req, res) 
   }
 });*/
 
-module.exports = router;
+//module.exports = router;
