@@ -6,7 +6,8 @@ const admin = require('firebase-admin');
 async function initializeFirebaseAdmin() {
   try {
     let serviceAccountKey;
-    logger.warn(`ENVIROMENT VAR: ${process.env.NODE_ENV}, ${process.env.NODE_ENV == "production"}`);
+    logger.info(`NODE_ENV is: '${process.env.NODE_ENV}'`);
+    logger.info(process.env.NODE_ENV === "production" ? "MATCH" : "NO MATCH"); 
     if (process.env.NODE_ENV == "production") { // Check if in Cloud Run
       logger.info("Get the secret from Secret Manager (Cloud Run)");
 
