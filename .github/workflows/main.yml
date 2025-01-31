@@ -36,11 +36,11 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t europe-west4-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/memorise-repo:${{ github.sha }} -f Dockerfile .
+          docker build -t ${{ env.GAR_LOCATION }}/memorise-repo:${{ github.sha }} -f Dockerfile .
       
       - name: Push Docker image to Artifact Registry
         run: |
-          docker push europe-west4-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/memorise-repo:${{ github.sha }}
+          docker push ${{ env.GAR_LOCATION }}/memorise-repo:${{ github.sha }}
       
       
       - name: Deploy to Cloud Run
@@ -48,4 +48,4 @@ jobs:
         with:
           service: ${{ env.SERVICE }}
           region: ${{ env.REGION }}
-          image: memorise-repo-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/memorise-repo:${{ github.sha }} --platform managed --allow-unauthenticated
+          image: ${{ env.GAR_LOCATION }}/memorise-repo:${{ github.sha }} --platform managed --allow-unauthenticated
