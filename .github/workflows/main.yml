@@ -21,13 +21,11 @@ jobs:
         id: set_tag
         run: echo "::set-output name=tag::${GITHUB_REF#refs/tags/}"
 
-      - name: Set up Google Cloud SDK
+      - name: Login to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          service_account_email: ${{ secrets.GCP_SA_EMAIL }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          token_format: access_token
      
       - name: Configure Docker
         uses: docker/login-action@v2
