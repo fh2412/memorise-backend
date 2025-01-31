@@ -7,6 +7,7 @@ on:
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: europe-west4
+  SERVICE: memoriseapi
   GAR_LOCATION: europe-west4-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/memorise-repo
 jobs:
   build-and-push:
@@ -49,3 +50,11 @@ jobs:
           service: ${{ env.SERVICE }}
           region: ${{ env.REGION }}
           image: ${{ env.GAR_LOCATION }}/memorise-repo:${{ github.sha }} --platform managed --allow-unauthenticated
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE }}
+          region: ${{ env.REGION }}
+          image: ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/memorise-repo/memoriseapi:${{ github.sha }} # Corrected image path
+          flags: '--platform managed --allow-unauthenticated' # Flags go here
