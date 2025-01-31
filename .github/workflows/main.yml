@@ -50,3 +50,8 @@ jobs:
           region: ${{ env.REGION }}
           image: europe-west4-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/memorise-repo/memorise-repo:${{ github.sha }} # Corrected image path
           flags: '--platform managed --allow-unauthenticated' # Flags go here
+          env_vars: |-
+            GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }}
+            FB_SERVICEACCOUNT_SECRET_NAME={{ secrets.FB_SERVICEACCOUNT_SECRET_NAME }}
+            FB_BUCKET=${{ secrets.FB_BUCKET }}
+            NODE_ENV="production"
