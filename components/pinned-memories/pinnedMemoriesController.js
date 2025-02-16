@@ -13,7 +13,7 @@ const handleValidationErrors = require('../../middleware/validationMiddleware');
  * @route GET /:userId/favourite-memories
  * @description get max 4 favurite memories of a user
  */
-router.get('/:userId/favourite-memories', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
+router.get('/:userId/favourite-memories', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
     const userId = req.params.userId;
 
     try {
@@ -21,7 +21,7 @@ router.get('/:userId/favourite-memories', authenticateFirebaseToken, validateFir
         res.json(favouriteMemories);
     } catch (error) {
         logger.error(`Controller error; FAV MEMORIES GET /:userId/favourite-memories ${error.message}`);
-        res.status(500).json({ message: 'Error fetching favorite memories' });
+        next(error);
     }
 });
 
@@ -30,7 +30,7 @@ router.get('/:userId/favourite-memories', authenticateFirebaseToken, validateFir
  * @route GET /favourite-memorie/:memoryId
  * @description get alle the entrys for a memory if it is delcared at least once as favourite memory
  */
-router.get('/favourite-memorie/:memoryId', validateMemoryId, handleValidationErrors, async (req, res) => {
+router.get('/favourite-memorie/:memoryId', validateMemoryId, handleValidationErrors, async (req, res, next) => {
     const memoryId = req.params.memoryId;
 
     try {
@@ -38,7 +38,7 @@ router.get('/favourite-memorie/:memoryId', validateMemoryId, handleValidationErr
         res.json(favoriteMemory);
     } catch (error) {
         logger.error(`Controller error; FAV MEMORIES GET /favourite-memorie/:memoryId ${error.message}`);
-        res.status(500).json({ message: 'Error fetching favorite memory' });
+        next(error);
     }
 });
 
@@ -47,7 +47,7 @@ router.get('/favourite-memorie/:memoryId', validateMemoryId, handleValidationErr
  * @route PUT /:userId/favourite-memories/:memoryId
  * @description updates the favourite memories of a user
  */
-router.put('/:userId/favourite-memories/:memoryId', authenticateFirebaseToken, validateFirebaseUID, validateMemoryId, validatePinnedMemoryId, handleValidationErrors, async (req, res) => {
+router.put('/:userId/favourite-memories/:memoryId', authenticateFirebaseToken, validateFirebaseUID, validateMemoryId, validatePinnedMemoryId, handleValidationErrors, async (req, res, next) => {
     const userId = req.params.userId;
     const memoryIdToUpdate = req.params.memoryId;
     const updatedMemoryId = req.body.memoryId;
@@ -61,7 +61,7 @@ router.put('/:userId/favourite-memories/:memoryId', authenticateFirebaseToken, v
         res.json(updatedMemory);
     } catch (error) {
         logger.error(`Controller error; FAV MEMORIES PUT /:userId/favourite-memories/:memoryId ${error.message}`);
-        res.status(500).json({ message: 'Error updating favorite memory' });
+        next(error);
     }
 });
 
@@ -70,7 +70,7 @@ router.put('/:userId/favourite-memories/:memoryId', authenticateFirebaseToken, v
  * @route POST /:userId/favourite-memories
  * @description creates a new db entry for a users favourite memory
  */
-router.post('/:userId/favourite-memories', authenticateFirebaseToken, validateFirebaseUID, validatePinnedMemoryId, handleValidationErrors, async (req, res) => {
+router.post('/:userId/favourite-memories', authenticateFirebaseToken, validateFirebaseUID, validatePinnedMemoryId, handleValidationErrors, async (req, res, next) => {
     const userId = req.params.userId;
     const memoryId = req.body.memoryId;
 
@@ -84,7 +84,7 @@ router.post('/:userId/favourite-memories', authenticateFirebaseToken, validateFi
         res.status(201).json(insertResult);
     } catch (error) {
         logger.error(`Controller error; FAV MEMORIES POST /:userId/favourite-memories ${error.message}`);
-        res.status(500).json({ message: 'Error creating favorite memory' });
+        next(error);
     }
 });
 
@@ -93,7 +93,7 @@ router.post('/:userId/favourite-memories', authenticateFirebaseToken, validateFi
  * @route DELETE /:userId/favourite-memories/:memoryId
  * @description deletes a favourite memory for a user
  */
-router.delete('/:userId/favourite-memories/:memoryId', authenticateFirebaseToken, validateFirebaseUID, validateMemoryId, handleValidationErrors, async (req, res) => {
+router.delete('/:userId/favourite-memories/:memoryId', authenticateFirebaseToken, validateFirebaseUID, validateMemoryId, handleValidationErrors, async (req, res, next) => {
     const userId = req.params.userId;
     const memoryIdToDelete = req.params.memoryId;
 
@@ -107,7 +107,7 @@ router.delete('/:userId/favourite-memories/:memoryId', authenticateFirebaseToken
         res.json(deleteResult);
     } catch (error) {
         logger.error(`Controller error; FAV MEMORIES DELETE /:userId/favourite-memories/:memoryId ${error.message}`);
-        res.status(500).json({ message: 'Error deleting favorite memory' });
+        next(error);
     }
 });
 
@@ -116,7 +116,7 @@ router.delete('/:userId/favourite-memories/:memoryId', authenticateFirebaseToken
  * @route DELETE /favourite-memorie/:memoryId
  * @description when a memory gets deleted, thsi makes sure it does not remain as a favourite anywhere
  */
-router.delete('/favourite-memorie/:memoryId', authenticateFirebaseToken, validateMemoryId, handleValidationErrors, async (req, res) => {
+router.delete('/favourite-memorie/:memoryId', authenticateFirebaseToken, validateMemoryId, handleValidationErrors, async (req, res, next) => {
     const memoryId = req.params.memoryId;
 
     try {
@@ -124,7 +124,7 @@ router.delete('/favourite-memorie/:memoryId', authenticateFirebaseToken, validat
         res.json(result);
     } catch (error) {
         logger.error(`Controller error; FAV MEMORIES DELETE /favourite-memorie/:memoryId ${error.message}`);
-        res.status(500).json({ message: 'Error deleting favorite memory' });
+        next(error);
     }
 });
 

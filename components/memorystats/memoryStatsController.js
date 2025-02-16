@@ -12,7 +12,7 @@ const { getMemoryCountByUser, getMemoryCountByUserForYear, getFriendCountByUser,
  * @route GET /created/:userId
  * @description Get the count of memories created by a specific user
  */
-router.get('/created/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
+router.get('/created/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
     const userId = req.params.userId;
 
     try {
@@ -24,7 +24,7 @@ router.get('/created/:userId', authenticateFirebaseToken, validateFirebaseUID, h
         }
     } catch (error) {
         logger.error(`Controller error; MEMORY STATS GET /created/:userId ${error.message}`);
-        res.status(500).json({ message: 'An unexpected error occurred' });
+        next(error);
     }
 });
 
@@ -34,7 +34,7 @@ router.get('/created/:userId', authenticateFirebaseToken, validateFirebaseUID, h
  * @route GET /createdthisyear/:userId
  * @description Get the count of memories created by a specific user in the current year
  */
-router.get('/createdthisyear/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
+router.get('/createdthisyear/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
     const userId = req.params.userId;
 
     try {
@@ -47,7 +47,7 @@ router.get('/createdthisyear/:userId', authenticateFirebaseToken, validateFireba
         }
     } catch (error) {
         logger.error(`Controller error; MEMORY STATS GET /createdthisyear/:userId ${error.message}`);
-        res.status(500).json({ message: 'An unexpected error occurred' });
+        next(error);
     }
 });
 
@@ -56,7 +56,7 @@ router.get('/createdthisyear/:userId', authenticateFirebaseToken, validateFireba
  * @route GET /friendcount/:userId
  * @description Get the count of friends for a specific user
  */
-router.get('/friendcount/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
+router.get('/friendcount/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
     const userId = req.params.userId;
 
     try {
@@ -68,7 +68,7 @@ router.get('/friendcount/:userId', authenticateFirebaseToken, validateFirebaseUI
         }
     } catch (error) {
         logger.error(`Controller error; FRIEND COUNT GET /friendcount/:userId ${error.message}`);
-        res.status(500).json({ message: 'An unexpected error occurred' });
+        next(error);
     }
 });
 
@@ -77,7 +77,7 @@ router.get('/friendcount/:userId', authenticateFirebaseToken, validateFirebaseUI
  * @route GET /shared-memories/:user1Id/:user2Id
  * @description Get the count of shared memories between two specified users
  */
-router.get('/shared-memories/:user1Id/:user2Id', authenticateFirebaseToken, validateStatsUID, handleValidationErrors, async (req, res) => {
+router.get('/shared-memories/:user1Id/:user2Id', authenticateFirebaseToken, validateStatsUID, handleValidationErrors, async (req, res, next) => {
     const { user1Id, user2Id } = req.params;
 
     try {
@@ -85,7 +85,7 @@ router.get('/shared-memories/:user1Id/:user2Id', authenticateFirebaseToken, vali
         res.json({ sharedMemoriesCount });
     } catch (error) {
         logger.error(`Controller error; SHARED MEMORIES GET /shared-memories/:user1Id/:user2Id ${error.message}`);
-        res.status(500).json({ message: 'An unexpected error occurred' });
+        next(error);
     }
 });
 

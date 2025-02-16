@@ -11,13 +11,13 @@ const { validateActivityId, validateCreateActivity } = require('../../middleware
  * @route GET /
  * @description returns an array of all activities in the memorise database
  */
-router.get('/', authenticateFirebaseToken, async (req, res) => {
+router.get('/', authenticateFirebaseToken, async (req, res, next) => {
     try {
         const activities = await getAllActivities();
         res.json(activities);
     } catch (error) {
         logger.error(`Controller error; ACTIVITY GET /: ${error.message}`);
-        res.status(500).json({ message: 'An unexpected error occurred' });
+        next(error);
     }
 });
 
@@ -26,7 +26,7 @@ router.get('/', authenticateFirebaseToken, async (req, res) => {
  * @route GET /:activityId
  * @description returns a activity by the provided activity id
  */
-router.get('/:activityId', authenticateFirebaseToken, validateActivityId, handleValidationErrors, async (req, res) => {
+router.get('/:activityId', authenticateFirebaseToken, validateActivityId, handleValidationErrors, async (req, res, next) => {
     const activityId = req.params.activityId;
     try {
         const activity = await getActivityById(activityId);
@@ -37,7 +37,7 @@ router.get('/:activityId', authenticateFirebaseToken, validateActivityId, handle
         }
     } catch (error) {
         logger.error(`Controller error; ACTIVITY GET /:activityId: ${error.message}`);
-        res.status(500).json({ message: 'An unexpected error occurred' });
+        next(error);
     }
 });
 
@@ -46,14 +46,14 @@ router.get('/:activityId', authenticateFirebaseToken, validateActivityId, handle
  * @route POST /add-activity
  * @description creates a new activity
  */
-router.post('/add-activity', authenticateFirebaseToken, validateCreateActivity, handleValidationErrors, async (req, res) => {
+router.post('/add-activity', authenticateFirebaseToken, validateCreateActivity, handleValidationErrors, async (req, res, next) => {
     const { title } = req.body;
     try {
         const activityId = await createActivity(title);
         res.json({ message: 'Activity created successfully', activityId: activityId });
     } catch (error) {
         logger.error(`Controller error; ACTIVITY POST /add-activity: ${error.message}`);
-        res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 });
 
