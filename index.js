@@ -11,6 +11,7 @@ const errorHandler = require('./middleware/errorHandling/errorHandler');
 
 // Middleware setup
 //app.use(pinoHttp({ logger }));
+app.set('trust proxy', 1); 
 app.use(cors());
 app.use(bodyParser.json());
 app.use(apiLimiter);
