@@ -25,7 +25,7 @@ async function initializeFirebaseAdmin() {
     // Initialize Firebase Admin with the credentials
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccountKey),
-      storageBucket: process.env.FB_BUCKET // Keep storage bucket config here
+      storageBucket: process.env.FB_BUCKET
     });
 
     console.log('Firebase Admin initialized successfully.');
@@ -37,7 +37,7 @@ async function initializeFirebaseAdmin() {
   }
 }
 
-let firebaseAdminInstance; // Store the instance
+let firebaseAdminInstance;
 initializeFirebaseAdmin().then(adminInstance => {
     firebaseAdminInstance = adminInstance;
 }).catch(err => {
@@ -45,5 +45,5 @@ initializeFirebaseAdmin().then(adminInstance => {
 });
 
 module.exports = {
-    getFirebaseAdmin: () => firebaseAdminInstance // Function to access the initialized instance
+    getFirebaseAdmin: () => firebaseAdminInstance
 };

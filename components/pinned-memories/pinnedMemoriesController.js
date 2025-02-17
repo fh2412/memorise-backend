@@ -53,7 +53,10 @@ router.put('/:userId/favourite-memories/:memoryId', authenticateFirebaseToken, v
     const updatedMemoryId = req.body.memoryId;
 
     if (!userId || !memoryIdToUpdate || !updatedMemoryId) {
-        return res.status(400).json({ message: 'Missing required fields in request body or params' });
+        const error = new Error('Missing required fields in request body or params');
+        error.status = 400; // Bad Request
+        error.missingFieldsError = true; // Optional: Mark as a missing fields error
+        return next(error); // Pass the error to next()
     }
 
     try {
@@ -75,7 +78,11 @@ router.post('/:userId/favourite-memories', authenticateFirebaseToken, validateFi
     const memoryId = req.body.memoryId;
 
     if (!userId || !memoryId) {
-        return res.status(400).json({ message: 'Missing required fields in request body' });
+        const error = new Error('Missing required fields in request body');
+        error.status = 400; // Bad Request
+        error.missingFieldsError = true; // Optional: Mark as a missing fields error
+
+        return next(error); // Pass the error to next()
     }
 
     try {
@@ -98,7 +105,10 @@ router.delete('/:userId/favourite-memories/:memoryId', authenticateFirebaseToken
     const memoryIdToDelete = req.params.memoryId;
 
     if (!userId || !memoryIdToDelete) {
-        return res.status(400).json({ message: 'Missing required parameters' });
+        const error = new Error('Missing required fields in request body or params');
+        error.status = 400; // Bad Request
+        error.missingFieldsError = true; // Optional: Mark as a missing fields error
+        return next(error); // Pass the error to next()
     }
 
     try {

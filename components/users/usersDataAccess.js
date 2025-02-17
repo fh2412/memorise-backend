@@ -1,6 +1,6 @@
 const db = require('../../config/db');
 const logger = require('../../middleware/logger');
-const admin = require('../../config/firebaseAdmin');
+const { getFirebaseAdmin } = require('../../config/firebaseAdmin');
 
 
 const fetchAllUsers = async () => {
@@ -83,6 +83,8 @@ const searchUsersData = async (userId, searchTerm) => {
 };
 
 const createFirebaseUser = async (email, displayName, password) => {
+    const admin = getFirebaseAdmin();
+    logger.info(email);
     return await admin.auth().createUser({
         email,
         displayName,
@@ -91,6 +93,7 @@ const createFirebaseUser = async (email, displayName, password) => {
 };
 
 const generateCustomToken = async (uid) => {
+    const admin = getFirebaseAdmin();
     return await admin.auth().createCustomToken(uid);
 };
 

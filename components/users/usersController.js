@@ -115,7 +115,7 @@ router.get('/search/users/:userId', authenticateFirebaseToken, validateFirebaseU
  */
 router.post('/', validateUserEmail, validateUserPassword, handleValidationErrors, async (req, res) => {
     const { email, displayName, password } = req.body;
-
+    logger.info(req.body);
     try {
         const { firebaseUid, token } = await postCreateUser(email, displayName, password);
         res.status(201).json({

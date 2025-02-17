@@ -17,7 +17,6 @@ const validateUserEmail = [
     .withMessage('Email is required')
     .isEmail()
     .withMessage('Invalid email format')
-    .normalizeEmail()
 ];
 
 const validateUserPassword = [
