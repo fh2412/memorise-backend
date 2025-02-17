@@ -17,9 +17,11 @@ async function initializeFirebaseAdmin() {
       const name = `projects/${process.env.GCP_PROJECT_ID}/secrets/${process.env.FB_SERVICEACCOUNT_SECRET_NAME}/versions/latest`; // Use environment variables
       const [version] = await client.accessSecretVersion({name});
       serviceAccountKey = JSON.parse(version.payload.data.toString());
+      logger.info(serviceAccountKey);
     } else {
       logger.warn("Loading service account key locally (for local development)");
       serviceAccountKey = require(process.env.FB_SERVICEACCOUNT); // From file path
+      logger.info(serviceAccountKey);
     }
 
     // Initialize Firebase Admin with the credentials
