@@ -23,6 +23,8 @@ const authenticateFirebaseToken = async (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
+    logger.info("authHeader");
+    logger.info(authHeader);
 
     try {
         const admin = getFirebaseAdmin();
