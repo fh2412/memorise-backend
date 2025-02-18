@@ -54,4 +54,5 @@ jobs:
             GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }}
             FB_SERVICEACCOUNT_SECRET_NAME=${{ secrets.FB_SERVICEACCOUNT_SECRET_NAME }}
             FB_BUCKET=${{ secrets.FB_BUCKET }}
+            INSTANCE_CONNECTION_NAME=${{ secrets.INSTANCE_CONNECTION_NAME }}
             NODE_ENV=production
