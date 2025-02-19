@@ -6,8 +6,6 @@ const admin = require('firebase-admin');
 async function initializeFirebaseAdmin() {
   try {
     let serviceAccountKey;
-    logger.info(`NODE_ENV is: '${process.env.NODE_ENV}'`);
-    logger.info(process.env.NODE_ENV === "production" ? "MATCH" : "NO MATCH"); 
     if (process.env.NODE_ENV == "production") { // Check if in Cloud Run
       logger.info("Get the secret from Secret Manager (Cloud Run)");
 
@@ -17,11 +15,9 @@ async function initializeFirebaseAdmin() {
       const name = `projects/${process.env.GCP_PROJECT_ID}/secrets/${process.env.FB_SERVICEACCOUNT_SECRET_NAME}/versions/latest`; // Use environment variables
       const [version] = await client.accessSecretVersion({name});
       serviceAccountKey = JSON.parse(version.payload.data.toString());
-      logger.info(serviceAccountKey);
     } else {
       logger.warn("Loading service account key locally (for local development)");
       serviceAccountKey = require(process.env.FB_SERVICEACCOUNT); // From file path
-      logger.info(serviceAccountKey);
     }
 
     // Initialize Firebase Admin with the credentials
