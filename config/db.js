@@ -1,7 +1,7 @@
 require('dotenv').config();
 const mysql = require('mysql2');
 
-/*const dbConfig = {
+const dbConfig = {
   connectionLimit: 10,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
@@ -19,8 +19,8 @@ if (process.env.INSTANCE_CONNECTION_NAME) {
 
 const pool = mysql.createPool(dbConfig);
 
-module.exports = pool.promise();*/
-
+module.exports = pool.promise();
+/*
 
 const dbConfig = {
   connectionLimit: 10,
@@ -33,4 +33,4 @@ const dbConfig = {
 
 // Remove the socketPath logic unless needed elsewhere
 const pool = mysql.createPool(dbConfig);
-module.exports = pool.promise();
+module.exports = pool.promise();*/
