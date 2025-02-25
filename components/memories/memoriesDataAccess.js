@@ -68,7 +68,7 @@ const fetchAllMemoriesFromDB = async (userId) => {
     try {
         const [combinedRows] = await db.query(query, [userId, userId]);
         return combinedRows.map(memory => ({
-            memoryId: memory.memory_id,
+            memory_id: memory.memory_id,
             title: memory.title
         }));
     } catch (error) {
