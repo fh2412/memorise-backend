@@ -23,7 +23,7 @@ const memoriesRoutes = require('./components/memories/memoriesController');
 const friendsRoutes = require('./components/friends/friendsController');
 const memoryStatsRoutes = require('./components/memorystats/memoryStatsController');
 const locationRoutes = require('./components/locations/locationsController');
-//const firestoreRoutes = require('./components/firestore');
+const firestoreRoutes = require('./components/firestore');
 const pinnedMemoriesRoutes = require('./components/pinned-memories/pinnedMemoriesController');
 const companyRoutes = require('./components/companies/companiesController');
 const imageGalleryRoutes = require('./components/image-gallery/imageGalleryController');
@@ -34,7 +34,7 @@ app.use('/api/memories', memoriesRoutes); // Mount memories components at /api/m
 app.use('/api/friends', friendsRoutes); // Mount memories components at /api/memories
 app.use('/api/memorystats', memoryStatsRoutes);
 app.use('/api/locations', locationRoutes);
-//app.use('/api/firestore', firestoreRoutes);
+app.use('/api/firestore', firestoreRoutes);
 app.use('/api/pinned', pinnedMemoriesRoutes);
 app.use('/api/company', companyRoutes);
 app.use('/api/gallery', imageGalleryRoutes);

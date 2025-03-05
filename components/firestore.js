@@ -1,16 +1,24 @@
-/*const express = require('express');
-const { getFirebaseAdmin } = require('../config/firebaseAdmin');
+const express = require('express');
+const { getFirebaseAdmin, initializeFirebaseAdmin } = require('../config/firebaseAdmin');
 const router = express.Router();
 const archiver = require('archiver');
 const authenticateFirebaseToken = require('../middleware/authMiddleware');
 
 
-const admin = getFirebaseAdmin();
-const bucket = admin.storage().bucket();
+async function startApp() {
+  try {
+      await initializeFirebaseAdmin();
+  } catch (error) {
+      console.error('App initialization failed:', error);
+  }
+}
+
+startApp();
 
 router.get('/download-zip/:folder', authenticateFirebaseToken, async (req, res) => {
   const folderName = req.params.folder;
-
+  const admin = getFirebaseAdmin();
+  const bucket = admin.storage().bucket();
   try {
     // Get all files in the specified folder
     const [files] = await bucket.getFiles({ prefix: 'memories/' + folderName + '/' });
@@ -38,7 +46,7 @@ router.get('/download-zip/:folder', authenticateFirebaseToken, async (req, res) 
     console.error(error);
     res.status(500).send({ error: 'Failed to generate zip.' });
   }
-});*/
+});
 
 /*router.post('/delete-images', async (req, res) => {
   const imageUrls = req.body.urls;
@@ -68,4 +76,4 @@ router.get('/download-zip/:folder', authenticateFirebaseToken, async (req, res) 
   }
 });*/
 
-//module.exports = router;
+module.exports = router;
