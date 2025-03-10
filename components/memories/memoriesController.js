@@ -74,6 +74,7 @@ router.get('/allMemories/:userId', authenticateFirebaseToken, validateFirebaseUI
     try {
         const memories = await getAllMemories(userId);
         if (memories.length > 0) {
+            //logger.info(memories);
             res.json(memories);
         } else {
             res.status(200).json({ message: 'No memories found for this user.' });
