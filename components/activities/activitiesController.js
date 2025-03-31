@@ -3,8 +3,8 @@ const router = express.Router();
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const logger = require('../../middleware/logger');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
-const { createActivity, getActivityById, getAllActivities } = require('./activitiesService');
-const { validateActivityId, validateCreateActivity } = require('../../middleware/validation/validateActivity');
+const { createActivity, getActivityById, getAllActivities, createUserActivity, updateActivityWithFiles,finalizeActivity } = require('./activitiesService');
+const { validateActivityId, validateCreateActivity, validateUpdateActivity, validateUserCreateActivity } = require('../../middleware/validation/validateActivity');
 
 /**
  * GET all activities
@@ -53,6 +53,67 @@ router.post('/add-activity', authenticateFirebaseToken, validateCreateActivity, 
         res.json({ message: 'Activity created successfully', activityId: activityId });
     } catch (error) {
         logger.error(`Controller error; ACTIVITY POST /add-activity: ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * POST new activity
+ * @route POST /add-user-ctivity
+ * @description Creates a new activity with all details
+ */
+router.post('/add-user-activity', authenticateFirebaseToken, validateUserCreateActivity, handleValidationErrors, async (req, res) => {
+    const { title, description, groupSizeMin, groupSizeMax, indoor, commercialFlag, prize, location, websiteUrl, seasons, weathers } = req.body;
+    try {
+        const creatorId = req.user.uid;
+        const activityData = {
+            title, description, creatorId, groupSizeMin, groupSizeMax, indoorOutdoorFlag: indoor,
+            commercialFlag, prize, location, websiteUrl, seasons, weathers
+        };
+        const result = await createUserActivity(activityData);
+        res.json({
+            message: 'Activity created successfully',
+            id: result.activityId
+        });
+    } catch (error) {
+        logger.error(`Controller error; ACTIVITY POST /add-activity: ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * PUT update activity with files
+ * @route PUT /update-activity/:id
+ * @description Updates an activity with file URLs
+ */
+router.put('/update-activity/:id', authenticateFirebaseToken, validateUpdateActivity, handleValidationErrors, async (req, res) => {
+    const { id } = req.params;
+    const { titlePictureUrl, supportingDocUrls } = req.body;
+
+    try {
+        // Verify user owns this activity (could be middleware)
+        await updateActivityWithFiles(id, titlePictureUrl, supportingDocUrls);
+        res.json({ message: 'Activity updated with files successfully' });
+    } catch (error) {
+        logger.error(`Controller error; ACTIVITY PUT /update-activity/${id}: ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * POST finalize activity
+ * @route POST /finalize-activity/:id
+ * @description Finalizes activity creation (optional cleanup steps)
+ */
+router.post('/finalize-activity/:id', authenticateFirebaseToken, async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        // Verify user owns this activity (could be middleware)
+        await finalizeActivity(id);
+        res.json({ message: 'Activity finalized successfully' });
+    } catch (error) {
+        logger.error(`Controller error; ACTIVITY POST /finalize-activity/${id}: ${error.message}`);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
