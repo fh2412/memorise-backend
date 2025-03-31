@@ -45,8 +45,11 @@ const createUserActivity = async (activityData) => {
         
         // 1. If location provided, create it
         let locationId = null;
-        if (activityData.location) {
+        if (activityData.location.longitude !== 0 && activityData.location.latitude !== 0) {
             locationId = await addLocationToDatabase(activityData.location);
+        }
+        else{
+            locationId = 1;
         }
         
         // 2. Create activity

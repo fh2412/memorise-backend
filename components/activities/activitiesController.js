@@ -73,7 +73,7 @@ router.post('/add-user-activity', authenticateFirebaseToken, validateUserCreateA
         const result = await createUserActivity(activityData);
         res.json({
             message: 'Activity created successfully',
-            id: result.activityId
+            activityId: result.activityId
         });
     } catch (error) {
         logger.error(`Controller error; ACTIVITY POST /add-activity: ${error.message}`);
