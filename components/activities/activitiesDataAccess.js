@@ -59,7 +59,7 @@ const addUserActivityToDatabase = async (activity) => {
             website_url
         ) VALUES (?, ?, ?, NOW(), 1, ?, ?, ?, ?, ?, ?, ?)
     `;
-    
+
     try {
         const params = [
             activity.title,
@@ -73,7 +73,7 @@ const addUserActivityToDatabase = async (activity) => {
             activity.locationId || 1,
             activity.websiteUrl || null
         ];
-        
+
         const result = await db.query(query, params);
         return result[0].insertId;
     } catch (error) {
@@ -96,7 +96,7 @@ const addLocationToDatabase = async (location) => {
             locality
         ) VALUES (?, ?, ?, ?)
     `;
-    
+
     try {
         const params = [
             location.longitude || null,
@@ -104,7 +104,7 @@ const addLocationToDatabase = async (location) => {
             location.country || null,
             location.locality || null
         ];
-        
+
         const result = await db.query(query, params);
         return result[0].insertId;
     } catch (error) {
@@ -121,11 +121,11 @@ const addLocationToDatabase = async (location) => {
  */
 const addWeatherRelationsToDatabase = async (activityId, weathers) => {
     const query = `INSERT INTO has_weather (activity_id, weather_id) VALUES ?`;
-    
+
     try {
         // Format values for bulk insert
         const values = weathers.map(weatherId => [activityId, weatherId]);
-        
+
         await db.query(query, [values]);
     } catch (error) {
         logger.error(`Data Access error; Error adding weather relations (${query}): ${error.message}`);
@@ -141,11 +141,11 @@ const addWeatherRelationsToDatabase = async (activityId, weathers) => {
  */
 const addSeasonRelationsToDatabase = async (activityId, seasons) => {
     const query = `INSERT INTO has_season (activity_id, season_id) VALUES ?`;
-    
+
     try {
         // Format values for bulk insert
         const values = seasons.map(seasonId => [activityId, seasonId]);
-        
+
         await db.query(query, [values]);
     } catch (error) {
         logger.error(`Data Access error; Error adding season relations (${query}): ${error.message}`);
@@ -164,13 +164,13 @@ const updateActivityFiles = async (activityId, titleImageUrl) => {
     const query = `
         UPDATE activity 
         SET 
-            title_image_url = ?, 
+            title_image_url = ? 
         WHERE id = ?
     `;
-    
+
     try {
         await db.query(query, [
-            titleImageUrl || null, 
+            titleImageUrl || null,
             activityId
         ]);
     } catch (error) {
@@ -186,7 +186,7 @@ const updateActivityFiles = async (activityId, titleImageUrl) => {
  */
 const setActivityToActive = async (activityId) => {
     const query = `UPDATE activity SET active_flag = 1 WHERE id = ?`;
-    
+
     try {
         await db.query(query, [activityId]);
     } catch (error) {
