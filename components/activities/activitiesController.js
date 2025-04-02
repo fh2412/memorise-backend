@@ -88,11 +88,11 @@ router.post('/add-user-activity', authenticateFirebaseToken, validateUserCreateA
  */
 router.put('/update-activity/:id', authenticateFirebaseToken, validateUpdateActivity, handleValidationErrors, async (req, res) => {
     const { id } = req.params;
-    const { titlePictureUrl, supportingDocUrls } = req.body;
+    const { titlePictureUrl } = req.body;
 
     try {
         // Verify user owns this activity (could be middleware)
-        await updateActivityWithFiles(id, titlePictureUrl, supportingDocUrls);
+        await updateActivityWithFiles(id, titlePictureUrl);
         res.json({ message: 'Activity updated with files successfully' });
     } catch (error) {
         logger.error(`Controller error; ACTIVITY PUT /update-activity/${id}: ${error.message}`);

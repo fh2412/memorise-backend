@@ -160,19 +160,17 @@ const addSeasonRelationsToDatabase = async (activityId, seasons) => {
  * @param {string} storageUrl - JSON string containing supporting doc URLs
  * @returns {Promise<void>}
  */
-const updateActivityFiles = async (activityId, titleImageUrl, storageUrl) => {
+const updateActivityFiles = async (activityId, titleImageUrl) => {
     const query = `
         UPDATE activity 
         SET 
             title_image_url = ?, 
-            storage_url = ?
         WHERE id = ?
     `;
     
     try {
         await db.query(query, [
             titleImageUrl || null, 
-            storageUrl || null, 
             activityId
         ]);
     } catch (error) {

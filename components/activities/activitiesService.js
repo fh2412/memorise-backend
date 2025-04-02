@@ -97,14 +97,9 @@ const createUserActivity = async (activityData) => {
  * @param {string[]} supportingDocUrls - Array of supporting document URLs
  * @returns {Promise<void>}
  */
-const updateActivityWithFiles = async (activityId, titlePictureUrl, supportingDocUrls) => {
+const updateActivityWithFiles = async (activityId, titlePictureUrl) => {
     try {
-        // Store supporting doc URLs as JSON string if provided
-        const storageUrl = supportingDocUrls && supportingDocUrls.length > 0
-            ? JSON.stringify(supportingDocUrls)
-            : null;
-
-        await updateActivityFiles(activityId, titlePictureUrl, storageUrl);
+        await updateActivityFiles(activityId, titlePictureUrl);
     } catch (error) {
         logger.error(`Service error; Error updateActivityWithFiles: ${error.message}`);
         throw error;
