@@ -67,7 +67,7 @@ router.post('/add-user-activity', authenticateFirebaseToken, validateUserCreateA
     try {
         const creatorId = req.user.uid;
         const activityData = {
-            title, description, creatorId, groupSizeMin, groupSizeMax, indoorOutdoorFlag: indoor,
+            title, description, creatorId, groupSizeMin, groupSizeMax, isIndoorFlag: indoor,
             commercialFlag, prize, location, websiteUrl, seasons, weathers
         };
         const result = await createUserActivity(activityData);

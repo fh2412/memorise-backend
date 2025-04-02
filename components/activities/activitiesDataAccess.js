@@ -51,24 +51,26 @@ const addUserActivityToDatabase = async (activity) => {
             creation_date, 
             active_flag, 
             comercial_flag, 
-            group_size_min, 
+            group_size_min,
+            group_size_max,  
             indoor_outdoor_flag, 
             prize, 
             location_id,
             website_url
-        ) VALUES (?, ?, ?, NOW(), 0, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, NOW(), 1, ?, ?, ?, ?, ?, ?, ?)
     `;
     
     try {
         const params = [
             activity.title,
-            activity.description || null,
+            activity.description || 'no description added',
             activity.creatorId,
             activity.commercialFlag ? 1 : 0,
-            activity.groupSizeMin || null,
-            activity.indoorOutdoorFlag || null,
-            activity.prize || null,
-            activity.locationId || null,
+            activity.groupSizeMin || 1,
+            activity.groupSizeMax || 10,
+            activity.isIndoorFlag,
+            activity.prize || 0,
+            activity.locationId || 1,
             activity.websiteUrl || null
         ];
         
