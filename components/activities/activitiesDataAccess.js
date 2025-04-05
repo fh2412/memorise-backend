@@ -37,6 +37,17 @@ const fetchAllActivitiesFromDatabase = async () => {
     }
 };
 
+const fetchAllUserActivitiesFromDatabase = async (userId) => {
+    const query = 'SELECT * FROM activity WHERE creator_id = ?';
+
+    try {
+        const [rows] = await db.query(query, [userId]);
+        return rows.length > 0 ? rows : null;
+    } catch (error) {
+        logger.error(`Data Access error; Error selecting all activities from user (${query}): ${error.message}`);
+        throw error;
+    }
+};
 /**
  * Adds a new activity to the database
  * @param {Object} activity - Activity data
@@ -204,5 +215,6 @@ module.exports = {
     addWeatherRelationsToDatabase,
     addSeasonRelationsToDatabase,
     updateActivityFiles,
-    setActivityToActive
+    setActivityToActive,
+    fetchAllUserActivitiesFromDatabase
 }

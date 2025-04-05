@@ -3,7 +3,7 @@ const router = express.Router();
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const logger = require('../../middleware/logger');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
-const { createActivity, getActivityById, getAllActivities, createUserActivity, updateActivityWithFiles,finalizeActivity } = require('./activitiesService');
+const { createActivity, getActivityById, getAllActivities, createUserActivity, updateActivityWithFiles, finalizeActivity, getAllUserActivities } = require('./activitiesService');
 const { validateActivityId, validateCreateActivity, validateUpdateActivity, validateUserCreateActivity } = require('../../middleware/validation/validateActivity');
 
 /**
@@ -17,6 +17,23 @@ router.get('/', authenticateFirebaseToken, async (req, res) => {
         res.json(activities);
     } catch (error) {
         logger.error(`Controller error; ACTIVITY GET /: ${error.message}`);
+        res.status(500).json({ message: 'An unexpected error occurred' });
+    }
+});
+
+/**
+ * GET all activities of an User
+ * @route GET /userActivities/:userId
+ * @description returns an array of all activities in the memorise database from a user by ID
+ */
+router.get('/userActivities/:userId', authenticateFirebaseToken, async (req, res) => {
+    const userId = req.params.userId;
+
+    try {
+        const activities = await getAllUserActivities(userId);
+        res.json(activities);
+    } catch (error) {
+        logger.error(`Controller error; ACTIVITY GET /userActivities/:userId: ${error.message}`);
         res.status(500).json({ message: 'An unexpected error occurred' });
     }
 });

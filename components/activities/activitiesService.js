@@ -3,7 +3,8 @@ const { addActivityToDatabase, fetchActivityFromDatabase, fetchAllActivitiesFrom
     addWeatherRelationsToDatabase,
     addSeasonRelationsToDatabase,
     updateActivityFiles,
-    setActivityToActive } = require('./activitiesDataAccess')
+    setActivityToActive,
+    fetchAllUserActivitiesFromDatabase } = require('./activitiesDataAccess')
 const logger = require('../../middleware/logger');
 
 const createActivity = async (title) => {
@@ -29,6 +30,15 @@ const getAllActivities = async () => {
         return await fetchAllActivitiesFromDatabase();
     } catch (error) {
         logger.error(`Service error; Error getAllActivities: ${error.message}`);
+        throw error;
+    }
+};
+
+const getAllUserActivities = async (userId) => {
+    try {
+        return await fetchAllUserActivitiesFromDatabase(userId);
+    } catch (error) {
+        logger.error(`Service error; Error getAllUserActivities: ${error.message}`);
         throw error;
     }
 };
@@ -127,5 +137,6 @@ module.exports = {
     getAllActivities,
     createUserActivity,
     updateActivityWithFiles,
-    finalizeActivity
+    finalizeActivity,
+    getAllUserActivities
 };
