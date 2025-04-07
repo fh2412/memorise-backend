@@ -38,13 +38,25 @@ const fetchAllActivitiesFromDatabase = async () => {
 };
 
 const fetchAllUserActivitiesFromDatabase = async (userId) => {
-    const query = 'SELECT * FROM activity WHERE creator_id = ?';
+    const query = 'SELECT id, title, group_size_min AS groupSizeMin, group_size_max AS groupSizeMax, indoor_outdoor_flag AS indoor, prize AS costs, title_image_url AS firebaseUrl FROM activity WHERE creator_id = ?';
 
     try {
         const [rows] = await db.query(query, [userId]);
         return rows.length > 0 ? rows : null;
     } catch (error) {
         logger.error(`Data Access error; Error selecting all activities from user (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
+const fetchSuggestedActivitiesFromDatabase = async (userId) => {
+    const query = 'SELECT id, title, group_size_min AS groupSizeMin, group_size_max AS groupSizeMax, indoor_outdoor_flag AS indoor, prize AS costs, title_image_url AS firebaseUrl FROM activity WHERE creator_id = ?';
+
+    try {
+        const [rows] = await db.query(query, [userId]);
+        return rows.length > 0 ? rows : null;
+    } catch (error) {
+        logger.error(`Data Access error; Error selecting suggested activities for user (${query}): ${error.message}`);
         throw error;
     }
 };
@@ -216,5 +228,6 @@ module.exports = {
     addSeasonRelationsToDatabase,
     updateActivityFiles,
     setActivityToActive,
-    fetchAllUserActivitiesFromDatabase
+    fetchAllUserActivitiesFromDatabase,
+    fetchSuggestedActivitiesFromDatabase
 }

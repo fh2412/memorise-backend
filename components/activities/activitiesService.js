@@ -4,7 +4,8 @@ const { addActivityToDatabase, fetchActivityFromDatabase, fetchAllActivitiesFrom
     addSeasonRelationsToDatabase,
     updateActivityFiles,
     setActivityToActive,
-    fetchAllUserActivitiesFromDatabase } = require('./activitiesDataAccess')
+    fetchAllUserActivitiesFromDatabase,
+    fetchSuggestedActivitiesFromDatabase } = require('./activitiesDataAccess')
 const logger = require('../../middleware/logger');
 
 const createActivity = async (title) => {
@@ -43,6 +44,14 @@ const getAllUserActivities = async (userId) => {
     }
 };
 
+const getSuggestedActivity = async (userId) => {
+    try {
+        return await fetchSuggestedActivitiesFromDatabase(userId);
+    } catch (error) {
+        logger.error(`Service error; Error getSuggestedActivity: ${error.message}`);
+        throw error;
+    }
+};
 /**
  * Creates a new activity with all related data
  * @param {Object} activityData - All data needed for activity creation
@@ -138,5 +147,6 @@ module.exports = {
     createUserActivity,
     updateActivityWithFiles,
     finalizeActivity,
-    getAllUserActivities
+    getAllUserActivities,
+    getSuggestedActivity
 };

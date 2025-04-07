@@ -3,8 +3,10 @@ const router = express.Router();
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const logger = require('../../middleware/logger');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
-const { createActivity, getActivityById, getAllActivities, createUserActivity, updateActivityWithFiles, finalizeActivity, getAllUserActivities } = require('./activitiesService');
+const { createActivity, getActivityById, getAllActivities, createUserActivity, updateActivityWithFiles, finalizeActivity, getAllUserActivities, getSuggestedActivity } = require('./activitiesService');
 const { validateActivityId, validateCreateActivity, validateUpdateActivity, validateUserCreateActivity } = require('../../middleware/validation/validateActivity');
+const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
+
 
 /**
  * GET all activities
@@ -26,7 +28,7 @@ router.get('/', authenticateFirebaseToken, async (req, res) => {
  * @route GET /userActivities/:userId
  * @description returns an array of all activities in the memorise database from a user by ID
  */
-router.get('/userActivities/:userId', authenticateFirebaseToken, async (req, res) => {
+router.get('/userActivities/:userId', authenticateFirebaseToken, validateFirebaseUID, async (req, res) => {
     const userId = req.params.userId;
 
     try {
@@ -54,6 +56,26 @@ router.get('/:activityId', authenticateFirebaseToken, validateActivityId, handle
         }
     } catch (error) {
         logger.error(`Controller error; ACTIVITY GET /:activityId: ${error.message}`);
+        res.status(500).json({ message: 'An unexpected error occurred' });
+    }
+});
+
+/**
+ * GET get suggested activities
+ * @route GET /suggestedActivities/:userId
+ * @description returns a list of suggested activities for a user
+ */
+router.get('/suggestedActivities/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
+    const userId = req.params.userId;
+    try {
+        const activity = await getSuggestedActivity(userId);
+        if (activity) {
+            res.json(activity);
+        } else {
+            res.status(404).json({ message: 'No suggested Activities found for this User' });
+        }
+    } catch (error) {
+        logger.error(`Controller error; ACTIVITY GET /suggestedActivities/:userId ${error.message}`);
         res.status(500).json({ message: 'An unexpected error occurred' });
     }
 });
