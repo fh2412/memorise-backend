@@ -50,7 +50,7 @@ const fetchAllUserActivitiesFromDatabase = async (userId) => {
 };
 
 const fetchSuggestedActivitiesFromDatabase = async (userId) => {
-    const query = 'SELECT id, title, group_size_min AS groupSizeMin, group_size_max AS groupSizeMax, indoor_outdoor_flag AS indoor, prize AS costs, title_image_url AS firebaseUrl FROM activity WHERE creator_id = ?';
+    const query = 'SELECT id as activityId, title, group_size_min AS groupSizeMin, group_size_max AS groupSizeMax, indoor_outdoor_flag AS indoor, prize AS costs, title_image_url AS firebaseUrl, description FROM activity WHERE creator_id = ?';
 
     try {
         const [rows] = await db.query(query, [userId]);
@@ -58,6 +58,149 @@ const fetchSuggestedActivitiesFromDatabase = async (userId) => {
     } catch (error) {
         logger.error(`Data Access error; Error selecting suggested activities for user (${query}): ${error.message}`);
         throw error;
+    }
+};
+
+const fetchFilteredActivitiesFromDatabase = async (filter) => {
+    try {
+        let params = [];
+        let query = `
+            SELECT 
+                a.id, 
+                a.title, 
+                a.group_size_min AS groupSizeMin, 
+                a.group_size_max AS groupSizeMax, 
+                a.indoor_outdoor_flag AS indoor, 
+                a.prize AS costs, 
+                a.title_image_url AS firebaseUrl
+            FROM activity a
+            LEFT JOIN location l ON a.location_id = l.location_id
+        `;
+
+        // Build WHERE clauses based on filter parameters
+        let whereConditions = ['a.active_flag = 1']; // Only active activities
+
+        // Filter by name (using LIKE for partial matches)
+        if (filter.name.trim() !== '') {
+            whereConditions.push('a.title LIKE ?');
+            params.push(`%${filter.name}%`);
+        }
+
+        // Filter by group size (activities that can accommodate the requested size)
+        if (filter.groupSizeMin > 1) {
+            whereConditions.push('a.group_size_min <= ?');
+            params.push(filter.groupSizeMin);
+        }
+
+        if (filter.groupSizeMax < 16) {
+            whereConditions.push('a.group_size_max >= ?');
+            params.push(filter.groupSizeMax);
+        }
+
+        // Filter by price (assuming price is max willing to pay)
+        if (filter.price > 0) {
+            whereConditions.push('a.prize <= ?');
+            params.push(filter.price);
+        }
+
+        // Handle location and distance filtering
+        if (filter.location.trim() !== '') {
+            // If location is provided, join with location table and calculate distance
+            // Using Haversine formula to calculate distance in kilometers
+            const [lat, lng] = await geocodeLocation(filter.location);
+
+            if (lat && lng) {
+                query += `
+                    , (
+                        6371 * acos(
+                            cos(radians(?)) * 
+                            cos(radians(l.latitude)) * 
+                            cos(radians(l.longitude) - radians(?)) + 
+                            sin(radians(?)) * 
+                            sin(radians(l.latitude))
+                        )
+                    ) AS distance `;
+
+                params.push(lat, lng, lat);
+
+                whereConditions.push('distance <= ?');
+                params.push(filter.distance);
+            }
+        }
+
+        // Season filtering
+        if (filter.season.trim() !== '') {
+            query += `
+                LEFT JOIN has_season hs ON a.id = hs.activity_id
+                LEFT JOIN season s ON hs.season_id = s.id `;
+            whereConditions.push('s.name = ?');
+            params.push(filter.season);
+        }
+
+        // Weather filtering
+        if (filter.weather.trim() !== '') {
+            query += `
+                LEFT JOIN has_weather hw ON a.id = hw.activity_id
+                LEFT JOIN weather w ON hw.weather_id = w.id `;
+            whereConditions.push('w.name = ?');
+            params.push(filter.weather);
+        }
+
+        // Tag filtering
+        if (filter.tag.trim() !== '') {
+            query += `
+                LEFT JOIN has_tag ht ON a.id = ht.activity_id
+                LEFT JOIN tag t ON ht.tag_id = t.id `;
+            whereConditions.push('t.name = ?');
+            params.push(filter.tag);
+        }
+
+        // Add all WHERE conditions
+        if (whereConditions.length > 0) {
+            query += ' WHERE ' + whereConditions.join(' AND ');
+        }
+
+        // Group by to avoid duplicates due to joins
+        query += ' GROUP BY a.id';
+
+        // Order by distance if location is provided
+        if (filter.location.trim() !== '') {
+            query += ' ORDER BY distance ASC';
+        } else {
+            query += ' ORDER BY a.title ASC';
+        }
+
+        const [rows] = await db.query(query, params);
+        return rows.length > 0 ? rows : [];
+    } catch (error) {
+        logger.error(`Data Access error; Error fetching filtered activities: ${error.message}`);
+        throw error;
+    }
+};
+
+const geocodeLocation = async (locationString) => {
+    try {
+        // This would be replaced with your actual geocoding service
+        // e.g., Google Maps Geocoding API, Mapbox, or your own database lookup
+
+        // For example with a third-party geocoding service:
+        // const response = await geocodingService.geocode(locationString);
+        // return [response.lat, response.lng];
+
+        // Or with a database lookup:
+        const [locations] = await db.query(
+            'SELECT latitude, longitude FROM location WHERE locality LIKE ?',
+            [`%${locationString}%`]
+        );
+
+        if (locations.length > 0) {
+            return [locations[0].latitude, locations[0].longitude];
+        }
+
+        return [null, null];
+    } catch (error) {
+        logger.error(`Geocoding error for location "${locationString}": ${error.message}`);
+        return [null, null];
     }
 };
 /**
@@ -229,5 +372,6 @@ module.exports = {
     updateActivityFiles,
     setActivityToActive,
     fetchAllUserActivitiesFromDatabase,
-    fetchSuggestedActivitiesFromDatabase
+    fetchSuggestedActivitiesFromDatabase,
+    fetchFilteredActivitiesFromDatabase
 }

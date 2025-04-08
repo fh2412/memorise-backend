@@ -5,7 +5,8 @@ const { addActivityToDatabase, fetchActivityFromDatabase, fetchAllActivitiesFrom
     updateActivityFiles,
     setActivityToActive,
     fetchAllUserActivitiesFromDatabase,
-    fetchSuggestedActivitiesFromDatabase } = require('./activitiesDataAccess')
+    fetchSuggestedActivitiesFromDatabase,
+    fetchFilteredActivitiesFromDatabase } = require('./activitiesDataAccess')
 const logger = require('../../middleware/logger');
 
 const createActivity = async (title) => {
@@ -49,6 +50,15 @@ const getSuggestedActivity = async (userId) => {
         return await fetchSuggestedActivitiesFromDatabase(userId);
     } catch (error) {
         logger.error(`Service error; Error getSuggestedActivity: ${error.message}`);
+        throw error;
+    }
+};
+
+const getFilteredActivities = async (filter) => {
+    try {
+        return await fetchFilteredActivitiesFromDatabase(filter);
+    } catch (error) {
+        logger.error(`Service error; Error getFilteredActivities: ${error.message}`);
         throw error;
     }
 };
@@ -148,5 +158,6 @@ module.exports = {
     updateActivityWithFiles,
     finalizeActivity,
     getAllUserActivities,
-    getSuggestedActivity
+    getSuggestedActivity,
+    getFilteredActivities
 };

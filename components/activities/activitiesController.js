@@ -3,7 +3,7 @@ const router = express.Router();
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const logger = require('../../middleware/logger');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
-const { createActivity, getActivityById, getAllActivities, createUserActivity, updateActivityWithFiles, finalizeActivity, getAllUserActivities, getSuggestedActivity } = require('./activitiesService');
+const { createActivity, getActivityById, getAllActivities, createUserActivity, updateActivityWithFiles, finalizeActivity, getAllUserActivities, getSuggestedActivity, getFilteredActivities } = require('./activitiesService');
 const { validateActivityId, validateCreateActivity, validateUpdateActivity, validateUserCreateActivity } = require('../../middleware/validation/validateActivity');
 const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
 
@@ -76,6 +76,34 @@ router.get('/suggestedActivities/:userId', authenticateFirebaseToken, validateFi
         }
     } catch (error) {
         logger.error(`Controller error; ACTIVITY GET /suggestedActivities/:userId ${error.message}`);
+        res.status(500).json({ message: 'An unexpected error occurred' });
+    }
+});
+
+/**
+ * GET filtered activities
+ * @route GET /activities/filtered
+ * @description Returns activities filtered by multiple criteria including location, distance, tags, group size, price, season, weather, and name
+ */
+router.get('/filtered', authenticateFirebaseToken, async (req, res) => {
+    try {
+        // Extract filter parameters from query params
+        const filter = {
+            location: req.query.location || "",
+            distance: parseInt(req.query.distance) || 25,
+            tag: req.query.tag || "",
+            groupSizeMin: parseInt(req.query.groupSizeMin) || 1,
+            groupSizeMax: parseInt(req.query.groupSizeMax) || 16,
+            price: parseInt(req.query.price) || 0,
+            season: req.query.season || "",
+            weather: req.query.weather || "",
+            name: req.query.name || ""
+        };
+
+        const activities = await getFilteredActivities(filter);
+        res.json(activities);
+    } catch (error) {
+        logger.error(`Controller error; ACTIVITY GET /filtered: ${error.message}`);
         res.status(500).json({ message: 'An unexpected error occurred' });
     }
 });
