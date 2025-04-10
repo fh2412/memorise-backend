@@ -3,7 +3,7 @@ const router = express.Router();
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const logger = require('../../middleware/logger');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
-const { createActivity, getActivityById, getAllActivities, createUserActivity, updateActivityWithFiles, finalizeActivity, getAllUserActivities, getSuggestedActivity, getFilteredActivities } = require('./activitiesService');
+const { createActivity, getActivityDetails, getAllActivities, createUserActivity, updateActivityWithFiles, finalizeActivity, getAllUserActivities, getSuggestedActivity, getFilteredActivities } = require('./activitiesService');
 const { validateActivityId, validateCreateActivity, validateUpdateActivity, validateUserCreateActivity } = require('../../middleware/validation/validateActivity');
 const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
 
@@ -45,17 +45,19 @@ router.get('/userActivities/:userId', authenticateFirebaseToken, validateFirebas
  * @route GET /:activityId
  * @description returns a activity by the provided activity id
  */
-router.get('/:activityId', authenticateFirebaseToken, validateActivityId, handleValidationErrors, async (req, res) => {
+router.get('/details/:activityId', authenticateFirebaseToken, validateActivityId, handleValidationErrors, async (req, res) => {
     const activityId = req.params.activityId;
+
     try {
-        const activity = await getActivityById(activityId);
-        if (activity) {
-            res.json(activity);
-        } else {
-            res.status(404).json({ message: 'Activity not found' });
+        const activity = await getActivityDetails(activityId);
+        
+        if (!activity) {
+            return res.status(404).json({ message: 'Activity not found' });
         }
+        
+        res.json(activity);
     } catch (error) {
-        logger.error(`Controller error; ACTIVITY GET /:activityId: ${error.message}`);
+        logger.error(`Controller error; ACTIVITY GET /activities/:activityId: ${error.message}`);
         res.status(500).json({ message: 'An unexpected error occurred' });
     }
 });

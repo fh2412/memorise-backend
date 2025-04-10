@@ -13,14 +13,95 @@ const addActivityToDatabase = async (title) => {
     }
 };
 
-const fetchActivityFromDatabase = async (activityId) => {
-    const query = 'SELECT * FROM activity WHERE id = ?';
+const fetchActivityDetailsFromDatabase = async (activityId) => {
+    const query = `
+        SELECT 
+            id,
+            title,
+            description,
+            creator_id AS creatorId,
+            creation_date AS creationDate,
+            active_flag AS activeFlag,
+            comercial_flag AS commercialFlag,
+            group_size_min AS groupSizeMin,
+            group_size_max AS groupSizeMax,
+            indoor_outdoor_flag AS indoor,
+            prize AS costs,
+            location_id AS locationId,
+            base_memory_id AS baseMemoryId,
+            title_image_url AS firebaseUrl,
+            website_url AS websiteUrl
+        FROM activity
+        WHERE id = ?
+    `;
 
     try {
         const [rows] = await db.query(query, [activityId]);
         return rows.length > 0 ? rows[0] : null;
     } catch (error) {
-        logger.error(`Data Access error; Error selecting users comapny (${query}): ${error.message}`);
+        logger.error(`Data Access error; Error fetching activity details (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
+const fetchActivitySeasonsFromDatabase = async (activityId) => {
+    const query = `
+        SELECT 
+            s.season_id,
+            s.name
+        FROM has_season hs
+        JOIN season s ON hs.season_id = s.season_id
+        WHERE hs.activity_id = ?
+    `;
+
+    try {
+        const [rows] = await db.query(query, [activityId]);
+        return rows || [];
+    } catch (error) {
+        logger.error(`Data Access error; Error fetching activity seasons (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
+const fetchActivityWeatherFromDatabase = async (activityId) => {
+    const query = `
+        SELECT 
+            w.weather_id,
+            w.name,
+            w.icon_name
+        FROM has_weather hw
+        JOIN weather w ON hw.weather_id = w.weather_id
+        WHERE hw.activity_id = ?
+    `;
+
+    try {
+        const [rows] = await db.query(query, [activityId]);
+        return rows || [];
+    } catch (error) {
+        logger.error(`Data Access error; Error fetching activity weather (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
+const fetchActivityLocationFromDatabase = async (locationId) => {
+    if (!locationId) return null;
+
+    const query = `
+        SELECT 
+            location_id AS id,
+            longitude,
+            latitude,
+            country,
+            locality
+        FROM location
+        WHERE location_id = ?
+    `;
+
+    try {
+        const [rows] = await db.query(query, [locationId]);
+        return rows.length > 0 ? rows[0] : null;
+    } catch (error) {
+        logger.error(`Data Access error; Error fetching location details (${query}): ${error.message}`);
         throw error;
     }
 };
@@ -363,7 +444,10 @@ const setActivityToActive = async (activityId) => {
 
 module.exports = {
     addActivityToDatabase,
-    fetchActivityFromDatabase,
+    fetchActivityDetailsFromDatabase,
+    fetchActivitySeasonsFromDatabase,
+    fetchActivityWeatherFromDatabase,
+    fetchActivityLocationFromDatabase,
     fetchAllActivitiesFromDatabase,
     addUserActivityToDatabase,
     addLocationToDatabase,

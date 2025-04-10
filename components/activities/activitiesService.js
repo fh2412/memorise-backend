@@ -1,4 +1,4 @@
-const { addActivityToDatabase, fetchActivityFromDatabase, fetchAllActivitiesFromDatabase, addUserActivityToDatabase,
+const { addActivityToDatabase, fetchActivityDetailsFromDatabase, fetchActivitySeasonsFromDatabase, fetchActivityWeatherFromDatabase, fetchActivityLocationFromDatabase, fetchAllActivitiesFromDatabase, addUserActivityToDatabase,
     addLocationToDatabase,
     addWeatherRelationsToDatabase,
     addSeasonRelationsToDatabase,
@@ -18,11 +18,30 @@ const createActivity = async (title) => {
     }
 };
 
-const getActivityById = async (activityId) => {
+const getActivityDetails = async (activityId) => {
     try {
-        return await fetchActivityFromDatabase(activityId);
+        const activity = await fetchActivityDetailsFromDatabase(activityId);
+        
+        if (!activity) {
+            return null;
+        }
+        
+        // Fetch related data in parallel
+        const [seasons, weatherConditions, location] = await Promise.all([
+            fetchActivitySeasonsFromDatabase(activityId),
+            fetchActivityWeatherFromDatabase(activityId),
+            fetchActivityLocationFromDatabase(activity.locationId)
+        ]);
+        
+        // Combine all data
+        return {
+            ...activity,
+            seasons,
+            weatherConditions,
+            location
+        };
     } catch (error) {
-        logger.error(`Service error; Error getActivityById: ${error.message}`);
+        logger.error(`Service error; Error getActivityDetails for ID ${activityId}: ${error.message}`);
         throw error;
     }
 };
@@ -152,7 +171,7 @@ const finalizeActivity = async (activityId) => {
 
 module.exports = {
     createActivity,
-    getActivityById,
+    getActivityDetails,
     getAllActivities,
     createUserActivity,
     updateActivityWithFiles,
