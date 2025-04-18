@@ -303,8 +303,9 @@ const addUserActivityToDatabase = async (activity) => {
             indoor_outdoor_flag, 
             prize, 
             location_id,
-            website_url
-        ) VALUES (?, ?, ?, NOW(), 1, ?, ?, ?, ?, ?, ?, ?)
+            website_url,
+            base_memory_id
+        ) VALUES (?, ?, ?, NOW(), 1, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     try {
@@ -312,13 +313,14 @@ const addUserActivityToDatabase = async (activity) => {
             activity.title,
             activity.description || 'no description added',
             activity.creatorId,
-            activity.commercialFlag ? 1 : 0,
+            0,
             activity.groupSizeMin || 1,
             activity.groupSizeMax || 10,
             activity.isIndoorFlag,
             activity.prize || 0,
             activity.locationId || 1,
-            activity.websiteUrl || null
+            activity.websiteUrl || null,
+            activity.leadMemoryId || null,
         ];
 
         const result = await db.query(query, params);

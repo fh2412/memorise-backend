@@ -132,13 +132,14 @@ router.post('/add-activity', authenticateFirebaseToken, validateCreateActivity, 
  * @description Creates a new activity with all details
  */
 router.post('/add-user-activity', authenticateFirebaseToken, validateUserCreateActivity, handleValidationErrors, async (req, res) => {
-    const { title, description, groupSizeMin, groupSizeMax, indoor, commercialFlag, prize, location, websiteUrl, seasons, weathers } = req.body;
+    const { title, description, groupSizeMin, groupSizeMax, indoor, costs, location, websiteUrl, seasons, weathers, leadMemoryId } = req.body;
     try {
         const creatorId = req.user.uid;
         const activityData = {
             title, description, creatorId, groupSizeMin, groupSizeMax, isIndoorFlag: indoor,
-            commercialFlag, prize, location, websiteUrl, seasons, weathers
+            costs, location, websiteUrl, seasons, weathers, leadMemoryId
         };
+
         const result = await createUserActivity(activityData);
         res.json({
             message: 'Activity created successfully',

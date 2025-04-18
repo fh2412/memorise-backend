@@ -114,10 +114,10 @@ const createUserActivity = async (activityData) => {
             groupSizeMin: activityData.groupSizeMin,
             groupSizeMax: activityData.groupSizeMax,
             isIndoorFlag: activityData.isIndoorFlag,
-            commercialFlag: activityData.commercialFlag,
-            prize: activityData.prize,
+            prize: activityData.costs,
             locationId: locationId,
-            websiteUrl: activityData.websiteUrl
+            websiteUrl: activityData.websiteUrl,
+            leadMemoryId: activityData.leadMemoryId
         });
 
         // 3. Add weather relations if provided
