@@ -6,7 +6,9 @@ const { addActivityToDatabase, fetchActivityDetailsFromDatabase, fetchActivitySe
     setActivityToActive,
     fetchAllUserActivitiesFromDatabase,
     fetchSuggestedActivitiesFromDatabase,
-    fetchFilteredActivitiesFromDatabase } = require('./activitiesDataAccess')
+    fetchFilteredActivitiesFromDatabase,
+    fetchActivityCreatorNameFromDatabase,
+    fetchActivityMemoryCountFromDatabase } = require('./activitiesDataAccess')
 const logger = require('../../middleware/logger');
 
 const createActivity = async (title) => {
@@ -21,24 +23,42 @@ const createActivity = async (title) => {
 const getActivityDetails = async (activityId) => {
     try {
         const activity = await fetchActivityDetailsFromDatabase(activityId);
-        
+
         if (!activity) {
             return null;
         }
-        
+
         // Fetch related data in parallel
         const [seasons, weatherConditions, location] = await Promise.all([
             fetchActivitySeasonsFromDatabase(activityId),
             fetchActivityWeatherFromDatabase(activityId),
             fetchActivityLocationFromDatabase(activity.locationId)
         ]);
-        
+
         // Combine all data
         return {
             ...activity,
             seasons,
             weatherConditions,
             location
+        };
+    } catch (error) {
+        logger.error(`Service error; Error getActivityDetails for ID ${activityId}: ${error.message}`);
+        throw error;
+    }
+};
+
+const getActivityCreatorDetails = async (activityId, userId) => {
+    try {
+        const creator_name = await fetchActivityCreatorNameFromDatabase(userId);
+        const created_activities_count = await fetchActivityMemoryCountFromDatabase(activityId);
+        if (!creator_name) {
+            return null;
+        }
+
+        return {
+            ...creator_name,
+            created_activities_count,
         };
     } catch (error) {
         logger.error(`Service error; Error getActivityDetails for ID ${activityId}: ${error.message}`);
@@ -178,5 +198,6 @@ module.exports = {
     finalizeActivity,
     getAllUserActivities,
     getSuggestedActivity,
-    getFilteredActivities
+    getFilteredActivities,
+    getActivityCreatorDetails
 };

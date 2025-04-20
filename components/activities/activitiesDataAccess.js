@@ -44,6 +44,40 @@ const fetchActivityDetailsFromDatabase = async (activityId) => {
     }
 };
 
+const fetchActivityCreatorNameFromDatabase = async (userId) => {
+    const query = `
+        SELECT 
+            name as creator_name
+        FROM users
+        WHERE user_id = ?
+    `;
+
+    try {
+        const [rows] = await db.query(query, [userId]);
+        return rows.length > 0 ? rows[0] : null;
+    } catch (error) {
+        logger.error(`Data Access error; Error fetching activity creator name (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
+const fetchActivityMemoryCountFromDatabase = async (activityId) => {
+    const query = `
+        SELECT 
+            count(memory_id) as memories_count
+        FROM memories
+        WHERE activity_id = ?
+    `;
+
+    try {
+        const [rows] = await db.query(query, [activityId]);
+        return rows.length > 0 ? rows[0].memories_count : null;
+    } catch (error) {
+        logger.error(`Data Access error; Error fetching activity details (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
 const fetchActivitySeasonsFromDatabase = async (activityId) => {
     const query = `
         SELECT 
@@ -459,5 +493,7 @@ module.exports = {
     setActivityToActive,
     fetchAllUserActivitiesFromDatabase,
     fetchSuggestedActivitiesFromDatabase,
-    fetchFilteredActivitiesFromDatabase
+    fetchFilteredActivitiesFromDatabase,
+    fetchActivityCreatorNameFromDatabase,
+    fetchActivityMemoryCountFromDatabase
 }
