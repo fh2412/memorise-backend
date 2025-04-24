@@ -39,7 +39,7 @@ router.post('/bookmarks', authenticateFirebaseToken, async (req, res) => {
     }
 });
 
-router.delete('/bookmarks/:userId/:activityId', authenticateFirebaseToken, async (req, res) => {
+router.delete('/bookmarks/:userId/:activityId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
     const userId = req.params.userId;
     const activityId = req.params.activityId;
     try {
@@ -55,3 +55,5 @@ router.delete('/bookmarks/:userId/:activityId', authenticateFirebaseToken, async
         res.status(500).json({ message: 'An unexpected error occurred' });
     }
 });
+
+module.exports = router;
