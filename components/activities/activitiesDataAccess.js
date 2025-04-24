@@ -293,6 +293,18 @@ const fetchFilteredActivitiesFromDatabase = async (filter) => {
     }
 };
 
+const fetchUserActivityCountFromDatabase = async (userId) => {
+    const query = 'SELECT count(id) as activity_count FROM activity WHERE creator_id = ?';
+
+    try {
+        const [rows] = await db.query(query, [userId]);
+        return rows.length > 0 ? rows[0] : null;
+    } catch (error) {
+        logger.error(`Data Access error; Error selecting suggested activities for user (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
 const geocodeLocation = async (locationString) => {
     try {
         // This would be replaced with your actual geocoding service
@@ -436,6 +448,18 @@ const addSeasonRelationsToDatabase = async (activityId, seasons) => {
     }
 };
 
+const updateMemoriesActivityId= async (activityId, memoryId) => {
+    const query = `UPDATE memories SET activity_id = ? WHERE memories.memory_id = ?`;
+
+    try {
+        await db.query(query, [activityId, memoryId]);
+    } catch (error) {
+        logger.error(`Data Access error; Error updating memories activityId (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
+
 /**
  * Updates an activity with file URLs
  * @param {number} activityId - The ID of the activity
@@ -495,5 +519,7 @@ module.exports = {
     fetchSuggestedActivitiesFromDatabase,
     fetchFilteredActivitiesFromDatabase,
     fetchActivityCreatorNameFromDatabase,
-    fetchActivityMemoryCountFromDatabase
+    fetchActivityMemoryCountFromDatabase,
+    updateMemoriesActivityId,
+    fetchUserActivityCountFromDatabase
 }

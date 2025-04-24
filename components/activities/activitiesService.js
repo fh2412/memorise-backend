@@ -8,7 +8,9 @@ const { addActivityToDatabase, fetchActivityDetailsFromDatabase, fetchActivitySe
     fetchSuggestedActivitiesFromDatabase,
     fetchFilteredActivitiesFromDatabase,
     fetchActivityCreatorNameFromDatabase,
-    fetchActivityMemoryCountFromDatabase } = require('./activitiesDataAccess')
+    fetchActivityMemoryCountFromDatabase,
+    updateMemoriesActivityId,
+    fetchUserActivityCountFromDatabase } = require('./activitiesDataAccess')
 const logger = require('../../middleware/logger');
 
 const createActivity = async (title) => {
@@ -101,6 +103,29 @@ const getFilteredActivities = async (filter) => {
         throw error;
     }
 };
+
+const getUserActivityStats = async (userId) => {
+    try {
+        const activity_count = await fetchUserActivityCountFromDatabase(userId);
+
+        if (!activity_count) {
+            return null;
+        }
+
+        // Fetch related data in parallel
+        //const stars_count = await fetchUserActivityStarsCountFromDatabase(userId);
+        const stars_count = 0;
+        // Combine all data
+        return {
+            ...activity_count,
+            stars_count,
+        };
+    } catch (error) {
+        logger.error(`Service error; Error getActivityCount for userID ${userId}: ${error.message}`);
+        throw error;
+    }
+};
+
 /**
  * Creates a new activity with all related data
  * @param {Object} activityData - All data needed for activity creation
@@ -148,6 +173,11 @@ const createUserActivity = async (activityData) => {
         // 4. Add season relations if provided
         if (activityData.seasons && activityData.seasons.length > 0) {
             await addSeasonRelationsToDatabase(activityId, activityData.seasons);
+        }
+
+        // 5. Update Lead Memories Activity ID
+        if (activityData.leadMemoryId) {
+            await updateMemoriesActivityId(activityId, activityData.leadMemoryId);
         }
 
         // Return the created activity ID
@@ -199,5 +229,6 @@ module.exports = {
     getAllUserActivities,
     getSuggestedActivity,
     getFilteredActivities,
-    getActivityCreatorDetails
+    getActivityCreatorDetails,
+    getUserActivityStats
 };

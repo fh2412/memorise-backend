@@ -3,7 +3,7 @@ const router = express.Router();
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const logger = require('../../middleware/logger');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
-const { createActivity, getActivityDetails, getAllActivities, createUserActivity, updateActivityWithFiles, finalizeActivity, getAllUserActivities, getSuggestedActivity, getFilteredActivities, getActivityCreatorDetails } = require('./activitiesService');
+const { createActivity, getActivityDetails, getAllActivities, createUserActivity, updateActivityWithFiles, finalizeActivity, getAllUserActivities, getSuggestedActivity, getFilteredActivities, getActivityCreatorDetails, getUserActivityStats } = require('./activitiesService');
 const { validateActivityId, validateCreateActivity, validateUpdateActivity, validateUserCreateActivity } = require('../../middleware/validation/validateActivity');
 const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
 
@@ -129,6 +129,22 @@ router.get('/filtered', authenticateFirebaseToken, async (req, res) => {
         res.json(activities);
     } catch (error) {
         logger.error(`Controller error; ACTIVITY GET /filtered: ${error.message}`);
+        res.status(500).json({ message: 'An unexpected error occurred' });
+    }
+});
+
+/**
+ * GET users activities stats
+ * @route GET /activities/stats
+ * @description Returns number of activities created by a user and the total amount of stars received on them
+ */
+router.get('/stats/:userId', authenticateFirebaseToken, async (req, res) => {
+    const userId = req.params.userId;
+    try {
+        const stats = await getUserActivityStats(userId);
+        res.json(stats);
+    } catch (error) {
+        logger.error(`Controller error; ACTIVITY GET /stats: ${error.message}`);
         res.status(500).json({ message: 'An unexpected error occurred' });
     }
 });
