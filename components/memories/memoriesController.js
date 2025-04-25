@@ -26,7 +26,7 @@ const {
  * @route GET /createdMemories/:userId
  * @description Get all memories created by a user with location data
  */
-router.get('/createdMemories/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
+router.get('/createdMemories/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
     const userId = req.params.userId;
 
     try {
@@ -38,7 +38,7 @@ router.get('/createdMemories/:userId', authenticateFirebaseToken, validateFireba
         }
     } catch (error) {
         logger.error(`Controller error; CREATED MEMORIES GET /createdMemories/:userId ${error.message}`);
-        res.status(500).json({ message: 'An unexpected error occurred' });
+        next(error);
     }
 });
 
@@ -47,7 +47,7 @@ router.get('/createdMemories/:userId', authenticateFirebaseToken, validateFireba
  * @route GET /getAddedMemories/:userId
  * @description Get all memories that the user has added with location data
  */
-router.get('/getAddedMemories/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
+router.get('/getAddedMemories/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
     const userId = req.params.userId;
 
     try {
@@ -59,7 +59,7 @@ router.get('/getAddedMemories/:userId', authenticateFirebaseToken, validateFireb
         }
     } catch (error) {
         logger.error(`Controller error; ADDED MEMORIES GET /getAddedMemories/:userId ${error.message}`);
-        res.status(500).json({ message: 'An unexpected error occurred' });
+        next(error);
     }
 });
 
@@ -68,7 +68,7 @@ router.get('/getAddedMemories/:userId', authenticateFirebaseToken, validateFireb
  * @route GET /allMemories/:userId
  * @description Get all memories created and added by the user, with memoryId and title
  */
-router.get('/allMemories/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
+router.get('/allMemories/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
     const userId = req.params.userId;
 
     try {
@@ -80,7 +80,7 @@ router.get('/allMemories/:userId', authenticateFirebaseToken, validateFirebaseUI
         }
     } catch (error) {
         logger.error(`Controller error; ALL MEMORIES GET /allMemories/:userId ${error.message}`);
-        res.status(500).json({ message: 'An unexpected error occurred' });
+        next(error);
     }
 });
 
@@ -89,7 +89,7 @@ router.get('/allMemories/:userId', authenticateFirebaseToken, validateFirebaseUI
  * @route GET /:memoryId
  * @description Get details of a memory by its ID
  */
-router.get('/:memoryId', authenticateFirebaseToken, validateMemoryId, handleValidationErrors, async (req, res) => {
+router.get('/:memoryId', authenticateFirebaseToken, validateMemoryId, handleValidationErrors, async (req, res, next) => {
     const memoryId = req.params.memoryId;
 
     try {
@@ -101,7 +101,7 @@ router.get('/:memoryId', authenticateFirebaseToken, validateMemoryId, handleVali
         }
     } catch (error) {
         logger.error(`Controller error; MEMORY GET /:memoryId ${error.message}`);
-        res.status(500).json({ message: 'An unexpected error occurred' });
+        next(error);
     }
 });
 
@@ -110,7 +110,7 @@ router.get('/:memoryId', authenticateFirebaseToken, validateMemoryId, handleVali
  * @route GET /:memoryId/:userId/friends
  * @description Get all users (friends) added to a specific memory excluding the requesting user
  */
-router.get('/:memoryId/:userId/friends', authenticateFirebaseToken, validateMemoryId, validateFirebaseUID, handleValidationErrors, async (req, res) => {
+router.get('/:memoryId/:userId/friends', authenticateFirebaseToken, validateMemoryId, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
     const memoryId = req.params.memoryId;
     const userId = req.params.userId;
 
@@ -123,7 +123,7 @@ router.get('/:memoryId/:userId/friends', authenticateFirebaseToken, validateMemo
         }
     } catch (error) {
         logger.error(`Controller error; MEMORY GET /:memoryId/:userId/friends ${error.message}`);
-        res.status(500).json({ message: 'An unexpected error occurred' });
+        next(error);
     }
 });
 
@@ -132,7 +132,7 @@ router.get('/:memoryId/:userId/friends', authenticateFirebaseToken, validateMemo
  * @route GET /:memoryId/:userId/friends-with-shared-count
  * @description Get all friends with their shared memory count for a specific memory
  */
-router.get('/:memoryId/:userId/friends-with-shared-count', authenticateFirebaseToken, validateMemoryId, validateFirebaseUID, handleValidationErrors, async (req, res) => {
+router.get('/:memoryId/:userId/friends-with-shared-count', authenticateFirebaseToken, validateMemoryId, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
     const { memoryId, userId } = req.params;
 
     try {
@@ -140,7 +140,7 @@ router.get('/:memoryId/:userId/friends-with-shared-count', authenticateFirebaseT
         res.json(friendsWithSharedCount);
     } catch (error) {
         console.error('Controller error; GET /:memoryId/:userId/friends-with-shared-count', error.message);
-        res.status(500).json({ error: 'An error occurred while fetching data.' });
+        next(error);
     }
 });
 
@@ -149,7 +149,7 @@ router.get('/:memoryId/:userId/friends-with-shared-count', authenticateFirebaseT
  * @route POST /createMemory
  * @description Create a new memory and store it in the database
  */
-router.post('/createMemory', authenticateFirebaseToken, validateCreateMemory, handleValidationErrors, async (req, res) => {
+router.post('/createMemory', authenticateFirebaseToken, validateCreateMemory, handleValidationErrors, async (req, res, next) => {
     const { creator_id, title, description, firestore_bucket_url, location_id, memory_date, memory_end_date, title_pic, activity_id } = req.body;
 
     try {
@@ -159,7 +159,7 @@ router.post('/createMemory', authenticateFirebaseToken, validateCreateMemory, ha
         res.json({ message: 'Memory created successfully', memoryId });
     } catch (error) {
         logger.error(`Controller error; CREATE MEMORY POST /createMemory ${error.message}`);
-        res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 });
 
@@ -168,7 +168,7 @@ router.post('/createMemory', authenticateFirebaseToken, validateCreateMemory, ha
  * @route POST /addFriendsToMemory
  * @description Add friends to a memory by their emails
  */
-router.post('/addFriendsToMemory', authenticateFirebaseToken, validateAddFriendsToMemory, handleValidationErrors, async (req, res) => {
+router.post('/addFriendsToMemory', authenticateFirebaseToken, validateAddFriendsToMemory, handleValidationErrors, async (req, res, next) => {
     const { emails, memoryId } = req.body;
 
     try {
@@ -176,7 +176,7 @@ router.post('/addFriendsToMemory', authenticateFirebaseToken, validateAddFriends
         res.json({ success: true });
     } catch (error) {
         logger.error(`Controller error; ADD FRIENDS POST /addFriendsToMemory ${error.message}`);
-        res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 });
 
@@ -185,7 +185,7 @@ router.post('/addFriendsToMemory', authenticateFirebaseToken, validateAddFriends
  * @route PUT /:memoryId
  * @description Update memory details for a specific memory
  */
-router.put('/:memoryId', authenticateFirebaseToken, validateUpdateMemory, handleValidationErrors, async (req, res) => {
+router.put('/:memoryId', authenticateFirebaseToken, validateUpdateMemory, handleValidationErrors, async (req, res, next) => {
     const memoryId = req.params.memoryId;
     const { title, description, memory_date, memory_end_date } = req.body;
 
@@ -199,7 +199,7 @@ router.put('/:memoryId', authenticateFirebaseToken, validateUpdateMemory, handle
         }
     } catch (error) {
         logger.error(`Controller error; UPDATE PUT /:memoryId ${error.message}`);
-        res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 });
 
@@ -208,7 +208,7 @@ router.put('/:memoryId', authenticateFirebaseToken, validateUpdateMemory, handle
  * @route PUT /picturecount/:memoryId
  * @description Update the picture count for a specific memory
  */
-router.put('/picturecount/:memoryId', authenticateFirebaseToken, validateUpdatePictureCount, handleValidationErrors, async (req, res) => {
+router.put('/picturecount/:memoryId', authenticateFirebaseToken, validateUpdatePictureCount, handleValidationErrors, async (req, res, next) => {
     const memoryId = req.params.memoryId;
     const pictureCount = req.body.picture_count;
 
@@ -222,7 +222,7 @@ router.put('/picturecount/:memoryId', authenticateFirebaseToken, validateUpdateP
         }
     } catch (error) {
         logger.error(`Controller error; UPDATE PUT /picturecount/:memoryId ${error.message}`);
-        res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 });
 
@@ -231,7 +231,7 @@ router.put('/picturecount/:memoryId', authenticateFirebaseToken, validateUpdateP
  * @route PUT /updateMemoryLocation/:memoryId
  * @description Update the location ID for a specific memory
  */
-router.put('/updateMemoryLocation/:memoryId', authenticateFirebaseToken, validateUpdateMemoryLocation, handleValidationErrors, async (req, res) => {
+router.put('/updateMemoryLocation/:memoryId', authenticateFirebaseToken, validateUpdateMemoryLocation, handleValidationErrors, async (req, res, next) => {
     const memoryId = req.params.memoryId;
     const locationId = req.body.locationId;
 
@@ -245,7 +245,7 @@ router.put('/updateMemoryLocation/:memoryId', authenticateFirebaseToken, validat
         }
     } catch (error) {
         logger.error(`Controller error; UPDATE PUT /updateMemoryLocation/:memoryId ${error.message}`);
-        res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 });
 
@@ -254,7 +254,7 @@ router.put('/updateMemoryLocation/:memoryId', authenticateFirebaseToken, validat
  * @route PUT /updateTitlePic/:imageId
  * @description Update the title picture for a specific memory
  */
-router.put('/updateTitlePic/:imageId', authenticateFirebaseToken, validateUpdateTitlePic, handleValidationErrors, async (req, res) => {
+router.put('/updateTitlePic/:imageId', authenticateFirebaseToken, validateUpdateTitlePic, handleValidationErrors, async (req, res, next) => {
     const imageId = req.params.imageId;
     const imageUrl = req.body.imageUrl;
 
@@ -268,7 +268,7 @@ router.put('/updateTitlePic/:imageId', authenticateFirebaseToken, validateUpdate
         }
     } catch (error) {
         logger.error(`Controller error; UPDATE PUT /updateTitlePic/:imageId ${error.message}`);
-        res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 });
 
@@ -277,7 +277,7 @@ router.put('/updateTitlePic/:imageId', authenticateFirebaseToken, validateUpdate
  * @route DELETE /:memoryId
  * @description Deletes a memory and all associated friends
  */
-router.delete('/:memoryId', authenticateFirebaseToken, validateMemoryId, handleValidationErrors, async (req, res) => {
+router.delete('/:memoryId', authenticateFirebaseToken, validateMemoryId, handleValidationErrors, async (req, res, next) => {
     const memoryId = req.params.memoryId;
 
     try {
@@ -290,7 +290,7 @@ router.delete('/:memoryId', authenticateFirebaseToken, validateMemoryId, handleV
         }
     } catch (error) {
         logger.error(`Controller error; DELETE /:memoryId ${error.message}`);
-        res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 });
 
@@ -299,7 +299,7 @@ router.delete('/:memoryId', authenticateFirebaseToken, validateMemoryId, handleV
  * @route DELETE /:memoryId/:userId
  * @description Deletes a friend from the specified memory
  */
-router.delete('/:memoryId/:userId', authenticateFirebaseToken, validateMemoryId, validateFirebaseUID, handleValidationErrors, async (req, res) => {
+router.delete('/:memoryId/:userId', authenticateFirebaseToken, validateMemoryId, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
     const { memoryId, userId } = req.params;
 
     try {
@@ -307,7 +307,7 @@ router.delete('/:memoryId/:userId', authenticateFirebaseToken, validateMemoryId,
         res.json({ message: 'Friend removed successfully from Memory' });
     } catch (error) {
         logger.error(`Controller error; DELETE /:memoryId/:userId ${error.message}`);
-        res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 });
 

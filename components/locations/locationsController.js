@@ -11,7 +11,7 @@ const { getLocationByIdService, createLocationService, updateLocationService } =
  * @route GET /:locationId
  * @description get a location by its id
  */
-router.get('/:locationId', authenticateFirebaseToken, validateLocationId, handleValidationErrors, async (req, res) => {
+router.get('/:locationId', authenticateFirebaseToken, validateLocationId, handleValidationErrors, async (req, res, next) => {
     const locId = req.params.locationId;
 
     try {
@@ -23,7 +23,7 @@ router.get('/:locationId', authenticateFirebaseToken, validateLocationId, handle
         }
     } catch (error) {
         logger.error(`Controller error; LOCATION GET /:locationId: ${error.message}`);
-        res.status(500).json({ message: 'An unexpected error occurred' });
+        next(error);
     }
 });
 
@@ -32,7 +32,7 @@ router.get('/:locationId', authenticateFirebaseToken, validateLocationId, handle
 * @route POST /createLocation
 * @description creates a new location in the database
 */
-router.post('/createLocation', authenticateFirebaseToken, validateCreateLocation, handleValidationErrors, async (req, res) => {
+router.post('/createLocation', authenticateFirebaseToken, validateCreateLocation, handleValidationErrors, async (req, res, next) => {
     const { lng, lat, l_country, l_city } = req.body;
 
     try {
@@ -40,7 +40,7 @@ router.post('/createLocation', authenticateFirebaseToken, validateCreateLocation
         res.json({ message: 'Location created successfully', locationId: locationId });
     } catch (error) {
         logger.error(`Controller error; LOCATION POST /createLocation: ${error.message}`);
-        res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 });
 
@@ -49,7 +49,7 @@ router.post('/createLocation', authenticateFirebaseToken, validateCreateLocation
 * @route PUT /updateLocation/:locationId
 * @description creates a new location in the database
 */
-router.put('/updateLocation/:locationId', authenticateFirebaseToken, validateLocationId, validateCreateLocation, handleValidationErrors, async (req, res) => {
+router.put('/updateLocation/:locationId', authenticateFirebaseToken, validateLocationId, validateCreateLocation, handleValidationErrors, async (req, res, next) => {
     const locationId = req.params.locationId;
     const { lng, lat, l_country, l_city } = req.body;
 
@@ -63,7 +63,7 @@ router.put('/updateLocation/:locationId', authenticateFirebaseToken, validateLoc
         res.json({ message: 'Location updated successfully' });
     } catch (error) {
         logger.error(`Controller error; LOCATION PUT /updateLocation/:locationId: ${error.message}`);
-        res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 });
 

@@ -15,7 +15,7 @@ const handleValidationErrors = require('../../middleware/validationMiddleware');
  * @route GET /:userId
  * @description gets all the friends of a user by id
  */
-router.get('/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
+router.get('/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
     const userId = req.params.userId;
 
     try {
@@ -23,7 +23,7 @@ router.get('/:userId', authenticateFirebaseToken, validateFirebaseUID, handleVal
         res.json(friends);
     } catch (error) {
         logger.error(`Controller error; FRIENDS GET /:userId: ${error.message}`);
-        res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 });
 
@@ -32,7 +32,7 @@ router.get('/:userId', authenticateFirebaseToken, validateFirebaseUID, handleVal
  * @route GET /status/:userId1/:userId2
  * @description returns the status of friends between two users
  */
-router.get('/status/:userId1/:userId2', authenticateFirebaseToken, validateFriendsStatusUID, handleValidationErrors, async (req, res) => {
+router.get('/status/:userId1/:userId2', authenticateFirebaseToken, validateFriendsStatusUID, handleValidationErrors, async (req, res, next) => {
     const { userId1, userId2 } = req.params;
 
     try {
@@ -40,7 +40,7 @@ router.get('/status/:userId1/:userId2', authenticateFirebaseToken, validateFrien
         res.json(status);
     } catch (error) {
         logger.error(`Controller error; FRIENDS GET /status/:userId1/:userId2: ${error.message}`);
-        res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 });
 
@@ -49,7 +49,7 @@ router.get('/status/:userId1/:userId2', authenticateFirebaseToken, validateFrien
  * @route GET /missingMemory/:memoryId/:userId
  * @description gets all the friends missing in a certain memory to make suggestions for adding friends to memory
  */
-router.get('/missingMemory/:memoryId/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, validateMemoryId, async (req, res) => {
+router.get('/missingMemory/:memoryId/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, validateMemoryId, async (req, res, next) => {
     const { userId, memoryId } = req.params;
 
     try {
@@ -57,7 +57,7 @@ router.get('/missingMemory/:memoryId/:userId', authenticateFirebaseToken, valida
         res.json(missingMemoryFriends);
     } catch (error) {
         logger.error(`Controller error; FRIENDS GET /missingMemory/:memoryId/:userId: ${error.message}`);
-        res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 });
 
@@ -66,7 +66,7 @@ router.get('/missingMemory/:memoryId/:userId', authenticateFirebaseToken, valida
  * @route GET /pending/:userId
  * @description gets all the pending friend request a user has by id
  */
-router.get('/pending/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
+router.get('/pending/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
     const userId = req.params.userId;
 
     try {
@@ -74,7 +74,7 @@ router.get('/pending/:userId', authenticateFirebaseToken, validateFirebaseUID, h
         res.json(pendingFriends);
     } catch (error) {
         logger.error(`Controller error; FRIENDS GET /pending/:userId: ${error.message}`);
-        res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 });
 
@@ -83,7 +83,7 @@ router.get('/pending/:userId', authenticateFirebaseToken, validateFirebaseUID, h
  * @route GET /ingoing/:userId
  * @description gets all the ingoing friend request a user has by id
  */
-router.get('/ingoing/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
+router.get('/ingoing/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
     const userId = req.params.userId;
 
     try {
@@ -91,7 +91,7 @@ router.get('/ingoing/:userId', authenticateFirebaseToken, validateFirebaseUID, h
         res.json(ingoingRequests);
     } catch (error) {
         logger.error(`Controller error; FRIENDS GET /ingoing/:userId: ${error.message}`);
-        res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 });
 
@@ -100,7 +100,7 @@ router.get('/ingoing/:userId', authenticateFirebaseToken, validateFirebaseUID, h
  * @route GET /friend-suggestions/:userId
  * @description gets suggestions for new friends by user id
  */
-router.get('/friend-suggestions/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
+router.get('/friend-suggestions/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
     const userId = req.params.userId;
 
     try {
@@ -108,7 +108,7 @@ router.get('/friend-suggestions/:userId', authenticateFirebaseToken, validateFir
         res.json(suggestions);
     } catch (error) {
         logger.error(`Controller error; FRIENDS GET /friend-suggestions/:userId: ${error.message}`);
-        res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 });
 
@@ -117,7 +117,7 @@ router.get('/friend-suggestions/:userId', authenticateFirebaseToken, validateFir
  * @route POST /send_request
  * @description inserts a database entry for a sent request from uid1 to uid2
  */
-router.post('/send_request', authenticateFirebaseToken, validateFriendsUID, handleValidationErrors, async (req, res) => {
+router.post('/send_request', authenticateFirebaseToken, validateFriendsUID, handleValidationErrors, async (req, res, next) => {
     const { senderId, receiverId } = req.body;
 
     try {
@@ -125,7 +125,7 @@ router.post('/send_request', authenticateFirebaseToken, validateFriendsUID, hand
         res.json({ message: 'Friendship request sent successfully' });
     } catch (error) {
         logger.error(`Controller error; FRIENDS POST /send_request: ${error.message}`);
-        res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 });
 
@@ -134,7 +134,7 @@ router.post('/send_request', authenticateFirebaseToken, validateFriendsUID, hand
  * @route POST /add_friend
  * @description inserts a database entry for an accepted request from uid1 to uid2
  */
-router.post('/add_friend', authenticateFirebaseToken, validateFriendsUID, handleValidationErrors, async (req, res) => {
+router.post('/add_friend', authenticateFirebaseToken, validateFriendsUID, handleValidationErrors, async (req, res, next) => {
     const { senderId, receiverId } = req.body;
 
     try {
@@ -142,7 +142,7 @@ router.post('/add_friend', authenticateFirebaseToken, validateFriendsUID, handle
         res.json({ message: 'Friend added successfully' });
     } catch (error) {
         logger.error(`Controller error; FRIENDS POST /add_friend: ${error.message}`);
-        res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 });
 
@@ -151,7 +151,7 @@ router.post('/add_friend', authenticateFirebaseToken, validateFriendsUID, handle
  * @route PUT /accept_request/:userId1/:userId2
  * @description inserts a database entry for an accepted request from uid1 to uid2
  */
-router.put('/accept_request/:userId1/:userId2', authenticateFirebaseToken, validateStatsUID, handleValidationErrors, async (req, res) => {
+router.put('/accept_request/:userId1/:userId2', authenticateFirebaseToken, validateStatsUID, handleValidationErrors, async (req, res, next) => {
     const { userId1, userId2 } = req.params;
 
     try {
@@ -159,7 +159,7 @@ router.put('/accept_request/:userId1/:userId2', authenticateFirebaseToken, valid
         res.json({ message: 'Friendship request accepted successfully' });
     } catch (error) {
         logger.error(`Controller error; FRIENDS POST /accept_request/:userId1/:userId2: ${error.message}`);
-        res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 });
 
@@ -168,7 +168,7 @@ router.put('/accept_request/:userId1/:userId2', authenticateFirebaseToken, valid
  * @route DELETE /remove_friend/:userId1/:userId2
  * @description inserts a database entry for an accepted request from uid1 to uid2
  */
-router.delete('/remove_friend/:userId1/:userId2', authenticateFirebaseToken, async (req, res) => {
+router.delete('/remove_friend/:userId1/:userId2', authenticateFirebaseToken, async (req, res, next) => {
     const userId1 = req.params.userId1;
     const userId2 = req.params.userId2;
 
@@ -177,7 +177,7 @@ router.delete('/remove_friend/:userId1/:userId2', authenticateFirebaseToken, asy
         res.json(result);
     } catch (error) {
         logger.error(`Controller error; FRIENDS DELETE /remove_friend/:userId1/:userId2 ${error.message}`);
-        res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 });
 

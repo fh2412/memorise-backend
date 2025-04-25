@@ -22,7 +22,12 @@ const handleValidationErrors = (req, res, next) => {
       params: req.params,
       query: req.query,
     });
-    return res.status(400).json({ errors: errors.array() });
+
+    const error = new Error('Validation failed');
+    error.status = 400;
+    error.errors = errorMessages;
+    error.validationError = true;
+    return next(error); // Key change: Pass the error to next()
   }
   next();
 };
