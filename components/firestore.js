@@ -1,16 +1,26 @@
-/*const express = require('express');
-const { getFirebaseAdmin } = require('../config/firebaseAdmin');
+const express = require('express');
+const axios = require('axios');
+const { getFirebaseAdmin, initializeFirebaseAdmin } = require('../config/firebaseAdmin');
 const router = express.Router();
+const logger = require('../middleware/logger');
 const archiver = require('archiver');
 const authenticateFirebaseToken = require('../middleware/authMiddleware');
 
 
-const admin = getFirebaseAdmin();
-const bucket = admin.storage().bucket();
+async function startApp() {
+  try {
+    await initializeFirebaseAdmin();
+  } catch (error) {
+    logger.error('App initialization failed:', error);
+  }
+}
+
+startApp();
 
 router.get('/download-zip/:folder', authenticateFirebaseToken, async (req, res) => {
   const folderName = req.params.folder;
-
+  const admin = getFirebaseAdmin();
+  const bucket = admin.storage().bucket();
   try {
     // Get all files in the specified folder
     const [files] = await bucket.getFiles({ prefix: 'memories/' + folderName + '/' });
@@ -35,37 +45,81 @@ router.get('/download-zip/:folder', authenticateFirebaseToken, async (req, res) 
     // Finalize the archive
     await archive.finalize();
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).send({ error: 'Failed to generate zip.' });
   }
-});*/
+});
 
-/*router.post('/delete-images', async (req, res) => {
-  const imageUrls = req.body.urls;
-
+router.post('/download-selected-zip', authenticateFirebaseToken, async (req, res) => {
   try {
-    const deletionPromises = imageUrls.map(async (imageUrl) => {
-      const bucketName = imageUrl.split('/b/')[1].split('/')[0];
-      const filePath = imageUrl.split('?')[0].split('/o/')[1];
-      const bucket = storage.bucket(bucketName);
-      const file = bucket.file(filePath);
+    // Expect an array of image download URLs in the request body
+    const { imageUrls } = req.body;
 
-      await file.delete()
-      .then(() => {
-           console.log('Image deleted successfully');
-      })
-      .catch((error) => {
-          console.error('Error deleting image:', error);
-      });
+    // Set the content type and header for zip download
+    res.contentType('application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename=downloaded_images.zip');
+
+    // Create an archiver instance
+    const archive = archiver('zip', {
+      zlib: { level: 9 } // Sets the compression level
     });
 
-    await Promise.all(deletionPromises); // Wait for all deletions to complete
+    // Pipe archive to the response
+    archive.pipe(res);
 
-    res.json({ message: 'Images deleted successfully' });
+    // Download and add images to the archive
+    const downloadPromises = imageUrls.map(async (url, index) => {
+      try {
+        // Download the image
+        const response = await axios({
+          method: 'get',
+          url: url.url,
+          responseType: 'arraybuffer'
+        });
+
+        // Determine file extension
+        const contentType = response.headers['content-type'];
+        const fileExtension = getFileExtension(contentType);
+
+        // Append the image to the archive
+        archive.append(response.data, { 
+          name: `image_${index + 1}${fileExtension}`
+        });
+      } catch (downloadError) {
+        console.error(`Error downloading image from ${url.url}:`, downloadError);
+      }
+    });
+
+    // Wait for all download promises to resolve
+    await Promise.all(downloadPromises);
+
+    // Finalize the archive
+    await archive.finalize();
   } catch (error) {
-    console.error('Error deleting images:', error);
-    res.status(500).json({ message: 'Error deleting images' });
+    console.error('Error in image download route:', error);
+    res.status(500).json({ 
+      error: 'Failed to download images', 
+      details: error.message 
+    });
   }
-});*/
+});
 
-//module.exports = router;
+// Helper function to get file extension from content type
+function getFileExtension(contentType) {
+  switch (contentType) {
+    case 'image/jpeg':
+      return '.jpg';
+    case 'image/png':
+      return '.png';
+    case 'image/gif':
+      return '.gif';
+    case 'image/webp':
+      return '.webp';
+    case 'image/svg+xml':
+      return '.svg';
+    default:
+      return '.jpg'; // Default to .jpg if unknown
+  }
+}
+
+module.exports = router;
