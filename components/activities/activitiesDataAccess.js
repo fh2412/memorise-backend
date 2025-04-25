@@ -153,7 +153,7 @@ const fetchAllActivitiesFromDatabase = async () => {
 };
 
 const fetchAllUserActivitiesFromDatabase = async (userId) => {
-    const query = 'SELECT id, title, group_size_min AS groupSizeMin, group_size_max AS groupSizeMax, indoor_outdoor_flag AS indoor, prize AS costs, title_image_url AS firebaseUrl FROM activity WHERE creator_id = ?';
+    const query = 'SELECT id as activityId, title, group_size_min AS groupSizeMin, group_size_max AS groupSizeMax, indoor_outdoor_flag AS indoor, prize AS costs, title_image_url AS firebaseUrl FROM activity WHERE creator_id = ?';
 
     try {
         const [rows] = await db.query(query, [userId]);
