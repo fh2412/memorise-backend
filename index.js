@@ -29,6 +29,8 @@ const companyRoutes = require('./components/companies/companiesController');
 const imageGalleryRoutes = require('./components/image-gallery/imageGalleryController');
 const activityRoutes = require('./components/activities/activitiesController');
 const bookmarkingRoutes = require('./components/activity_bookmarking/bookmarkingController');
+const feedbackRoutes = require('./components/feedback');
+
 
 app.use('/api/users', usersRoutes); // Mount users components at /api/users
 app.use('/api/memories', memoriesRoutes); // Mount memories components at /api/memories
@@ -41,6 +43,7 @@ app.use('/api/company', companyRoutes);
 app.use('/api/gallery', imageGalleryRoutes);
 app.use('/api/activity', activityRoutes);
 app.use('/api/bookmarking', bookmarkingRoutes);
+app.use('api/feedback', feedbackRoutes);
 
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
