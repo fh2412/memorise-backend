@@ -5,7 +5,9 @@ const { Octokit } = require('octokit');
 require('dotenv').config();
 
 // Initialize Octokit with your GitHub Personal Access Token
-
+const octokit = new Octokit({
+  //process.env.GITHUB_TOKEN
+});
 
 // GitHub repository details
 const GITHUB_OWNER = 'fh2412';//process.env.GITHUB_OWNER;  e.g., 'your-username'
