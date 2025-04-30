@@ -43,7 +43,7 @@ app.use('/api/company', companyRoutes);
 app.use('/api/gallery', imageGalleryRoutes);
 app.use('/api/activity', activityRoutes);
 app.use('/api/bookmarking', bookmarkingRoutes);
-app.use('api/feedback', feedbackRoutes);
+app.use('/api/feedback', feedbackRoutes);
 
 app.get('/health', (req, res) => {
   res.status(200).send('OK');

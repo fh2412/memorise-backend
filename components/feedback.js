@@ -1,36 +1,22 @@
-// feedback-routes.js
+// feedback.js
 const express = require('express');
 const router = express.Router();
-const { Octokit } = require('octokit');
+const { Octokit } = require('@octokit/rest'); // ✅ Use this in CommonJS
 require('dotenv').config();
 
-// Initialize Octokit with your GitHub Personal Access Token
-const octokit = new Octokit({
-  //process.env.GITHUB_TOKEN
-});
+const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
 
-// GitHub repository details
-const GITHUB_OWNER = 'fh2412';//process.env.GITHUB_OWNER;  e.g., 'your-username'
-const GITHUB_REPO = 'memorise-ns';//process.env.GITHUB_REPO;    e.g., 'your-project'
+const GITHUB_OWNER = process.env.GITHUB_OWNER;
+const GITHUB_REPO = process.env.GITHUB_REPO;
 
-// Middleware to validate feedback data
-const validateFeedback = (req, res, next) => {
-  const { type, title, description } = req.body;
-  
-  if (!type || !title || !description) {
+router.post('/new', async (req, res) => {
+  const { title, description, type, email } = req.body;
+
+  if (!title || !description || !type) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
-  
-  next();
-};
 
-// POST endpoint to receive feedback and create GitHub issue
-router.post('/', validateFeedback, async (req, res) => {
-  try {
-    const { type, title, description, email } = req.body;
-    
-    // Format the issue body
-    const issueBody = `
+  const issueBody = `
 ## Feedback Details
 - **Type**: ${type}
 - **Submitted By**: ${email || 'Anonymous'}
@@ -41,25 +27,17 @@ ${description}
 
 ---
 *This issue was automatically created from user feedback in the beta application.*
-    `;
-    
-    // Create issue labels based on feedback type
-    const labels = ['feedback'];
-    switch (type) {
-      case 'bug':
-        labels.push('bug');
-        break;
-      case 'feature':
-        labels.push('enhancement');
-        break;
-      case 'improvement':
-        labels.push('improvement');
-        break;
-      default:
-        labels.push('question');
-    }
-    
-    // Create the GitHub issue
+  `;
+
+  const labels = ['feedback'];
+  switch (type) {
+    case 'bug': labels.push('bug'); break;
+    case 'feature': labels.push('enhancement'); break;
+    case 'improvement': labels.push('improvement'); break;
+    default: labels.push('question');
+  }
+
+  try {
     const response = await octokit.rest.issues.create({
       owner: GITHUB_OWNER,
       repo: GITHUB_REPO,
@@ -67,29 +45,24 @@ ${description}
       body: issueBody,
       labels: labels
     });
-    
-    // Log successful creation
-    console.log(`Created GitHub issue #${response.data.number}`);
-    
-    // Return success response with issue info
+
     return res.status(201).json({
       success: true,
-      message: 'Feedback submitted successfully',
       issueUrl: response.data.html_url,
       issueNumber: response.data.number
     });
-    
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: 'Failed to create issue' });
+  }
+});
+
+router.get('/', async (req, res) => {
+  try {
+    res.json({ message: 'Found!' });
   } catch (error) {
-    console.error('Error creating GitHub issue:', error);
-    
-    // Return error response
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to submit feedback',
-      error: process.env.NODE_ENV === 'production' 
-        ? 'Server error occurred' 
-        : error.message
-    });
+    console.error('Database error:', error.message);
+    res.status(500).json({ message: 'An unexpected error occurred' });
   }
 });
 
