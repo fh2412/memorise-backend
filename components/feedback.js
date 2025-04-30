@@ -6,8 +6,8 @@ require('dotenv').config();
 
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
 
-const GITHUB_OWNER = process.env.GITHUB_OWNER;
-const GITHUB_REPO = process.env.GITHUB_REPO;
+const GITHUB_OWNER = "fh2412";
+const GITHUB_REPO = "memorise-ns";
 
 router.post('/new', async (req, res) => {
   const { title, description, type, email } = req.body;
