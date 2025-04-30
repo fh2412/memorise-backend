@@ -1,4 +1,4 @@
-require('dotenv').config(); // Keep this for local development
+require('dotenv').config();
 const logger = require('../middleware/logger');
 const admin = require('firebase-admin');
 
