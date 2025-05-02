@@ -3,7 +3,7 @@ const router = express.Router();
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const logger = require('../../middleware/logger');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
-const { createActivity, getActivityDetails, getAllActivities, createUserActivity, updateActivityWithFiles, finalizeActivity, getAllUserActivities, getSuggestedActivity, getFilteredActivities, getActivityCreatorDetails, getUserActivityStats } = require('./activitiesService');
+const { createActivity, getActivityDetails, getAllActivities, createUserActivity, updateActivityWithFiles, finalizeActivity, getAllUserActivities, getSuggestedActivity, getFilteredActivities, getActivityCreatorDetails, getUserActivityStats, archiveActivity } = require('./activitiesService');
 const { validateActivityId, validateCreateActivity, validateUpdateActivity, validateUserCreateActivity } = require('../../middleware/validation/validateActivity');
 const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
 
@@ -205,6 +205,23 @@ router.put('/update-activity/:id', authenticateFirebaseToken, validateUpdateActi
         res.json({ message: 'Activity updated with files successfully' });
     } catch (error) {
         logger.error(`Controller error; ACTIVITY PUT /update-activity/${id}: ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * PUT archive activity
+ * @route PUT /archive-activity/:id
+ * @description Archives an existing activity so it no longer gets shown
+ */
+router.put('/archive-activity/:id', authenticateFirebaseToken, handleValidationErrors, async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        await archiveActivity(id);
+        res.json({ message: 'Activity arcived successfully' });
+    } catch (error) {
+        logger.error(`Controller error; ACTIVITY PUT /archive-activity/${id}: ${error.message}`);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });

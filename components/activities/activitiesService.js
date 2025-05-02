@@ -10,7 +10,8 @@ const { addActivityToDatabase, fetchActivityDetailsFromDatabase, fetchActivitySe
     fetchActivityCreatorNameFromDatabase,
     fetchActivityMemoryCountFromDatabase,
     updateMemoriesActivityId,
-    fetchUserActivityCountFromDatabase } = require('./activitiesDataAccess')
+    fetchUserActivityCountFromDatabase,
+    archiveActivityDatabase } = require('./activitiesDataAccess')
 const logger = require('../../middleware/logger');
 
 const createActivity = async (title) => {
@@ -204,6 +205,15 @@ const updateActivityWithFiles = async (activityId, titlePictureUrl) => {
     }
 };
 
+const archiveActivity = async (activityId) => {
+    try {
+        await archiveActivityDatabase(activityId);
+    } catch (error) {
+        logger.error(`Service error; Error archiveActivity: ${error.message}`);
+        throw error;
+    }
+};
+
 /**
  * Finalizes an activity after creation
  * @param {string|number} activityId - The ID of the activity
@@ -230,5 +240,6 @@ module.exports = {
     getSuggestedActivity,
     getFilteredActivities,
     getActivityCreatorDetails,
-    getUserActivityStats
+    getUserActivityStats,
+    archiveActivity
 };

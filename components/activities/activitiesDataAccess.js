@@ -153,7 +153,8 @@ const fetchAllActivitiesFromDatabase = async () => {
 };
 
 const fetchAllUserActivitiesFromDatabase = async (userId) => {
-    const query = 'SELECT id as activityId, title, group_size_min AS groupSizeMin, group_size_max AS groupSizeMax, indoor_outdoor_flag AS indoor, prize AS costs, title_image_url AS firebaseUrl FROM activity WHERE creator_id = ?';
+    const query = `SELECT id as activityId, title, group_size_min AS groupSizeMin, group_size_max AS groupSizeMax, indoor_outdoor_flag AS indoor, prize AS costs, title_image_url AS firebaseUrl 
+    FROM activity WHERE creator_id = ? AND active_flag = 1`;
 
     try {
         const [rows] = await db.query(query, [userId]);
@@ -165,7 +166,8 @@ const fetchAllUserActivitiesFromDatabase = async (userId) => {
 };
 
 const fetchSuggestedActivitiesFromDatabase = async (userId) => {
-    const query = 'SELECT id as activityId, title, group_size_min AS groupSizeMin, group_size_max AS groupSizeMax, indoor_outdoor_flag AS indoor, prize AS costs, title_image_url AS firebaseUrl, description FROM activity WHERE creator_id = ?';
+    const query = `SELECT id as activityId, title, group_size_min AS groupSizeMin, group_size_max AS groupSizeMax, indoor_outdoor_flag AS indoor, prize AS costs, title_image_url AS firebaseUrl, description 
+    FROM activity WHERE creator_id != ? AND active_flag = 1`;
 
     try {
         const [rows] = await db.query(query, [userId]);
@@ -448,7 +450,7 @@ const addSeasonRelationsToDatabase = async (activityId, seasons) => {
     }
 };
 
-const updateMemoriesActivityId= async (activityId, memoryId) => {
+const updateMemoriesActivityId = async (activityId, memoryId) => {
     const query = `UPDATE memories SET activity_id = ? WHERE memories.memory_id = ?`;
 
     try {
@@ -486,6 +488,22 @@ const updateActivityFiles = async (activityId, titleImageUrl) => {
     }
 };
 
+const archiveActivityDatabase = async (activityId) => {
+    const query = `
+        UPDATE activity 
+        SET active_flag  = 0 
+        WHERE id = ?
+    `;
+
+    try {
+        await db.query(query, [
+            activityId
+        ]);
+    } catch (error) {
+        logger.error(`Data Access error; Error archiving activity (${query}): ${error.message}`);
+        throw error;
+    }
+};
 /**
  * Sets an activity to active status
  * @param {number} activityId - The ID of the activity
@@ -521,5 +539,6 @@ module.exports = {
     fetchActivityCreatorNameFromDatabase,
     fetchActivityMemoryCountFromDatabase,
     updateMemoriesActivityId,
-    fetchUserActivityCountFromDatabase
+    fetchUserActivityCountFromDatabase,
+    archiveActivityDatabase
 }
