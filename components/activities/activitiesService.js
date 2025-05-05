@@ -11,7 +11,10 @@ const { addActivityToDatabase, fetchActivityDetailsFromDatabase, fetchActivitySe
     fetchActivityMemoryCountFromDatabase,
     updateMemoriesActivityId,
     fetchUserActivityCountFromDatabase,
-    archiveActivityDatabase } = require('./activitiesDataAccess')
+    archiveActivityDatabase,
+    updateActivityInDatabase,
+    deleteWeatherRelations,
+    deleteSeasonRelations } = require('./activitiesDataAccess')
 const logger = require('../../middleware/logger');
 
 const createActivity = async (title) => {
@@ -214,6 +217,43 @@ const archiveActivity = async (activityId) => {
     }
 };
 
+const updateUserActivity = async (activityData) => {
+    try {
+        activityData.isIndoorFlag = activityData.isIndoorFlag ? 'Indoor' : 'Outdoor';
+
+        // 1. Update main activity fields
+        await updateActivityInDatabase({
+            activityId: activityData.activityId,
+            title: activityData.title,
+            description: activityData.description,
+            groupSizeMin: activityData.groupSizeMin,
+            groupSizeMax: activityData.groupSizeMax,
+            isIndoorFlag: activityData.isIndoorFlag,
+            prize: activityData.costs,
+            websiteUrl: activityData.websiteUrl,
+            leadMemoryId: activityData.leadMemoryId
+        });
+
+        // 2. Update related data
+        if (activityData.weathers) {
+            await deleteWeatherRelations(activityData.activityId);
+            await addWeatherRelationsToDatabase(activityData.activityId, activityData.weathers);
+        }
+
+        if (activityData.seasons) {
+            await deleteSeasonRelations(activityData.activityId);
+            await addSeasonRelationsToDatabase(activityData.activityId, activityData.seasons);
+        }
+
+        if (activityData.leadMemoryId) {
+            await updateMemoriesActivityId(activityData.activityId, activityData.leadMemoryId);
+        }
+    } catch (error) {
+        logger.error(`Service error; updateUserActivity: ${error.message}`);
+        throw error;
+    }
+};
+
 /**
  * Finalizes an activity after creation
  * @param {string|number} activityId - The ID of the activity
@@ -241,5 +281,6 @@ module.exports = {
     getFilteredActivities,
     getActivityCreatorDetails,
     getUserActivityStats,
-    archiveActivity
+    archiveActivity,
+    updateUserActivity
 };

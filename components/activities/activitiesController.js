@@ -3,7 +3,7 @@ const router = express.Router();
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const logger = require('../../middleware/logger');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
-const { createActivity, getActivityDetails, getAllActivities, createUserActivity, updateActivityWithFiles, finalizeActivity, getAllUserActivities, getSuggestedActivity, getFilteredActivities, getActivityCreatorDetails, getUserActivityStats, archiveActivity } = require('./activitiesService');
+const { createActivity, getActivityDetails, getAllActivities, createUserActivity, updateActivityWithFiles, finalizeActivity, getAllUserActivities, getSuggestedActivity, getFilteredActivities, getActivityCreatorDetails, getUserActivityStats, archiveActivity, updateUserActivity } = require('./activitiesService');
 const { validateActivityId, validateCreateActivity, validateUpdateActivity, validateUserCreateActivity } = require('../../middleware/validation/validateActivity');
 const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
 
@@ -222,6 +222,42 @@ router.put('/archive-activity/:id', authenticateFirebaseToken, handleValidationE
         res.json({ message: 'Activity arcived successfully' });
     } catch (error) {
         logger.error(`Controller error; ACTIVITY PUT /archive-activity/${id}: ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * PUT update activity
+ * @route PUT /update-user-activity/:activityId
+ * @description Updates an existing activity with new details
+ */
+router.put('/update-user-activity/:activityId', authenticateFirebaseToken, validateUserCreateActivity, handleValidationErrors, async (req, res) => {
+    const activityId = parseInt(req.params.activityId, 10);
+    const { title, description, groupSizeMin, groupSizeMax, indoor, costs, websiteUrl, season, weather, leadMemoryId } = req.body;
+
+    try {
+        const creatorId = req.user.uid;
+
+        const updatedActivityData = {
+            activityId,
+            title,
+            description,
+            creatorId,
+            groupSizeMin,
+            groupSizeMax,
+            isIndoorFlag: indoor,
+            costs,
+            websiteUrl,
+            seasons: season,
+            weathers: weather,
+            leadMemoryId
+        };
+
+        await updateUserActivity(updatedActivityData);
+
+        res.json({ message: 'Activity updated successfully' });
+    } catch (error) {
+        logger.error(`Controller error; ACTIVITY PUT /update-user-activity: ${error.message}`);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });

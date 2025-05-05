@@ -520,6 +520,54 @@ const setActivityToActive = async (activityId) => {
     }
 };
 
+const updateActivityInDatabase = async (activity) => {
+    const query = `
+        UPDATE activity
+        SET 
+            title = ?, 
+            description = ?, 
+            group_size_min = ?, 
+            group_size_max = ?, 
+            indoor_outdoor_flag = ?, 
+            prize = ?, 
+            location_id = ?, 
+            website_url = ?, 
+            base_memory_id = ?
+        WHERE id = ?
+    `;
+
+    const params = [
+        activity.title,
+        activity.description || 'no description added',
+        activity.groupSizeMin || 1,
+        activity.groupSizeMax || 10,
+        activity.isIndoorFlag,
+        activity.prize || 0,
+        activity.locationId || 1,
+        activity.websiteUrl || null,
+        activity.leadMemoryId || null,
+        activity.activityId
+    ];
+
+    try {
+        await db.query(query, params);
+    } catch (error) {
+        logger.error(`Data Access error; Error updating activity (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
+const deleteWeatherRelations = async (activityId) => {
+    const query = `DELETE FROM has_weather WHERE activity_id = ?`;
+    await db.query(query, [activityId]);
+};
+
+const deleteSeasonRelations = async (activityId) => {
+    const query = `DELETE FROM has_season WHERE activity_id = ?`;
+    await db.query(query, [activityId]);
+};
+
+
 module.exports = {
     addActivityToDatabase,
     fetchActivityDetailsFromDatabase,
@@ -540,5 +588,8 @@ module.exports = {
     fetchActivityMemoryCountFromDatabase,
     updateMemoriesActivityId,
     fetchUserActivityCountFromDatabase,
-    archiveActivityDatabase
+    archiveActivityDatabase,
+    updateActivityInDatabase,
+    deleteWeatherRelations,
+    deleteSeasonRelations
 }
