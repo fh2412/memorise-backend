@@ -14,7 +14,8 @@ const { addActivityToDatabase, fetchActivityDetailsFromDatabase, fetchActivitySe
     archiveActivityDatabase,
     updateActivityInDatabase,
     deleteWeatherRelations,
-    deleteSeasonRelations } = require('./activitiesDataAccess')
+    deleteSeasonRelations } = require('./activitiesDataAccess');
+const { updateLocation } = require('../locations/locationsDataAccess');
 const logger = require('../../middleware/logger');
 
 const createActivity = async (title) => {
@@ -221,7 +222,14 @@ const updateUserActivity = async (activityData) => {
     try {
         activityData.isIndoorFlag = activityData.isIndoorFlag ? 'Indoor' : 'Outdoor';
 
-        // 1. Update main activity fields
+        if(activityData.location.location_id !== 1){
+            await updateLocation(activityData.location.location_id, { lng: activityData.location.longitude, lat: activityData.location.latitude, l_country: '', l_city: '' });
+        }
+
+        else if(activityData.location.latitude !== "32.714377" && activityData.location.longitude !== "-17.005173"){
+            activityData.location.location_id = await addLocationToDatabase(activityData.location);
+        }
+
         await updateActivityInDatabase({
             activityId: activityData.activityId,
             title: activityData.title,
@@ -230,6 +238,7 @@ const updateUserActivity = async (activityData) => {
             groupSizeMax: activityData.groupSizeMax,
             isIndoorFlag: activityData.isIndoorFlag,
             prize: activityData.costs,
+            locationId: activityData.location.location_id,
             websiteUrl: activityData.websiteUrl,
             leadMemoryId: activityData.leadMemoryId
         });

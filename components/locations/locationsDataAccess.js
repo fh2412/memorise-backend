@@ -38,7 +38,6 @@ const updateLocation = async (locationId, { lng, lat, l_country, l_city }) => {
       SET longitude = ?, latitude = ?, country = ?, locality = ?
       WHERE location_id = ?
     `;
-
     try {
         const [result] = await db.query(query, [lng, lat, l_country, l_city, locationId]);
         return result;

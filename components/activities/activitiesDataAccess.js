@@ -122,7 +122,7 @@ const fetchActivityLocationFromDatabase = async (locationId) => {
 
     const query = `
         SELECT 
-            location_id AS id,
+            location_id AS location_id,
             longitude,
             latitude,
             country,

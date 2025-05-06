@@ -233,7 +233,7 @@ router.put('/archive-activity/:id', authenticateFirebaseToken, handleValidationE
  */
 router.put('/update-user-activity/:activityId', authenticateFirebaseToken, validateUserCreateActivity, handleValidationErrors, async (req, res) => {
     const activityId = parseInt(req.params.activityId, 10);
-    const { title, description, groupSizeMin, groupSizeMax, indoor, costs, websiteUrl, season, weather, leadMemoryId } = req.body;
+    const { title, description, groupSizeMin, groupSizeMax, indoor, costs, websiteUrl, season, weather, location, leadMemoryId } = req.body;
 
     try {
         const creatorId = req.user.uid;
@@ -250,6 +250,7 @@ router.put('/update-user-activity/:activityId', authenticateFirebaseToken, valid
             websiteUrl,
             seasons: season,
             weathers: weather,
+            location,
             leadMemoryId
         };
 
