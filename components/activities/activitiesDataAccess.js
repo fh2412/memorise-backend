@@ -504,6 +504,24 @@ const archiveActivityDatabase = async (activityId) => {
         throw error;
     }
 };
+
+const updateActivityThumbmailDatabase = async (activityId, imageUrl) => {
+    const query = `
+        UPDATE activity 
+        SET title_image_url = ? 
+        WHERE id = ?
+    `;
+
+    try {
+        await db.query(query, [
+            imageUrl,
+            activityId
+        ]);
+    } catch (error) {
+        logger.error(`Data Access error; Error archiving activity (${query}): ${error.message}`);
+        throw error;
+    }
+};
 /**
  * Sets an activity to active status
  * @param {number} activityId - The ID of the activity
@@ -591,5 +609,6 @@ module.exports = {
     archiveActivityDatabase,
     updateActivityInDatabase,
     deleteWeatherRelations,
-    deleteSeasonRelations
+    deleteSeasonRelations,
+    updateActivityThumbmailDatabase
 }

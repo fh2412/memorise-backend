@@ -3,7 +3,7 @@ const router = express.Router();
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const logger = require('../../middleware/logger');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
-const { createActivity, getActivityDetails, getAllActivities, createUserActivity, updateActivityWithFiles, finalizeActivity, getAllUserActivities, getSuggestedActivity, getFilteredActivities, getActivityCreatorDetails, getUserActivityStats, archiveActivity, updateUserActivity } = require('./activitiesService');
+const { createActivity, getActivityDetails, getAllActivities, createUserActivity, updateActivityWithFiles, finalizeActivity, getAllUserActivities, getSuggestedActivity, getFilteredActivities, getActivityCreatorDetails, getUserActivityStats, archiveActivity, updateUserActivity, updateThumbmail } = require('./activitiesService');
 const { validateActivityId, validateCreateActivity, validateUpdateActivity, validateUserCreateActivity } = require('../../middleware/validation/validateActivity');
 const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
 
@@ -222,6 +222,25 @@ router.put('/archive-activity/:id', authenticateFirebaseToken, handleValidationE
         res.json({ message: 'Activity arcived successfully' });
     } catch (error) {
         logger.error(`Controller error; ACTIVITY PUT /archive-activity/${id}: ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * PUT new thumbmail url activity
+ * @route PUT /update-thumbmail/:id
+ * @description Updates the thumbmails url after it got changed
+ */
+router.put('/update-thumbmail/:id', authenticateFirebaseToken, handleValidationErrors, async (req, res) => {
+    const { id } = req.params;
+    const { imageUrl } = req.body;
+
+    logger.info(imageUrl);
+    try {
+        await updateThumbmail(id, imageUrl);
+        res.json({ message: 'Activity Thumbmail updated successfully' });
+    } catch (error) {
+        logger.error(`Controller error; ACTIVITY PUT /update-thumbmail/${id}: ${error.message}`);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });

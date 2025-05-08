@@ -14,7 +14,8 @@ const { addActivityToDatabase, fetchActivityDetailsFromDatabase, fetchActivitySe
     archiveActivityDatabase,
     updateActivityInDatabase,
     deleteWeatherRelations,
-    deleteSeasonRelations } = require('./activitiesDataAccess');
+    deleteSeasonRelations,
+    updateActivityThumbmailDatabase } = require('./activitiesDataAccess');
 const { updateLocation } = require('../locations/locationsDataAccess');
 const logger = require('../../middleware/logger');
 
@@ -218,6 +219,15 @@ const archiveActivity = async (activityId) => {
     }
 };
 
+const updateThumbmail = async (activityId, imageUrl) => {
+    try {
+        await updateActivityThumbmailDatabase(activityId, imageUrl);
+    } catch (error) {
+        logger.error(`Service error; Error updateThumbmail: ${error.message}`);
+        throw error;
+    }
+};
+
 const updateUserActivity = async (activityData) => {
     try {
         activityData.isIndoorFlag = activityData.isIndoorFlag ? 'Indoor' : 'Outdoor';
@@ -291,5 +301,6 @@ module.exports = {
     getActivityCreatorDetails,
     getUserActivityStats,
     archiveActivity,
-    updateUserActivity
+    updateUserActivity,
+    updateThumbmail
 };
