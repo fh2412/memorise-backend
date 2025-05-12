@@ -235,7 +235,6 @@ router.put('/update-thumbmail/:id', authenticateFirebaseToken, handleValidationE
     const { id } = req.params;
     const { imageUrl } = req.body;
 
-    logger.info(imageUrl);
     try {
         await updateThumbmail(id, imageUrl);
         res.json({ message: 'Activity Thumbmail updated successfully' });
