@@ -153,10 +153,10 @@ router.post('/createMemory', authenticateFirebaseToken, validateCreateMemory, ha
     const { creator_id, title, description, firestore_bucket_url, location_id, memory_date, memory_end_date, title_pic, activity_id } = req.body;
 
     try {
-        const memoryId = await createMemory({
+        const memory_id = await createMemory({
             creator_id, title, description, firestore_bucket_url, location_id, memory_date, memory_end_date, title_pic, activity_id
         });
-        res.json({ message: 'Memory created successfully', memoryId });
+        res.json({ message: 'Memory created successfully', memory_id });
     } catch (error) {
         logger.error(`Controller error; CREATE MEMORY POST /createMemory ${error.message}`);
         next(error);
