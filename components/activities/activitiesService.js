@@ -15,7 +15,8 @@ const { addActivityToDatabase, fetchActivityDetailsFromDatabase, fetchActivitySe
     updateActivityInDatabase,
     deleteWeatherRelations,
     deleteSeasonRelations,
-    updateActivityThumbmailDatabase } = require('./activitiesDataAccess');
+    updateActivityThumbmailDatabase,
+    fetchUsersBookmarkedActivitiesFromDatabase } = require('./activitiesDataAccess');
 const { updateLocation } = require('../locations/locationsDataAccess');
 const logger = require('../../middleware/logger');
 
@@ -97,6 +98,15 @@ const getSuggestedActivity = async (userId) => {
         return await fetchSuggestedActivitiesFromDatabase(userId);
     } catch (error) {
         logger.error(`Service error; Error getSuggestedActivity: ${error.message}`);
+        throw error;
+    }
+};
+
+const getBookmarkedActivities = async (userId) => {
+    try {
+        return await fetchUsersBookmarkedActivitiesFromDatabase(userId);
+    } catch (error) {
+        logger.error(`Service error; Error updateActivityThumbmailDatabase: ${error.message}`);
         throw error;
     }
 };
@@ -232,11 +242,11 @@ const updateUserActivity = async (activityData) => {
     try {
         activityData.isIndoorFlag = activityData.isIndoorFlag ? 'Indoor' : 'Outdoor';
 
-        if(activityData.location.location_id !== 1){
+        if (activityData.location.location_id !== 1) {
             await updateLocation(activityData.location.location_id, { lng: activityData.location.longitude, lat: activityData.location.latitude, l_country: '', l_city: '' });
         }
 
-        else if(activityData.location.latitude !== "32.714377" && activityData.location.longitude !== "-17.005173"){
+        else if (activityData.location.latitude !== "32.714377" && activityData.location.longitude !== "-17.005173") {
             activityData.location.location_id = await addLocationToDatabase(activityData.location);
         }
 
@@ -302,5 +312,6 @@ module.exports = {
     getUserActivityStats,
     archiveActivity,
     updateUserActivity,
-    updateThumbmail
+    updateThumbmail,
+    getBookmarkedActivities
 };

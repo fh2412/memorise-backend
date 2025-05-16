@@ -3,7 +3,7 @@ const router = express.Router();
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const logger = require('../../middleware/logger');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
-const { createActivity, getActivityDetails, getAllActivities, createUserActivity, updateActivityWithFiles, finalizeActivity, getAllUserActivities, getSuggestedActivity, getFilteredActivities, getActivityCreatorDetails, getUserActivityStats, archiveActivity, updateUserActivity, updateThumbmail } = require('./activitiesService');
+const { createActivity, getActivityDetails, getAllActivities, createUserActivity, updateActivityWithFiles, finalizeActivity, getAllUserActivities, getSuggestedActivity, getFilteredActivities, getActivityCreatorDetails, getUserActivityStats, archiveActivity, updateUserActivity, updateThumbmail, getBookmarkedActivities } = require('./activitiesService');
 const { validateActivityId, validateCreateActivity, validateUpdateActivity, validateUserCreateActivity } = require('../../middleware/validation/validateActivity');
 const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
 
@@ -101,6 +101,26 @@ router.get('/suggestedActivities/:userId', authenticateFirebaseToken, validateFi
         }
     } catch (error) {
         logger.error(`Controller error; ACTIVITY GET /suggestedActivities/:userId ${error.message}`);
+        res.status(500).json({ message: 'An unexpected error occurred' });
+    }
+});
+
+/**
+ * GET get bookmarked activities
+ * @route GET /bookmarkedActivities/:userId
+ * @description returns a list of bookmarked activities for a user
+ */
+router.get('/bookmarkedActivities/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
+    const userId = req.params.userId;
+    try {
+        const activity = await getBookmarkedActivities(userId);
+        if (activity) {
+            res.json(activity);
+        } else {
+            res.status(404).json({ message: 'No bookmarked Activities found for this User' });
+        }
+    } catch (error) {
+        logger.error(`Controller error; ACTIVITY GET /bookmarkedActivities/:userId ${error.message}`);
         res.status(500).json({ message: 'An unexpected error occurred' });
     }
 });

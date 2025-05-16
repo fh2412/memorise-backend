@@ -178,6 +178,18 @@ const fetchSuggestedActivitiesFromDatabase = async (userId) => {
     }
 };
 
+const fetchUsersBookmarkedActivitiesFromDatabase = async (userId) => {
+    const query = `SELECT a.title, a.group_size_min AS groupSizeMin, a.group_size_max AS groupSizeMax FROM activity a JOIN is_bookmarked b ON a.id = b.activity_id WHERE b.user_id = ?`;
+
+    try {
+        const [rows] = await db.query(query, [userId]);
+        return rows.length > 0 ? rows : null;
+    } catch (error) {
+        logger.error(`Data Access error; Error selecting suggested activities for user (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
 const fetchFilteredActivitiesFromDatabase = async (filter) => {
     try {
         let params = [];
@@ -430,12 +442,6 @@ const addWeatherRelationsToDatabase = async (activityId, weathers) => {
     }
 };
 
-/**
- * Adds season relations for an activity
- * @param {number} activityId - The ID of the activity
- * @param {Array} seasons - Array of season IDs
- * @returns {Promise<void>}
- */
 const addSeasonRelationsToDatabase = async (activityId, seasons) => {
     const query = `INSERT INTO has_season (activity_id, season_id) VALUES ?`;
 
@@ -460,7 +466,6 @@ const updateMemoriesActivityId = async (activityId, memoryId) => {
         throw error;
     }
 };
-
 
 /**
  * Updates an activity with file URLs
@@ -610,5 +615,6 @@ module.exports = {
     updateActivityInDatabase,
     deleteWeatherRelations,
     deleteSeasonRelations,
-    updateActivityThumbmailDatabase
+    updateActivityThumbmailDatabase,
+    fetchUsersBookmarkedActivitiesFromDatabase
 }
