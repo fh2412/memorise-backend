@@ -179,7 +179,7 @@ const fetchSuggestedActivitiesFromDatabase = async (userId) => {
 };
 
 const fetchUsersBookmarkedActivitiesFromDatabase = async (userId) => {
-    const query = `SELECT a.title, a.group_size_min AS groupSizeMin, a.group_size_max AS groupSizeMax FROM activity a JOIN is_bookmarked b ON a.id = b.activity_id WHERE b.user_id = ?`;
+    const query = `SELECT a.id as activityId, a.title, a.group_size_min AS groupSizeMin, a.group_size_max AS groupSizeMax, a.title_image_url as firebaseUrl FROM activity a JOIN is_bookmarked b ON a.id = b.activity_id WHERE b.user_id = ?`;
 
     try {
         const [rows] = await db.query(query, [userId]);
