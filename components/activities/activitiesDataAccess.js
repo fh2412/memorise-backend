@@ -166,11 +166,29 @@ const fetchAllUserActivitiesFromDatabase = async (userId) => {
 };
 
 const fetchSuggestedActivitiesFromDatabase = async (userId) => {
-    const query = `SELECT id as activityId, title, group_size_min AS groupSizeMin, group_size_max AS groupSizeMax, indoor_outdoor_flag AS indoor, prize AS costs, title_image_url AS firebaseUrl, description 
-    FROM activity WHERE creator_id != ? AND active_flag = 1`;
+    const query = `
+        SELECT 
+            a.id as activityId, 
+            a.title, 
+            a.group_size_min AS groupSizeMin, 
+            a.group_size_max AS groupSizeMax, 
+            a.indoor_outdoor_flag AS indoor, 
+            a.prize AS costs, 
+            a.title_image_url AS firebaseUrl, 
+            a.description 
+        FROM 
+            activity a
+        LEFT JOIN 
+            is_bookmarked ib ON a.id = ib.activity_id AND ib.user_id = ?
+        WHERE 
+            a.creator_id != ? AND 
+            a.active_flag = 1 AND
+            ib.activity_id IS NULL; 
+    `; // ib.activity_id IS NULL means the activity is NOT bookmarked by the user
 
     try {
-        const [rows] = await db.query(query, [userId]);
+        // Note: userId is now used twice in the query
+        const [rows] = await db.query(query, [userId, userId]); 
         return rows.length > 0 ? rows : null;
     } catch (error) {
         logger.error(`Data Access error; Error selecting suggested activities for user (${query}): ${error.message}`);
