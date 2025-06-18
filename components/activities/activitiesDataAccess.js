@@ -187,7 +187,6 @@ const fetchSuggestedActivitiesFromDatabase = async (userId) => {
     `; // ib.activity_id IS NULL means the activity is NOT bookmarked by the user
 
     try {
-        // Note: userId is now used twice in the query
         const [rows] = await db.query(query, [userId, userId]); 
         return rows.length > 0 ? rows : null;
     } catch (error) {
