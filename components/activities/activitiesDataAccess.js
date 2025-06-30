@@ -238,7 +238,7 @@ const fetchFilteredActivitiesFromDatabase = async (filter) => {
             params.push(filter.groupSizeMin);
         }
 
-        if (filter.groupSizeMax < 16) {
+        if (filter.groupSizeMax < 20) {
             whereConditions.push('a.group_size_max >= ?');
             params.push(filter.groupSizeMax);
         }
@@ -278,7 +278,7 @@ const fetchFilteredActivitiesFromDatabase = async (filter) => {
         if (filter.season.trim() !== '') {
             query += `
                 LEFT JOIN has_season hs ON a.id = hs.activity_id
-                LEFT JOIN season s ON hs.season_id = s.id `;
+                LEFT JOIN season s ON hs.season_id = s.season_id `;
             whereConditions.push('s.name = ?');
             params.push(filter.season);
         }
@@ -287,7 +287,7 @@ const fetchFilteredActivitiesFromDatabase = async (filter) => {
         if (filter.weather.trim() !== '') {
             query += `
                 LEFT JOIN has_weather hw ON a.id = hw.activity_id
-                LEFT JOIN weather w ON hw.weather_id = w.id `;
+                LEFT JOIN weather w ON hw.weather_id = w.weather_id `;
             whereConditions.push('w.name = ?');
             params.push(filter.weather);
         }
