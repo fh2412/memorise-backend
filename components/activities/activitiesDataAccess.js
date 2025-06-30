@@ -233,18 +233,18 @@ const fetchFilteredActivitiesFromDatabase = async (filter) => {
         }
 
         // Filter by group size (activities that can accommodate the requested size)
-        if (filter.groupSizeMin > 1) {
+        if (filter.groupSize > 0) {
             whereConditions.push('a.group_size_min <= ?');
-            params.push(filter.groupSizeMin);
+            params.push(filter.groupSize);
         }
 
-        if (filter.groupSizeMax < 20) {
+        if (filter.groupSize < 21) {
             whereConditions.push('a.group_size_max >= ?');
-            params.push(filter.groupSizeMax);
+            params.push(filter.groupSize);
         }
 
         // Filter by price (assuming price is max willing to pay)
-        if (filter.price > 0) {
+        if (filter.price >= 0) {
             whereConditions.push('a.prize <= ?');
             params.push(filter.price);
         }
