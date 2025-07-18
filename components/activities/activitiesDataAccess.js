@@ -325,7 +325,7 @@ const fetchFilteredActivitiesFromDatabase = async (filter) => {
 };
 
 const fetchUserActivityCountFromDatabase = async (userId) => {
-    const query = 'SELECT count(id) as activity_count FROM activity WHERE creator_id = ?';
+    const query = 'SELECT count(id) as activity_count FROM activity WHERE creator_id = ? AND active_flag = 1';
 
     try {
         const [rows] = await db.query(query, [userId]);
