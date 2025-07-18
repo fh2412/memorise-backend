@@ -109,11 +109,11 @@ const getFriendSuggestionsFromDB = async (userId) => {
         -- The 'friend_id' column will contain the ID of the friend.
         SELECT f.user_id2 AS friend_id
         FROM friendships f
-        WHERE f.user_id1 = ? AND f.status = 'accepted'
+        WHERE f.user_id1 = ?
         UNION
         SELECT f.user_id1 AS friend_id
         FROM friendships f
-        WHERE f.user_id2 = ? AND f.status = 'accepted'
+        WHERE f.user_id2 = ?
     ),
     FriendsOfFriendsCandidates AS (
         -- Identify potential friend suggestions by looking at friends of the user's friends.
