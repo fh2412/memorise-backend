@@ -270,7 +270,7 @@ router.put('/update-thumbmail/:id', authenticateFirebaseToken, handleValidationE
  */
 router.put('/update-user-activity/:activityId', authenticateFirebaseToken, validateUserCreateActivity, handleValidationErrors, async (req, res) => {
     const activityId = parseInt(req.params.activityId, 10);
-    const { title, description, groupSizeMin, groupSizeMax, indoor, costs, websiteUrl, season, weather, location, leadMemoryId } = req.body;
+    const { title, description, groupSizeMin, groupSizeMax, indoor_outdoor_flag, costs, websiteUrl, season, weather, location, leadMemoryId } = req.body;
 
     try {
         const creatorId = req.user.uid;
@@ -282,7 +282,7 @@ router.put('/update-user-activity/:activityId', authenticateFirebaseToken, valid
             creatorId,
             groupSizeMin,
             groupSizeMax,
-            isIndoorFlag: indoor,
+            isIndoorFlag: indoor_outdoor_flag,
             costs,
             websiteUrl,
             seasons: season,

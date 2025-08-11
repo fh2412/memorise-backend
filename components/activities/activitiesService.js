@@ -161,12 +161,6 @@ const createUserActivity = async (activityData) => {
             locationId = 1;
         }
 
-        if (activityData.isIndoorFlag) {
-            activityData.isIndoorFlag = 'Indoor';
-        } else {
-            activityData.isIndoorFlag = 'Outdoor';
-        }
-
         // 2. Create activity
         const activityId = await addUserActivityToDatabase({
             title: activityData.title,
@@ -240,7 +234,6 @@ const updateThumbmail = async (activityId, imageUrl) => {
 
 const updateUserActivity = async (activityData) => {
     try {
-        activityData.isIndoorFlag = activityData.isIndoorFlag ? 'Indoor' : 'Outdoor';
 
         if (activityData.location.location_id !== 1) {
             await updateLocation(activityData.location.location_id, { lng: activityData.location.longitude, lat: activityData.location.latitude, l_country: '', l_city: '' });
@@ -264,12 +257,12 @@ const updateUserActivity = async (activityData) => {
         });
 
         // 2. Update related data
-        if (activityData.weathers) {
+        if (activityData.weathers && activityData.weathers.length > 0) {
             await deleteWeatherRelations(activityData.activityId);
             await addWeatherRelationsToDatabase(activityData.activityId, activityData.weathers);
         }
 
-        if (activityData.seasons) {
+        if (activityData.seasons && activityData.seasons.length > 0) {
             await deleteSeasonRelations(activityData.activityId);
             await addSeasonRelationsToDatabase(activityData.activityId, activityData.seasons);
         }
