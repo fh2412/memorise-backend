@@ -122,7 +122,7 @@ const fetchActivityLocationFromDatabase = async (locationId) => {
 
     const query = `
         SELECT 
-            location_id AS id,
+            location_id AS location_id,
             longitude,
             latitude,
             country,
@@ -153,7 +153,8 @@ const fetchAllActivitiesFromDatabase = async () => {
 };
 
 const fetchAllUserActivitiesFromDatabase = async (userId) => {
-    const query = 'SELECT id as activityId, title, group_size_min AS groupSizeMin, group_size_max AS groupSizeMax, indoor_outdoor_flag AS indoor, prize AS costs, title_image_url AS firebaseUrl FROM activity WHERE creator_id = ?';
+    const query = `SELECT id as activityId, title, group_size_min AS groupSizeMin, group_size_max AS groupSizeMax, indoor_outdoor_flag AS indoor, prize AS costs, title_image_url AS firebaseUrl 
+    FROM activity WHERE creator_id = ? AND active_flag = 1`;
 
     try {
         const [rows] = await db.query(query, [userId]);
@@ -165,7 +166,37 @@ const fetchAllUserActivitiesFromDatabase = async (userId) => {
 };
 
 const fetchSuggestedActivitiesFromDatabase = async (userId) => {
-    const query = 'SELECT id as activityId, title, group_size_min AS groupSizeMin, group_size_max AS groupSizeMax, indoor_outdoor_flag AS indoor, prize AS costs, title_image_url AS firebaseUrl, description FROM activity WHERE creator_id = ?';
+    const query = `
+        SELECT 
+            a.id as activityId, 
+            a.title, 
+            a.group_size_min AS groupSizeMin, 
+            a.group_size_max AS groupSizeMax, 
+            a.indoor_outdoor_flag AS indoor, 
+            a.prize AS costs, 
+            a.title_image_url AS firebaseUrl, 
+            a.description 
+        FROM 
+            activity a
+        LEFT JOIN 
+            is_bookmarked ib ON a.id = ib.activity_id AND ib.user_id = ?
+        WHERE 
+            a.creator_id != ? AND 
+            a.active_flag = 1 AND
+            ib.activity_id IS NULL; 
+    `; // ib.activity_id IS NULL means the activity is NOT bookmarked by the user
+
+    try {
+        const [rows] = await db.query(query, [userId, userId]); 
+        return rows.length > 0 ? rows : null;
+    } catch (error) {
+        logger.error(`Data Access error; Error selecting suggested activities for user (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
+const fetchUsersBookmarkedActivitiesFromDatabase = async (userId) => {
+    const query = `SELECT a.id as activityId, a.title, a.group_size_min AS groupSizeMin, a.group_size_max AS groupSizeMax, a.title_image_url as firebaseUrl FROM activity a JOIN is_bookmarked b ON a.id = b.activity_id WHERE b.user_id = ?`;
 
     try {
         const [rows] = await db.query(query, [userId]);
@@ -202,18 +233,18 @@ const fetchFilteredActivitiesFromDatabase = async (filter) => {
         }
 
         // Filter by group size (activities that can accommodate the requested size)
-        if (filter.groupSizeMin > 1) {
+        if (filter.groupSize > 0) {
             whereConditions.push('a.group_size_min <= ?');
-            params.push(filter.groupSizeMin);
+            params.push(filter.groupSize);
         }
 
-        if (filter.groupSizeMax < 16) {
+        if (filter.groupSize < 21) {
             whereConditions.push('a.group_size_max >= ?');
-            params.push(filter.groupSizeMax);
+            params.push(filter.groupSize);
         }
 
         // Filter by price (assuming price is max willing to pay)
-        if (filter.price > 0) {
+        if (filter.price >= 0) {
             whereConditions.push('a.prize <= ?');
             params.push(filter.price);
         }
@@ -247,7 +278,7 @@ const fetchFilteredActivitiesFromDatabase = async (filter) => {
         if (filter.season.trim() !== '') {
             query += `
                 LEFT JOIN has_season hs ON a.id = hs.activity_id
-                LEFT JOIN season s ON hs.season_id = s.id `;
+                LEFT JOIN season s ON hs.season_id = s.season_id `;
             whereConditions.push('s.name = ?');
             params.push(filter.season);
         }
@@ -256,7 +287,7 @@ const fetchFilteredActivitiesFromDatabase = async (filter) => {
         if (filter.weather.trim() !== '') {
             query += `
                 LEFT JOIN has_weather hw ON a.id = hw.activity_id
-                LEFT JOIN weather w ON hw.weather_id = w.id `;
+                LEFT JOIN weather w ON hw.weather_id = w.weather_id `;
             whereConditions.push('w.name = ?');
             params.push(filter.weather);
         }
@@ -294,7 +325,7 @@ const fetchFilteredActivitiesFromDatabase = async (filter) => {
 };
 
 const fetchUserActivityCountFromDatabase = async (userId) => {
-    const query = 'SELECT count(id) as activity_count FROM activity WHERE creator_id = ?';
+    const query = 'SELECT count(id) as activity_count FROM activity WHERE creator_id = ? AND active_flag = 1';
 
     try {
         const [rows] = await db.query(query, [userId]);
@@ -428,12 +459,6 @@ const addWeatherRelationsToDatabase = async (activityId, weathers) => {
     }
 };
 
-/**
- * Adds season relations for an activity
- * @param {number} activityId - The ID of the activity
- * @param {Array} seasons - Array of season IDs
- * @returns {Promise<void>}
- */
 const addSeasonRelationsToDatabase = async (activityId, seasons) => {
     const query = `INSERT INTO has_season (activity_id, season_id) VALUES ?`;
 
@@ -448,7 +473,7 @@ const addSeasonRelationsToDatabase = async (activityId, seasons) => {
     }
 };
 
-const updateMemoriesActivityId= async (activityId, memoryId) => {
+const updateMemoriesActivityId = async (activityId, memoryId) => {
     const query = `UPDATE memories SET activity_id = ? WHERE memories.memory_id = ?`;
 
     try {
@@ -458,7 +483,6 @@ const updateMemoriesActivityId= async (activityId, memoryId) => {
         throw error;
     }
 };
-
 
 /**
  * Updates an activity with file URLs
@@ -486,6 +510,40 @@ const updateActivityFiles = async (activityId, titleImageUrl) => {
     }
 };
 
+const archiveActivityDatabase = async (activityId) => {
+    const query = `
+        UPDATE activity 
+        SET active_flag  = 0 
+        WHERE id = ?
+    `;
+
+    try {
+        await db.query(query, [
+            activityId
+        ]);
+    } catch (error) {
+        logger.error(`Data Access error; Error archiving activity (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
+const updateActivityThumbmailDatabase = async (activityId, imageUrl) => {
+    const query = `
+        UPDATE activity 
+        SET title_image_url = ? 
+        WHERE id = ?
+    `;
+
+    try {
+        await db.query(query, [
+            imageUrl,
+            activityId
+        ]);
+    } catch (error) {
+        logger.error(`Data Access error; Error archiving activity (${query}): ${error.message}`);
+        throw error;
+    }
+};
 /**
  * Sets an activity to active status
  * @param {number} activityId - The ID of the activity
@@ -501,6 +559,54 @@ const setActivityToActive = async (activityId) => {
         throw error;
     }
 };
+
+const updateActivityInDatabase = async (activity) => {
+    const query = `
+        UPDATE activity
+        SET 
+            title = ?, 
+            description = ?, 
+            group_size_min = ?, 
+            group_size_max = ?, 
+            indoor_outdoor_flag = ?, 
+            prize = ?, 
+            location_id = ?, 
+            website_url = ?, 
+            base_memory_id = ?
+        WHERE id = ?
+    `;
+
+    const params = [
+        activity.title,
+        activity.description || 'no description added',
+        activity.groupSizeMin || 1,
+        activity.groupSizeMax || 10,
+        activity.isIndoorFlag,
+        activity.prize || 0,
+        activity.locationId || 1,
+        activity.websiteUrl || null,
+        activity.leadMemoryId || null,
+        activity.activityId
+    ];
+
+    try {
+        await db.query(query, params);
+    } catch (error) {
+        logger.error(`Data Access error; Error updating activity (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
+const deleteWeatherRelations = async (activityId) => {
+    const query = `DELETE FROM has_weather WHERE activity_id = ?`;
+    await db.query(query, [activityId]);
+};
+
+const deleteSeasonRelations = async (activityId) => {
+    const query = `DELETE FROM has_season WHERE activity_id = ?`;
+    await db.query(query, [activityId]);
+};
+
 
 module.exports = {
     addActivityToDatabase,
@@ -521,5 +627,11 @@ module.exports = {
     fetchActivityCreatorNameFromDatabase,
     fetchActivityMemoryCountFromDatabase,
     updateMemoriesActivityId,
-    fetchUserActivityCountFromDatabase
+    fetchUserActivityCountFromDatabase,
+    archiveActivityDatabase,
+    updateActivityInDatabase,
+    deleteWeatherRelations,
+    deleteSeasonRelations,
+    updateActivityThumbmailDatabase,
+    fetchUsersBookmarkedActivitiesFromDatabase
 }

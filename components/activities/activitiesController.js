@@ -3,7 +3,7 @@ const router = express.Router();
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const logger = require('../../middleware/logger');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
-const { createActivity, getActivityDetails, getAllActivities, createUserActivity, updateActivityWithFiles, finalizeActivity, getAllUserActivities, getSuggestedActivity, getFilteredActivities, getActivityCreatorDetails, getUserActivityStats } = require('./activitiesService');
+const { createActivity, getActivityDetails, getAllActivities, createUserActivity, updateActivityWithFiles, finalizeActivity, getAllUserActivities, getSuggestedActivity, getFilteredActivities, getActivityCreatorDetails, getUserActivityStats, archiveActivity, updateUserActivity, updateThumbmail, getBookmarkedActivities } = require('./activitiesService');
 const { validateActivityId, validateCreateActivity, validateUpdateActivity, validateUserCreateActivity } = require('../../middleware/validation/validateActivity');
 const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
 
@@ -106,6 +106,26 @@ router.get('/suggestedActivities/:userId', authenticateFirebaseToken, validateFi
 });
 
 /**
+ * GET get bookmarked activities
+ * @route GET /bookmarkedActivities/:userId
+ * @description returns a list of bookmarked activities for a user
+ */
+router.get('/bookmarkedActivities/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
+    const userId = req.params.userId;
+    try {
+        const activity = await getBookmarkedActivities(userId);
+        if (activity) {
+            res.json(activity);
+        } else {
+            res.status(404).json({ message: 'No bookmarked Activities found for this User' });
+        }
+    } catch (error) {
+        logger.error(`Controller error; ACTIVITY GET /bookmarkedActivities/:userId ${error.message}`);
+        res.status(500).json({ message: 'An unexpected error occurred' });
+    }
+});
+
+/**
  * GET filtered activities
  * @route GET /activities/filtered
  * @description Returns activities filtered by multiple criteria including location, distance, tags, group size, price, season, weather, and name
@@ -117,8 +137,7 @@ router.get('/filtered', authenticateFirebaseToken, async (req, res) => {
             location: req.query.location || "",
             distance: parseInt(req.query.distance) || 25,
             tag: req.query.tag || "",
-            groupSizeMin: parseInt(req.query.groupSizeMin) || 1,
-            groupSizeMax: parseInt(req.query.groupSizeMax) || 16,
+            groupSize: parseInt(req.query.groupSize) || 1,
             price: parseInt(req.query.price) || 0,
             season: req.query.season || "",
             weather: req.query.weather || "",
@@ -205,6 +224,78 @@ router.put('/update-activity/:id', authenticateFirebaseToken, validateUpdateActi
         res.json({ message: 'Activity updated with files successfully' });
     } catch (error) {
         logger.error(`Controller error; ACTIVITY PUT /update-activity/${id}: ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * PUT archive activity
+ * @route PUT /archive-activity/:id
+ * @description Archives an existing activity so it no longer gets shown
+ */
+router.put('/archive-activity/:id', authenticateFirebaseToken, handleValidationErrors, async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        await archiveActivity(id);
+        res.json({ message: 'Activity arcived successfully' });
+    } catch (error) {
+        logger.error(`Controller error; ACTIVITY PUT /archive-activity/${id}: ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * PUT new thumbmail url activity
+ * @route PUT /update-thumbmail/:id
+ * @description Updates the thumbmails url after it got changed
+ */
+router.put('/update-thumbmail/:id', authenticateFirebaseToken, handleValidationErrors, async (req, res) => {
+    const { id } = req.params;
+    const { imageUrl } = req.body;
+
+    try {
+        await updateThumbmail(id, imageUrl);
+        res.json({ message: 'Activity Thumbmail updated successfully' });
+    } catch (error) {
+        logger.error(`Controller error; ACTIVITY PUT /update-thumbmail/${id}: ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * PUT update activity
+ * @route PUT /update-user-activity/:activityId
+ * @description Updates an existing activity with new details
+ */
+router.put('/update-user-activity/:activityId', authenticateFirebaseToken, validateUserCreateActivity, handleValidationErrors, async (req, res) => {
+    const activityId = parseInt(req.params.activityId, 10);
+    const { title, description, groupSizeMin, groupSizeMax, indoor_outdoor_flag, costs, websiteUrl, season, weather, location, leadMemoryId } = req.body;
+
+    try {
+        const creatorId = req.user.uid;
+
+        const updatedActivityData = {
+            activityId,
+            title,
+            description,
+            creatorId,
+            groupSizeMin,
+            groupSizeMax,
+            isIndoorFlag: indoor_outdoor_flag,
+            costs,
+            websiteUrl,
+            seasons: season,
+            weathers: weather,
+            location,
+            leadMemoryId
+        };
+
+        await updateUserActivity(updatedActivityData);
+
+        res.json({ message: 'Activity updated successfully' });
+    } catch (error) {
+        logger.error(`Controller error; ACTIVITY PUT /update-user-activity: ${error.message}`);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });

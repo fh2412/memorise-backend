@@ -10,7 +10,14 @@ const { addActivityToDatabase, fetchActivityDetailsFromDatabase, fetchActivitySe
     fetchActivityCreatorNameFromDatabase,
     fetchActivityMemoryCountFromDatabase,
     updateMemoriesActivityId,
-    fetchUserActivityCountFromDatabase } = require('./activitiesDataAccess')
+    fetchUserActivityCountFromDatabase,
+    archiveActivityDatabase,
+    updateActivityInDatabase,
+    deleteWeatherRelations,
+    deleteSeasonRelations,
+    updateActivityThumbmailDatabase,
+    fetchUsersBookmarkedActivitiesFromDatabase } = require('./activitiesDataAccess');
+const { updateLocation } = require('../locations/locationsDataAccess');
 const logger = require('../../middleware/logger');
 
 const createActivity = async (title) => {
@@ -95,6 +102,15 @@ const getSuggestedActivity = async (userId) => {
     }
 };
 
+const getBookmarkedActivities = async (userId) => {
+    try {
+        return await fetchUsersBookmarkedActivitiesFromDatabase(userId);
+    } catch (error) {
+        logger.error(`Service error; Error updateActivityThumbmailDatabase: ${error.message}`);
+        throw error;
+    }
+};
+
 const getFilteredActivities = async (filter) => {
     try {
         return await fetchFilteredActivitiesFromDatabase(filter);
@@ -143,12 +159,6 @@ const createUserActivity = async (activityData) => {
         }
         else {
             locationId = 1;
-        }
-
-        if (activityData.isIndoorFlag) {
-            activityData.isIndoorFlag = 'Indoor';
-        } else {
-            activityData.isIndoorFlag = 'Outdoor';
         }
 
         // 2. Create activity
@@ -204,6 +214,68 @@ const updateActivityWithFiles = async (activityId, titlePictureUrl) => {
     }
 };
 
+const archiveActivity = async (activityId) => {
+    try {
+        await archiveActivityDatabase(activityId);
+    } catch (error) {
+        logger.error(`Service error; Error archiveActivity: ${error.message}`);
+        throw error;
+    }
+};
+
+const updateThumbmail = async (activityId, imageUrl) => {
+    try {
+        await updateActivityThumbmailDatabase(activityId, imageUrl);
+    } catch (error) {
+        logger.error(`Service error; Error updateThumbmail: ${error.message}`);
+        throw error;
+    }
+};
+
+const updateUserActivity = async (activityData) => {
+    try {
+
+        if (activityData.location.location_id !== 1) {
+            await updateLocation(activityData.location.location_id, { lng: activityData.location.longitude, lat: activityData.location.latitude, l_country: '', l_city: '' });
+        }
+
+        else if (activityData.location.latitude !== "32.714377" && activityData.location.longitude !== "-17.005173") {
+            activityData.location.location_id = await addLocationToDatabase(activityData.location);
+        }
+
+        await updateActivityInDatabase({
+            activityId: activityData.activityId,
+            title: activityData.title,
+            description: activityData.description,
+            groupSizeMin: activityData.groupSizeMin,
+            groupSizeMax: activityData.groupSizeMax,
+            isIndoorFlag: activityData.isIndoorFlag,
+            prize: activityData.costs,
+            locationId: activityData.location.location_id,
+            websiteUrl: activityData.websiteUrl,
+            leadMemoryId: activityData.leadMemoryId
+        });
+
+        // 2. Update related data
+        if (activityData.weathers && activityData.weathers.length > 0) {
+            await deleteWeatherRelations(activityData.activityId);
+            await addWeatherRelationsToDatabase(activityData.activityId, activityData.weathers);
+        }
+
+        if (activityData.seasons && activityData.seasons.length > 0) {
+            await deleteSeasonRelations(activityData.activityId);
+            await addSeasonRelationsToDatabase(activityData.activityId, activityData.seasons);
+        }
+
+        if (activityData.leadMemoryId) {
+            await updateMemoriesActivityId(activityData.activityId, activityData.leadMemoryId);
+        }
+    } catch (error) {
+        logger.error(`Service error; updateUserActivity: ${error.message}`);
+        throw error;
+    }
+};
+
 /**
  * Finalizes an activity after creation
  * @param {string|number} activityId - The ID of the activity
@@ -230,5 +302,9 @@ module.exports = {
     getSuggestedActivity,
     getFilteredActivities,
     getActivityCreatorDetails,
-    getUserActivityStats
+    getUserActivityStats,
+    archiveActivity,
+    updateUserActivity,
+    updateThumbmail,
+    getBookmarkedActivities
 };

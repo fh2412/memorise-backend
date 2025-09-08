@@ -104,17 +104,67 @@ const getIngoingFriendRequestsFromDB = async (userId) => {
 
 const getFriendSuggestionsFromDB = async (userId) => {
     const query = `
-      SELECT u.user_id, u.name, u.gender, u.dob, COUNT(f1.user_id2) AS common_friends_count
-      FROM friendships f1
-      JOIN friendships f2 ON f1.user_id2 = f2.user_id2 AND f1.user_id1 != f2.user_id1
-      JOIN users u ON u.user_id = f2.user_id1
-      WHERE f1.user_id1 = ? AND f1.status = 'accepted' AND f2.status = 'accepted'
-      GROUP BY u.user_id, u.name
-      ORDER BY common_friends_count DESC
-      LIMIT 4;
+    WITH UserAcceptedFriends AS (
+        -- Finds all direct accepted friends of the target user.
+        -- The 'friend_id' column will contain the ID of the friend.
+        SELECT f.user_id2 AS friend_id
+        FROM friendships f
+        WHERE f.user_id1 = ?
+        UNION
+        SELECT f.user_id1 AS friend_id
+        FROM friendships f
+        WHERE f.user_id2 = ?
+    ),
+    FriendsOfFriendsCandidates AS (
+        -- Identify potential friend suggestions by looking at friends of the user's friends.
+        -- This CTE also tracks which common friend (bridge) connects them.
+        SELECT
+            -- The potential suggested friend's ID
+            CASE
+                WHEN fof.user_id1 = uaf.friend_id THEN fof.user_id2
+                ELSE fof.user_id1
+            END AS potential_friend_id,
+            -- The ID of the common friend that links the target user to the potential friend
+            uaf.friend_id AS common_friend_id
+        FROM friendships fof
+        JOIN UserAcceptedFriends uaf
+            -- Join conditions to find friendships involving the user's direct friends
+            ON (fof.user_id1 = uaf.friend_id OR fof.user_id2 = uaf.friend_id)
+        WHERE
+            fof.status = 'accepted' -- Ensure it's an accepted friendship
+            -- Exclude the target user themselves from being a potential friend
+            AND fof.user_id1 != ?
+            AND fof.user_id2 != ?
+    )
+    SELECT
+        u.user_id,
+        u.name,
+        u.gender,
+        u.dob,
+        u.profilepic,
+        COUNT(DISTINCT fofc.common_friend_id) AS common_friends_count
+    FROM FriendsOfFriendsCandidates fofc
+    JOIN users u ON u.user_id = fofc.potential_friend_id
+    WHERE
+        -- Crucial: Filter out any potential suggestions who are already direct friends of the target user.
+        fofc.potential_friend_id NOT IN (SELECT friend_id FROM UserAcceptedFriends)
+    GROUP BY
+        u.user_id, u.name, u.gender, u.dob
+    ORDER BY
+        common_friends_count DESC
+    LIMIT 5;
     `;
     try {
-        const [results] = await db.query(query, [userId]);
+        const [results] = await db.query(
+            query,
+            [
+                userId, // For WHERE f.user_id1 = ? (UserAcceptedFriends first part)
+                userId, // For WHERE f.user_id2 = ? (UserAcceptedFriends second part)
+                userId, // For AND fof.user_id1 != ? (FriendsOfFriendsCandidates)
+                userId, // For AND fof.user_id2 != ? (FriendsOfFriendsCandidates)
+                userId  // For fofc.potential_friend_id NOT IN (SELECT friend_id FROM UserAcceptedFriends)
+            ]
+        );
         return results;
     } catch (error) {
         logger.error(`Data Access error; Error getting suggested friends (${query}): ${error.message}`);
