@@ -1,13 +1,26 @@
-// feedback.js
 const express = require('express');
 const router = express.Router();
-const { Octokit } = require('@octokit/rest'); // ✅ Use this in CommonJS
 require('dotenv').config();
 
-const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+// The octokit instance is now initialized inside an async function
+let octokit;
 
 const GITHUB_OWNER = "fh2412";
 const GITHUB_REPO = "memorise-ns";
+
+async function initializeOctokit() {
+  if (!octokit) {
+    // Dynamic import is performed here
+    const { Octokit } = await import('@octokit/rest');
+    octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+  }
+}
+
+// Ensure Octokit is initialized before any routes that use it
+router.use(async (req, res, next) => {
+  await initializeOctokit();
+  next();
+});
 
 router.post('/new', async (req, res) => {
   const { title, description, type, email } = req.body;
