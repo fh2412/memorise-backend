@@ -7,7 +7,7 @@ const { getCompanyByUserId, createCompanyForUser, generateUniqueCompanyCode, upd
 /**
  * GET users company
  * @route GET /:userId
- * @description gets the company of a user by his id
+ * @description gets the company of a user by users id
  */
 router.get('/:userId', authenticateFirebaseToken, async (req, res, next) => {
     const userId = req.params.userId;
