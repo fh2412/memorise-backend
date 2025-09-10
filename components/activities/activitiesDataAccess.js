@@ -207,12 +207,12 @@ const fetchUsersBookmarkedActivitiesFromDatabase = async (userId) => {
     }
 };
 
-const fetchFilteredActivitiesFromDatabase = async (filter) => {
+const fetchFilteredActivitiesFromDatabase = async (filter, userId) => {
     try {
         let params = [];
         let query = `
             SELECT 
-                a.id, 
+                a.id AS activityId, 
                 a.title, 
                 a.group_size_min AS groupSizeMin, 
                 a.group_size_max AS groupSizeMax, 
@@ -225,6 +225,10 @@ const fetchFilteredActivitiesFromDatabase = async (filter) => {
 
         // Build WHERE clauses based on filter parameters
         let whereConditions = ['a.active_flag = 1']; // Only active activities
+        
+        //Make sure it does not suggest a users own Activities
+        whereConditions.push('a.creator_id != ?');
+        params.push(userId);
 
         // Filter by name (using LIKE for partial matches)
         if (filter.name.trim() !== '') {
@@ -244,11 +248,11 @@ const fetchFilteredActivitiesFromDatabase = async (filter) => {
         }
 
         // Filter by price (assuming price is max willing to pay)
-        if (filter.price >= 0) {
+        if (filter.price > -1) {
             whereConditions.push('a.prize <= ?');
             params.push(filter.price);
         }
-
+/*
         // Handle location and distance filtering
         if (filter.location.trim() !== '') {
             // If location is provided, join with location table and calculate distance
@@ -273,7 +277,7 @@ const fetchFilteredActivitiesFromDatabase = async (filter) => {
                 params.push(filter.distance);
             }
         }
-
+*/
         // Season filtering
         if (filter.season.trim() !== '') {
             query += `
@@ -292,15 +296,6 @@ const fetchFilteredActivitiesFromDatabase = async (filter) => {
             params.push(filter.weather);
         }
 
-        // Tag filtering
-        if (filter.tag.trim() !== '') {
-            query += `
-                LEFT JOIN has_tag ht ON a.id = ht.activity_id
-                LEFT JOIN tag t ON ht.tag_id = t.id `;
-            whereConditions.push('t.name = ?');
-            params.push(filter.tag);
-        }
-
         // Add all WHERE conditions
         if (whereConditions.length > 0) {
             query += ' WHERE ' + whereConditions.join(' AND ');
@@ -310,11 +305,12 @@ const fetchFilteredActivitiesFromDatabase = async (filter) => {
         query += ' GROUP BY a.id';
 
         // Order by distance if location is provided
+        /*
         if (filter.location.trim() !== '') {
             query += ' ORDER BY distance ASC';
         } else {
             query += ' ORDER BY a.title ASC';
-        }
+        }*/
 
         const [rows] = await db.query(query, params);
         return rows.length > 0 ? rows : [];

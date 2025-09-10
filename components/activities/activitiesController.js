@@ -136,15 +136,16 @@ router.get('/filtered', authenticateFirebaseToken, async (req, res) => {
         const filter = {
             location: req.query.location || "",
             distance: parseInt(req.query.distance) || 25,
-            tag: req.query.tag || "",
-            groupSize: parseInt(req.query.groupSize) || 1,
+            groupSize: parseInt(req.query.groupSize) || 0,
             price: parseInt(req.query.price) || 0,
             season: req.query.season || "",
             weather: req.query.weather || "",
             name: req.query.name || ""
         };
 
-        const activities = await getFilteredActivities(filter);
+        const userId = req.query.userId;
+
+        const activities = await getFilteredActivities(filter, userId);
         res.json(activities);
     } catch (error) {
         logger.error(`Controller error; ACTIVITY GET /filtered: ${error.message}`);

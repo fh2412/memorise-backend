@@ -111,9 +111,9 @@ const getBookmarkedActivities = async (userId) => {
     }
 };
 
-const getFilteredActivities = async (filter) => {
+const getFilteredActivities = async (filter, userId) => {
     try {
-        return await fetchFilteredActivitiesFromDatabase(filter);
+        return await fetchFilteredActivitiesFromDatabase(filter, userId);
     } catch (error) {
         logger.error(`Service error; Error getFilteredActivities: ${error.message}`);
         throw error;
