@@ -210,23 +210,22 @@ const fetchUsersBookmarkedActivitiesFromDatabase = async (userId) => {
 const fetchFilteredActivitiesFromDatabase = async (filter, userId) => {
     try {
         let params = [];
-        let query = `
-            SELECT 
-                a.id AS activityId, 
-                a.title, 
-                a.group_size_min AS groupSizeMin, 
-                a.group_size_max AS groupSizeMax, 
-                a.indoor_outdoor_flag AS indoor, 
-                a.prize AS costs, 
-                a.title_image_url AS firebaseUrl
-            FROM activity a
-            LEFT JOIN location l ON a.location_id = l.location_id
-        `;
-
-        // Build WHERE clauses based on filter parameters
-        let whereConditions = ['a.active_flag = 1']; // Only active activities
+        let selectFields = [
+            'a.id AS activityId',
+            'a.title',
+            'a.group_size_min AS groupSizeMin',
+            'a.group_size_max AS groupSizeMax',
+            'a.indoor_outdoor_flag AS indoor',
+            'a.prize AS costs',
+            'a.title_image_url AS firebaseUrl'
+        ];
+        let joinClauses = [
+            'LEFT JOIN location l ON a.location_id = l.location_id'
+        ];
+        let whereConditions = ['a.active_flag = 1'];
+        let havingConditions = [];
         
-        //Make sure it does not suggest a users own Activities
+        // Make sure it does not suggest a user's own Activities
         whereConditions.push('a.creator_id != ?');
         params.push(userId);
 
@@ -252,66 +251,66 @@ const fetchFilteredActivitiesFromDatabase = async (filter, userId) => {
             whereConditions.push('a.prize <= ?');
             params.push(filter.price);
         }
-/*
+
         // Handle location and distance filtering
-        if (filter.location.trim() !== '') {
-            // If location is provided, join with location table and calculate distance
-            // Using Haversine formula to calculate distance in kilometers
-            const [lat, lng] = await geocodeLocation(filter.location);
+        if (filter.lat.trim() !== '' && filter.lng.trim() !== '') {
+            if (filter.lat && filter.lng) {
+                // Add the distance calculation to the SELECT fields
+                // Clamped the value to prevent floating point errors
+                selectFields.push(`(
+                    6371 * acos(
+                        LEAST(1.0, GREATEST(-1.0, (
+                            cos(radians(?)) * cos(radians(l.latitude)) * cos(radians(l.longitude) - radians(?)) + 
+                            sin(radians(?)) * sin(radians(l.latitude))
+                        )))
+                    )
+                ) AS distance`);
 
-            if (lat && lng) {
-                query += `
-                    , (
-                        6371 * acos(
-                            cos(radians(?)) * 
-                            cos(radians(l.latitude)) * 
-                            cos(radians(l.longitude) - radians(?)) + 
-                            sin(radians(?)) * 
-                            sin(radians(l.latitude))
-                        )
-                    ) AS distance `;
+                // Push parameters for the distance calculation
+                params.push(filter.lat, filter.lng, filter.lat);
 
-                params.push(lat, lng, lat);
-
-                whereConditions.push('distance <= ?');
+                // Use the HAVING clause to filter by the 'distance' alias
+                havingConditions.push('distance <= ?');
                 params.push(filter.distance);
             }
         }
-*/
+
         // Season filtering
         if (filter.season.trim() !== '') {
-            query += `
-                LEFT JOIN has_season hs ON a.id = hs.activity_id
-                LEFT JOIN season s ON hs.season_id = s.season_id `;
+            joinClauses.push('LEFT JOIN has_season hs ON a.id = hs.activity_id');
+            joinClauses.push('LEFT JOIN season s ON hs.season_id = s.season_id');
             whereConditions.push('s.name = ?');
             params.push(filter.season);
         }
 
         // Weather filtering
         if (filter.weather.trim() !== '') {
-            query += `
-                LEFT JOIN has_weather hw ON a.id = hw.activity_id
-                LEFT JOIN weather w ON hw.weather_id = w.weather_id `;
+            joinClauses.push('LEFT JOIN has_weather hw ON a.id = hw.activity_id');
+            joinClauses.push('LEFT JOIN weather w ON hw.weather_id = w.weather_id');
             whereConditions.push('w.name = ?');
             params.push(filter.weather);
         }
 
-        // Add all WHERE conditions
+        // Construct the final query string by joining all the parts
+        let query = `
+            SELECT ${selectFields.join(', ')}
+            FROM activity a
+            ${joinClauses.join('\n')}
+        `;
+
+        // Add WHERE clause if conditions exist
         if (whereConditions.length > 0) {
             query += ' WHERE ' + whereConditions.join(' AND ');
         }
 
-        // Group by to avoid duplicates due to joins
+        // Add GROUP BY clause
         query += ' GROUP BY a.id';
 
-        // Order by distance if location is provided
-        /*
-        if (filter.location.trim() !== '') {
-            query += ' ORDER BY distance ASC';
-        } else {
-            query += ' ORDER BY a.title ASC';
-        }*/
-
+        // Add HAVING clause if conditions exist
+        if (havingConditions.length > 0) {
+            query += ' HAVING ' + havingConditions.join(' AND ');
+        }
+        
         const [rows] = await db.query(query, params);
         return rows.length > 0 ? rows : [];
     } catch (error) {
@@ -319,6 +318,7 @@ const fetchFilteredActivitiesFromDatabase = async (filter, userId) => {
         throw error;
     }
 };
+
 
 const fetchUserActivityCountFromDatabase = async (userId) => {
     const query = 'SELECT count(id) as activity_count FROM activity WHERE creator_id = ? AND active_flag = 1';
@@ -332,31 +332,6 @@ const fetchUserActivityCountFromDatabase = async (userId) => {
     }
 };
 
-const geocodeLocation = async (locationString) => {
-    try {
-        // This would be replaced with your actual geocoding service
-        // e.g., Google Maps Geocoding API, Mapbox, or your own database lookup
-
-        // For example with a third-party geocoding service:
-        // const response = await geocodingService.geocode(locationString);
-        // return [response.lat, response.lng];
-
-        // Or with a database lookup:
-        const [locations] = await db.query(
-            'SELECT latitude, longitude FROM location WHERE locality LIKE ?',
-            [`%${locationString}%`]
-        );
-
-        if (locations.length > 0) {
-            return [locations[0].latitude, locations[0].longitude];
-        }
-
-        return [null, null];
-    } catch (error) {
-        logger.error(`Geocoding error for location "${locationString}": ${error.message}`);
-        return [null, null];
-    }
-};
 /**
  * Adds a new activity to the database
  * @param {Object} activity - Activity data

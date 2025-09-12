@@ -134,7 +134,8 @@ router.get('/filtered', authenticateFirebaseToken, async (req, res) => {
     try {
         // Extract filter parameters from query params
         const filter = {
-            location: req.query.location || "",
+            lat: req.query.lat || 0,
+            lng: req.query.lng || 0,
             distance: parseInt(req.query.distance) || 25,
             groupSize: parseInt(req.query.groupSize) || 0,
             price: parseInt(req.query.price) || 0,
