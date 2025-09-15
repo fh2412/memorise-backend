@@ -225,35 +225,8 @@ const fetchFilteredActivitiesFromDatabase = async (filter, userId) => {
         let whereConditions = ['a.active_flag = 1'];
         let havingConditions = [];
         
-        // Make sure it does not suggest a user's own Activities
-        whereConditions.push('a.creator_id != ?');
-        params.push(userId);
-
-        // Filter by name (using LIKE for partial matches)
-        if (filter.name.trim() !== '') {
-            whereConditions.push('a.title LIKE ?');
-            params.push(`%${filter.name}%`);
-        }
-
-        // Filter by group size (activities that can accommodate the requested size)
-        if (filter.groupSize > 0) {
-            whereConditions.push('a.group_size_min <= ?');
-            params.push(filter.groupSize);
-        }
-
-        if (filter.groupSize < 21) {
-            whereConditions.push('a.group_size_max >= ?');
-            params.push(filter.groupSize);
-        }
-
-        // Filter by price (assuming price is max willing to pay)
-        if (filter.price > -1) {
-            whereConditions.push('a.prize <= ?');
-            params.push(filter.price);
-        }
-
         // Handle location and distance filtering
-        if (filter.lat.trim() !== '' && filter.lng.trim() !== '') {
+        if (filter.lat.trim() !== '0' && filter.lng.trim() !== '0') {
             if (filter.lat && filter.lng) {
                 // Add the distance calculation to the SELECT fields
                 // Clamped the value to prevent floating point errors
@@ -271,8 +244,37 @@ const fetchFilteredActivitiesFromDatabase = async (filter, userId) => {
 
                 // Use the HAVING clause to filter by the 'distance' alias
                 havingConditions.push('distance <= ?');
-                params.push(filter.distance);
             }
+        }
+
+        // Make sure it does not suggest a user's own Activities
+        whereConditions.push('a.creator_id != ?');
+        params.push(userId);
+
+        // Filter by Indoor / Outdoor
+        if (filter.activityType.trim() !== '') {
+            whereConditions.push('a.indoor_outdoor_flag = ?');
+            params.push(filter.activityType);
+        }
+
+        // Filter by name (using LIKE for partial matches)
+        if (filter.name.trim() !== '') {
+            whereConditions.push('a.title LIKE ?');
+            params.push(`%${filter.name}%`);
+        }
+
+        // Filter by group size (activities that can accommodate the requested size)
+        if (filter.groupSize > 0) {
+            whereConditions.push('a.group_size_min <= ?');
+            whereConditions.push('a.group_size_max >= ?');
+            params.push(filter.groupSize);
+            params.push(filter.groupSize);
+        }
+
+        // Filter by price (assuming price is max willing to pay)
+        if (filter.price > -1) {
+            whereConditions.push('a.prize <= ?');
+            params.push(filter.price);
         }
 
         // Season filtering
@@ -309,7 +311,11 @@ const fetchFilteredActivitiesFromDatabase = async (filter, userId) => {
         // Add HAVING clause if conditions exist
         if (havingConditions.length > 0) {
             query += ' HAVING ' + havingConditions.join(' AND ');
+            params.push(filter.distance);
         }
+
+        logger.info(query);
+        logger.warn(params);
         
         const [rows] = await db.query(query, params);
         return rows.length > 0 ? rows : [];

@@ -141,7 +141,8 @@ router.get('/filtered', authenticateFirebaseToken, async (req, res) => {
             price: parseInt(req.query.price) || 0,
             season: req.query.season || "",
             weather: req.query.weather || "",
-            name: req.query.name || ""
+            name: req.query.name || "",
+            activityType: req.query.activityType || "" // indoor or outdoor
         };
 
         const userId = req.query.userId;
