@@ -3,7 +3,7 @@ const router = express.Router();
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const logger = require('../../middleware/logger');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
-const { createActivity, getActivityDetails, getAllActivities, createUserActivity, updateActivityWithFiles, finalizeActivity, getAllUserActivities, getSuggestedActivity, getFilteredActivities, getActivityCreatorDetails, getUserActivityStats, archiveActivity, updateUserActivity, updateThumbmail, getBookmarkedActivities } = require('./activitiesService');
+const { createActivity, getActivityDetails, getAllActivities, createUserActivity, updateActivityWithFiles, finalizeActivity, getAllUserActivities, getSuggestedActivity, getFilteredActivities, getActivityCreatorDetails, getUserActivityStats, archiveActivity, updateUserActivity, updateThumbmail, getBookmarkedActivities, updateMemoryActivity } = require('./activitiesService');
 const { validateActivityId, validateCreateActivity, validateUpdateActivity, validateUserCreateActivity } = require('../../middleware/validation/validateActivity');
 const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
 
@@ -299,6 +299,25 @@ router.put('/update-user-activity/:activityId', authenticateFirebaseToken, valid
         res.json({ message: 'Activity updated successfully' });
     } catch (error) {
         logger.error(`Controller error; ACTIVITY PUT /update-user-activity: ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * PUT update memory activity
+ * @route PUT /update-memory-activity/:memoryId
+ * @description Updates the activity assotiated with a memory
+ */
+router.put('/update-memory-activity/:memoryId', authenticateFirebaseToken, handleValidationErrors, async (req, res) => {
+    const memoryId = parseInt(req.params.memoryId, 10);
+    const { activityId } = req.body;
+
+    try {
+        await updateMemoryActivity(activityId, memoryId);
+
+        res.json({ message: 'Memory Activity updated successfully' });
+    } catch (error) {
+        logger.error(`Controller error; ACTIVITY PUT /update-memory-activity: ${error.message}`);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });

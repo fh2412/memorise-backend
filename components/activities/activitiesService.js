@@ -16,7 +16,8 @@ const { addActivityToDatabase, fetchActivityDetailsFromDatabase, fetchActivitySe
     deleteWeatherRelations,
     deleteSeasonRelations,
     updateActivityThumbmailDatabase,
-    fetchUsersBookmarkedActivitiesFromDatabase } = require('./activitiesDataAccess');
+    fetchUsersBookmarkedActivitiesFromDatabase,
+    updateMemoryActivityInDatabase } = require('./activitiesDataAccess');
 const { updateLocation } = require('../locations/locationsDataAccess');
 const logger = require('../../middleware/logger');
 
@@ -276,6 +277,16 @@ const updateUserActivity = async (activityData) => {
     }
 };
 
+const updateMemoryActivity = async (activityId, memoryId) => {
+    try {
+        await updateMemoryActivityInDatabase(memoryId, activityId);
+        
+    } catch (error) {
+        logger.error(`Service error; updateMemoryActivity: ${error.message}`);
+        throw error;
+    }
+};
+
 /**
  * Finalizes an activity after creation
  * @param {string|number} activityId - The ID of the activity
@@ -306,5 +317,6 @@ module.exports = {
     archiveActivity,
     updateUserActivity,
     updateThumbmail,
-    getBookmarkedActivities
+    getBookmarkedActivities,
+    updateMemoryActivity
 };

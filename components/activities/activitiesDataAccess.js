@@ -574,6 +574,28 @@ const updateActivityInDatabase = async (activity) => {
     }
 };
 
+const updateMemoryActivityInDatabase = async (memoryId, activityId) => {
+    const query = `
+        UPDATE memories
+        SET activity_id = ?,
+            location_id = (SELECT location_id FROM activity WHERE id = ?)
+        WHERE memory_id = ?;
+    `;
+
+    const params = [
+        activityId,
+        activityId,
+        memoryId
+    ];
+
+    try {
+        await db.query(query, params);
+    } catch (error) {
+        logger.error(`Data Access error; Error updating memory activity (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
 const deleteWeatherRelations = async (activityId) => {
     const query = `DELETE FROM has_weather WHERE activity_id = ?`;
     await db.query(query, [activityId]);
@@ -610,5 +632,6 @@ module.exports = {
     deleteWeatherRelations,
     deleteSeasonRelations,
     updateActivityThumbmailDatabase,
-    fetchUsersBookmarkedActivitiesFromDatabase
+    fetchUsersBookmarkedActivitiesFromDatabase,
+    updateMemoryActivityInDatabase
 }
