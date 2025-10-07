@@ -3,7 +3,7 @@ const handleValidationErrors = require('../../middleware/validationMiddleware');
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const router = express.Router();
 const logger = require('../../middleware/logger');
-const { getAllUsers, getUserById, getUserMemories, getUserCountry, searchUsers, postCreateUser, updateUser, updateUserProfilePic, deleteUser } = require('./usersService');
+const { getAllUsers, getUserById, getUserMemories, getUserCountry, searchUsers, postCreateUser, updateUser, updateUserProfilePic, getUserStorageData, deleteUser } = require('./usersService');
 const { validateFirebaseUID, validateUserEmail, validateUserPassword, validateProfilePicUrl, validateUserUpdate } = require('../../middleware/validation/validateUsers');
 
 /**
@@ -105,6 +105,26 @@ router.get('/search/users/:userId', authenticateFirebaseToken, validateFirebaseU
     } catch (error) {
         logger.error(`Controller error; USERS GET /search/users/:userId: ${error.message}`);
         res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+/**
+ * GET users UserStorageData
+ * @route GET /userStorageData/:userId
+ * @description returns the userStorageData of a user by id
+ */
+router.get('/userStorageData/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res) => {
+    const userId = req.params.userId;
+    try {
+        const userStorageData = await getUserStorageData(userId);
+        if (userStorageData) {
+            res.json(userStorageData);
+        } else {
+            res.status(404).json({ message: 'User not found (/:userId)' });
+        }
+    } catch (error) {
+        logger.error(`Controller error; USERS GET /userStorageData/:userId: ${error.message}`);
+        res.status(500).json({ message: 'An unexpected error occurred' });
     }
 });
 

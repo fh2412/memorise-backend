@@ -1,4 +1,4 @@
-const { fetchAllUsers, fetchUserById, fetchUserMemories, fetchUserCountry, createFirebaseUser, searchUsersData, generateCustomToken, saveUserInDatabase, updateUserData, updateUserProfilePicData, deleteUserData } = require('./usersDataAccess');
+const { fetchAllUsers, fetchUserById, fetchUserMemories, fetchUserCountry, createFirebaseUser, fetchUserStorageData, searchUsersData, generateCustomToken, saveUserInDatabase, updateUserData, updateUserProfilePicData, deleteUserData } = require('./usersDataAccess');
 const logger = require('../../middleware/logger');
 
 
@@ -34,6 +34,15 @@ const getUserCountry = async (userId) => {
         return await fetchUserCountry(userId);
     } catch (error) {
         logger.error(`Service error; Error getUserCountry: ${error.message}`);
+        throw error;
+    }
+};
+
+const getUserStorageData = async (userId) => {
+    try {
+        return await fetchUserStorageData(userId);
+    } catch (error) {
+        logger.error(`Service error; Error getUserStorageData: ${error.message}`);
         throw error;
     }
 };
@@ -98,4 +107,5 @@ module.exports = {
     updateUser,
     updateUserProfilePic,
     deleteUser,
+    getUserStorageData
 };

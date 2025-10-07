@@ -11,8 +11,6 @@ router.put('/freetier/:userId', authenticateFirebaseToken, validateFirebaseUID, 
     const { userId } = req.params;
     const { data_size } = req.body;
 
-    logger.info(data_size);
-
     try {
         await updateUserStorageTakenService(userId, data_size);
         res.json({ message: 'Updated Storage Count of user successfully' });
