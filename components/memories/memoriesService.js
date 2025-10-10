@@ -17,7 +17,11 @@ const {
     checkMemoryExists,
     deleteFriendsByMemoryId,
     deleteMemoryById,
-    deleteFriendFromMemory
+    deleteFriendFromMemory,
+    getOrCreateShareToken,
+    fetchMemoryByShareToken,
+    checkUserMemoryMembership,
+    addUserToMemoryViaToken,
 } = require('./memoriesDataAccess');
 const logger = require('../../middleware/logger');
 
@@ -195,6 +199,124 @@ const removeFriendFromMemory = async (userId, memoryId) => {
     }
 };
 
+/**
+ * Generate or retrieve share link for a memory
+ */
+const generateShareLink = async (memoryId, userId) => {
+    try {
+        // First verify the memory exists and user has permission
+        const memory = await fetchMemoryByIdFromDB(memoryId);
+
+        if (!memory) {
+            throw new Error('Memory not found');
+        }
+
+        // Check if user is creator or member (has permission to share)
+        const isMember = await checkUserMemoryMembership(memoryId, userId);
+
+        if (!isMember) {
+            throw new Error('User does not have permission to share this memory');
+        }
+
+        // Get or create share token
+        const shareToken = await getOrCreateShareToken(memoryId);
+
+        // Construct the share link (frontend URL will be passed from controller/env)
+        return {
+            shareToken,
+            memoryId
+        };
+    } catch (error) {
+        logger.error(`Service error; Error in generateShareLink: ${error.message}`);
+        throw error;
+    }
+};
+
+/**
+ * Validate share token and return memory details
+ */
+const validateShareToken = async (token, userId = null) => {
+    try {
+        // Find memory by token
+        const memory = await fetchMemoryByShareToken(token);
+
+        if (!memory) {
+            return { valid: false };
+        }
+
+        // If userId is provided, check if already a member
+        let alreadyMember = false;
+        if (userId) {
+            alreadyMember = await checkUserMemoryMembership(memory.memory_id, userId);
+        }
+
+        return {
+            valid: true,
+            memory,
+            alreadyMember
+        };
+    } catch (error) {
+        logger.error(`Service error; Error in validateShareToken: ${error.message}`);
+        throw error;
+    }
+};
+
+/**
+ * Join a memory via share token
+ */
+const joinMemoryViaToken = async (token, userId) => {
+    try {
+        // First validate the token and get memory
+        const memory = await fetchMemoryByShareToken(token);
+
+        if (!memory) {
+            throw new Error('Invalid or expired share link');
+        }
+
+        // Check if user is the creator
+        if (memory.user_id === userId) {
+            return {
+                message: 'You are the creator of this memory',
+                alreadyMember: true,
+                memory
+            };
+        }
+
+        // Add user to memory
+        const result = await addUserToMemoryViaToken(userId, memory.memory_id);
+
+        if (result.alreadyMember) {
+            return {
+                message: 'You are already a member of this memory',
+                alreadyMember: true,
+                memory
+            };
+        }
+
+        return {
+            message: 'Successfully joined memory',
+            alreadyMember: false,
+            memory
+        };
+    } catch (error) {
+        logger.error(`Service error; Error in joinMemoryViaToken: ${error.message}`);
+        throw error;
+    }
+};
+
+/**
+ * Check if user is a member of a memory
+ */
+const checkMembership = async (memoryId, userId) => {
+    try {
+        const isMember = await checkUserMemoryMembership(memoryId, userId);
+        return { isMember };
+    } catch (error) {
+        logger.error(`Service error; Error in checkMembership: ${error.message}`);
+        throw error;
+    }
+};
+
 module.exports = {
     getUsersForMemory,
     getCreatedMemories,
@@ -211,4 +333,8 @@ module.exports = {
     updateTitlePic,
     deleteMemoryAndFriends,
     removeFriendFromMemory,
+    generateShareLink,
+    validateShareToken,
+    joinMemoryViaToken,
+    checkMembership,
 }

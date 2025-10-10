@@ -1,5 +1,6 @@
 const db = require('../../config/db');
 const logger = require('../../middleware/logger');
+const crypto = require('crypto');
 
 const fetchUsersForMemoryFromDB = async (memoryId) => {
     const query = `
@@ -277,6 +278,117 @@ const deleteFriendFromMemory = async (userId, memoryId) => {
     }
 };
 
+/**
+ * Generate or retrieve share token for a memory
+ */
+const getOrCreateShareToken = async (memoryId) => {
+    // First check if token already exists
+    const checkQuery = 'SELECT share_token FROM memories WHERE memory_id = ?';
+    
+    try {
+        const [rows] = await db.query(checkQuery, [memoryId]);
+        
+        if (rows.length === 0) {
+            throw new Error('Memory not found');
+        }
+        
+        // If token exists, return it
+        if (rows[0].share_token) {
+            return rows[0].share_token;
+        }
+        
+        // Generate new token
+        const shareToken = crypto.randomBytes(32).toString('base64url');
+        
+        // Update memory with new token
+        const updateQuery = 'UPDATE memories SET share_token = ? WHERE memory_id = ?';
+        await db.query(updateQuery, [shareToken, memoryId]);
+        
+        return shareToken;
+    } catch (error) {
+        logger.error(`Data Access error; Error in getOrCreateShareToken: ${error.message}`);
+        throw error;
+    }
+};
+
+/**
+ * Find memory by share token
+ */
+const fetchMemoryByShareToken = async (token) => {
+    const query = `
+        SELECT m.*, u.name AS username, l.latitude, l.longitude
+        FROM memories m
+        JOIN users u ON m.user_id = u.user_id
+        JOIN location l ON m.location_id = l.location_id
+        WHERE m.share_token = ?
+    `;
+    
+    try {
+        const [rows] = await db.query(query, [token]);
+        return rows.length > 0 ? rows[0] : null;
+    } catch (error) {
+        logger.error(`Data Access error; Error fetching memory by share token: ${error.message}`);
+        throw error;
+    }
+};
+
+/**
+ * Check if user is a member of a memory (creator or added friend)
+ */
+const checkUserMemoryMembership = async (memoryId, userId) => {
+    const query = `
+        SELECT 
+            CASE 
+                WHEN m.user_id = ? THEN TRUE
+                WHEN uh.user_id IS NOT NULL THEN TRUE
+                ELSE FALSE
+            END AS is_member
+        FROM memories m
+        LEFT JOIN user_has_memory uh ON m.memory_id = uh.memory_id AND uh.user_id = ?
+        WHERE m.memory_id = ?
+        LIMIT 1
+    `;
+    
+    try {
+        const [rows] = await db.query(query, [userId, userId, memoryId]);
+        return rows.length > 0 && rows[0].is_member === 1;
+    } catch (error) {
+        logger.error(`Data Access error; Error checking user membership: ${error.message}`);
+        throw error;
+    }
+};
+
+/**
+ * Add user to memory via share token (same as addUserToMemory but explicit)
+ */
+const addUserToMemoryViaToken = async (userId, memoryId) => {
+    // Check if user is already a member
+    const checkQuery = `
+        SELECT * FROM user_has_memory 
+        WHERE user_id = ? AND memory_id = ?
+    `;
+    
+    try {
+        const [existing] = await db.query(checkQuery, [userId, memoryId]);
+        
+        if (existing.length > 0) {
+            return { alreadyMember: true };
+        }
+        
+        // Add user to memory
+        const insertQuery = `
+            INSERT INTO user_has_memory (user_id, memory_id, status) 
+            VALUES (?, ?, 'friend')
+        `;
+        await db.query(insertQuery, [userId, memoryId]);
+        
+        return { alreadyMember: false };
+    } catch (error) {
+        logger.error(`Data Access error; Error adding user to memory via token: ${error.message}`);
+        throw error;
+    }
+};
+
 module.exports = {
     fetchUsersForMemoryFromDB,
     fetchCreatedMemoriesFromDB,
@@ -297,4 +409,8 @@ module.exports = {
     deleteFriendsByMemoryId,
     deleteMemoryById,
     deleteFriendFromMemory,
+    getOrCreateShareToken,
+    fetchMemoryByShareToken,
+    checkUserMemoryMembership,
+    addUserToMemoryViaToken,
 }

@@ -5,8 +5,7 @@ const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const { validateMemoryId, validateCreateMemory, validateAddFriendsToMemory, validateUpdateMemory, validateUpdatePictureCount, validateUpdateMemoryLocation, validateUpdateTitlePic } = require('../../middleware/validation/validateMemory');
 const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
-const { 
-    getCreatedMemories,
+const { getCreatedMemories,
     getAddedMemories,
     getAllMemories,
     getMemoryById,
@@ -19,7 +18,11 @@ const {
     updateMemoryLocation,
     updateTitlePic,
     deleteMemoryAndFriends,
-    removeFriendFromMemory } = require('./memoriesService');
+    removeFriendFromMemory, 
+    generateShareLink,
+    validateShareToken,
+    joinMemoryViaToken,
+    checkMembership } = require('./memoriesService');
 
 /**
  * GET created memories for a user
@@ -83,6 +86,58 @@ router.get('/allMemories/:userId', authenticateFirebaseToken, validateFirebaseUI
         next(error);
     }
 });
+
+/**
+ * GET Check if user is a member of a memory
+ * @route GET /memories/:memoryId/member/:userId
+ * @description Check if a specific user is a member of a memory
+ */
+router.get('/:memoryId/member/:userId', 
+    authenticateFirebaseToken, 
+    validateMemoryId, 
+    validateFirebaseUID, 
+    handleValidationErrors, 
+    async (req, res, next) => {
+        const { memoryId, userId } = req.params;
+
+        try {
+            const result = await checkMembership(memoryId, userId);
+            res.json(result);
+        } catch (error) {
+            logger.error(`Controller error; GET /:memoryId/member/:userId ${error.message}`);
+            next(error);
+        }
+    }
+);
+
+/**
+ * GET Validate share token and return memory details
+ * @route GET /memories/share/validate/:token
+ * @description Validate a share token and return memory information
+ */
+router.get('/share/validate/:token', 
+    authenticateFirebaseToken, 
+    async (req, res, next) => {
+        const { token } = req.params;
+        const userId = req.user?.uid; // Optional - user might be checking before joining
+
+        try {
+            const result = await validateShareToken(token, userId);
+            
+            if (!result.valid) {
+                return res.status(404).json({ 
+                    valid: false, 
+                    message: 'Invalid or expired share link' 
+                });
+            }
+            
+            res.json(result);
+        } catch (error) {
+            logger.error(`Controller error; GET /share/validate/:token ${error.message}`);
+            next(error);
+        }
+    }
+);
 
 /**
  * GET details of a specific memory by memoryId
@@ -179,6 +234,73 @@ router.post('/addFriendsToMemory', authenticateFirebaseToken, validateAddFriends
         next(error);
     }
 });
+
+/**
+ * POST Generate or get share link for a memory
+ * @route POST /memories/:memoryId/share
+ * @description Generate a shareable link for a memory
+ */
+router.post('/:memoryId/share', 
+    authenticateFirebaseToken, 
+    validateMemoryId, 
+    handleValidationErrors, 
+    async (req, res, next) => {
+        const { memoryId } = req.params;
+        const userId = req.user.uid; // Get from Firebase auth middleware
+
+        try {
+            const result = await generateShareLink(memoryId, userId);
+            
+            // Construct full share link
+            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+            const shareLink = `${frontendUrl}/memory/join/${result.shareToken}`;
+            
+            res.json({
+                shareLink,
+                shareToken: result.shareToken
+            });
+        } catch (error) {
+            if (error.message === 'Memory not found') {
+                return res.status(404).json({ message: error.message });
+            }
+            if (error.message === 'User does not have permission to share this memory') {
+                return res.status(403).json({ message: error.message });
+            }
+            
+            logger.error(`Controller error; POST /:memoryId/share ${error.message}`);
+            next(error);
+        }
+    }
+);
+
+/**
+ * POST Join a memory via share token
+ * @route POST /memories/share/join
+ * @description Add the authenticated user to a memory using a share token
+ */
+router.post('/share/join', 
+    authenticateFirebaseToken, 
+    async (req, res, next) => {
+        const { token } = req.body;
+        const userId = req.user.uid;
+
+        if (!token) {
+            return res.status(400).json({ message: 'Share token is required' });
+        }
+
+        try {
+            const result = await joinMemoryViaToken(token, userId);
+            res.json(result);
+        } catch (error) {
+            if (error.message === 'Invalid or expired share link') {
+                return res.status(404).json({ message: error.message });
+            }
+            
+            logger.error(`Controller error; POST /share/join ${error.message}`);
+            next(error);
+        }
+    }
+);
 
 /**
  * PUT Update a memory
