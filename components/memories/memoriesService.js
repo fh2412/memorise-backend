@@ -5,7 +5,7 @@ const {
     fetchAllMemoriesFromDB,
     fetchMemoryByIdFromDB,
     fetchMemoryFriendsFromDB,
-    fetchMemoryFriends,
+    fetchMemoryDetailFriends,
     getSharedMemoriesCount,
     createMemoryInDB,
     getUserIdByEmail,
@@ -88,7 +88,7 @@ const getMemoryFriends = async (memoryId, userId) => {
 const getFriendsWithSharedCount = async (memoryId, userId) => {
     try {
         // Step 1: Get the list of friends
-        const friends = await fetchMemoryFriends(memoryId);
+        const friends = await fetchMemoryDetailFriends(memoryId, userId);
 
         // Step 2: Get shared memories count for each friend
         const friendsWithSharedCount = await Promise.all(friends.map(friend =>

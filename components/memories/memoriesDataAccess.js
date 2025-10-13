@@ -109,16 +109,30 @@ const fetchMemoryFriendsFromDB = async (memoryId, userId) => {
     }
 };
 
-const fetchMemoryFriends = async (memoryId) => {
+const fetchMemoryDetailFriends = async (memoryId, userId) => {
     const query = `
-      SELECT u.user_id, u.name, u.dob, u.profilepic, u.country
-      FROM user_has_memory AS uh
-      JOIN users AS u ON uh.user_id = u.user_id
-      WHERE uh.memory_id = ?
+      SELECT u.user_id, u.name, u.dob, u.profilepic, u.country,
+    CASE
+        WHEN f1.status IS NOT NULL THEN f1.status
+        WHEN f2.status IS NOT NULL THEN f2.status
+        ELSE 'none'
+    END AS friendship_status FROM user_has_memory AS uh
+    JOIN
+        users AS u ON uh.user_id = u.user_id
+    LEFT JOIN
+        friendships AS f1 ON (
+            f1.user_id1 = u.user_id AND f1.user_id2 = ?
+        )
+    LEFT JOIN
+        friendships AS f2 ON (
+            f2.user_id1 = ? AND f2.user_id2 = u.user_id
+        )
+    WHERE
+        uh.memory_id = ?;
     `;
 
     try {
-        const [rows] = await db.execute(query, [memoryId]);
+        const [rows] = await db.execute(query, [userId, userId, memoryId]);
         return rows;
     } catch (error) {
         logger.error(`Data Access error; Error fetching friends for memoryId: ${memoryId}: ${error.message}`);
@@ -284,26 +298,26 @@ const deleteFriendFromMemory = async (userId, memoryId) => {
 const getOrCreateShareToken = async (memoryId) => {
     // First check if token already exists
     const checkQuery = 'SELECT share_token FROM memories WHERE memory_id = ?';
-    
+
     try {
         const [rows] = await db.query(checkQuery, [memoryId]);
-        
+
         if (rows.length === 0) {
             throw new Error('Memory not found');
         }
-        
+
         // If token exists, return it
         if (rows[0].share_token) {
             return rows[0].share_token;
         }
-        
+
         // Generate new token
         const shareToken = crypto.randomBytes(32).toString('base64url');
-        
+
         // Update memory with new token
         const updateQuery = 'UPDATE memories SET share_token = ? WHERE memory_id = ?';
         await db.query(updateQuery, [shareToken, memoryId]);
-        
+
         return shareToken;
     } catch (error) {
         logger.error(`Data Access error; Error in getOrCreateShareToken: ${error.message}`);
@@ -322,7 +336,7 @@ const fetchMemoryByShareToken = async (token) => {
         JOIN location l ON m.location_id = l.location_id
         WHERE m.share_token = ?
     `;
-    
+
     try {
         const [rows] = await db.query(query, [token]);
         return rows.length > 0 ? rows[0] : null;
@@ -348,7 +362,7 @@ const checkUserMemoryMembership = async (memoryId, userId) => {
         WHERE m.memory_id = ?
         LIMIT 1
     `;
-    
+
     try {
         const [rows] = await db.query(query, [userId, userId, memoryId]);
         return rows.length > 0 && rows[0].is_member === 1;
@@ -367,21 +381,21 @@ const addUserToMemoryViaToken = async (userId, memoryId) => {
         SELECT * FROM user_has_memory 
         WHERE user_id = ? AND memory_id = ?
     `;
-    
+
     try {
         const [existing] = await db.query(checkQuery, [userId, memoryId]);
-        
+
         if (existing.length > 0) {
             return { alreadyMember: true };
         }
-        
+
         // Add user to memory
         const insertQuery = `
             INSERT INTO user_has_memory (user_id, memory_id, status) 
             VALUES (?, ?, 'friend')
         `;
         await db.query(insertQuery, [userId, memoryId]);
-        
+
         return { alreadyMember: false };
     } catch (error) {
         logger.error(`Data Access error; Error adding user to memory via token: ${error.message}`);
@@ -396,7 +410,7 @@ module.exports = {
     fetchAllMemoriesFromDB,
     fetchMemoryByIdFromDB,
     fetchMemoryFriendsFromDB,
-    fetchMemoryFriends,
+    fetchMemoryDetailFriends,
     getSharedMemoriesCount,
     createMemoryInDB,
     getUserIdByEmail,
