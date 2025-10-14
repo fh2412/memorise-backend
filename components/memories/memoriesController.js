@@ -246,17 +246,17 @@ router.post('/:memoryId/share',
     handleValidationErrors, 
     async (req, res, next) => {
         const { memoryId } = req.params;
-        const userId = req.user.uid; // Get from Firebase auth middleware
+        const userId = req.user.uid;
 
         try {
             const result = await generateShareLink(memoryId, userId);
             
-            // Construct full share link
             const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
-            const shareLink = `${frontendUrl}/memory/join/${result.shareToken}`;
             
+            // Return both direct link and OG preview link
             res.json({
-                shareLink,
+                shareLink: `${frontendUrl}/og/memory/${result.shareToken}`,
+                directLink: `${frontendUrl}/memory/join/${result.shareToken}`,
                 shareToken: result.shareToken
             });
         } catch (error) {
