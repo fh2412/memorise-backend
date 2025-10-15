@@ -207,24 +207,55 @@ const fetchUsersBookmarkedActivitiesFromDatabase = async (userId) => {
     }
 };
 
-const fetchFilteredActivitiesFromDatabase = async (filter) => {
+const fetchFilteredActivitiesFromDatabase = async (filter, userId) => {
     try {
         let params = [];
-        let query = `
-            SELECT 
-                a.id, 
-                a.title, 
-                a.group_size_min AS groupSizeMin, 
-                a.group_size_max AS groupSizeMax, 
-                a.indoor_outdoor_flag AS indoor, 
-                a.prize AS costs, 
-                a.title_image_url AS firebaseUrl
-            FROM activity a
-            LEFT JOIN location l ON a.location_id = l.location_id
-        `;
+        let selectFields = [
+            'a.id AS activityId',
+            'a.title',
+            'a.group_size_min AS groupSizeMin',
+            'a.group_size_max AS groupSizeMax',
+            'a.indoor_outdoor_flag AS indoor',
+            'a.prize AS costs',
+            'a.title_image_url AS firebaseUrl'
+        ];
+        let joinClauses = [
+            'LEFT JOIN location l ON a.location_id = l.location_id'
+        ];
+        let whereConditions = ['a.active_flag = 1'];
+        let havingConditions = [];
+        
+        // Handle location and distance filtering
+        if (filter.lat.trim() !== '0' && filter.lng.trim() !== '0') {
+            if (filter.lat && filter.lng) {
+                // Add the distance calculation to the SELECT fields
+                // Clamped the value to prevent floating point errors
+                selectFields.push(`(
+                    6371 * acos(
+                        LEAST(1.0, GREATEST(-1.0, (
+                            cos(radians(?)) * cos(radians(l.latitude)) * cos(radians(l.longitude) - radians(?)) + 
+                            sin(radians(?)) * sin(radians(l.latitude))
+                        )))
+                    )
+                ) AS distance`);
 
-        // Build WHERE clauses based on filter parameters
-        let whereConditions = ['a.active_flag = 1']; // Only active activities
+                // Push parameters for the distance calculation
+                params.push(filter.lat, filter.lng, filter.lat);
+
+                // Use the HAVING clause to filter by the 'distance' alias
+                havingConditions.push('distance <= ?');
+            }
+        }
+
+        // Make sure it does not suggest a user's own Activities
+        whereConditions.push('a.creator_id != ?');
+        params.push(userId);
+
+        // Filter by Indoor / Outdoor
+        if (filter.activityType.trim() !== '') {
+            whereConditions.push('a.indoor_outdoor_flag = ?');
+            params.push(filter.activityType);
+        }
 
         // Filter by name (using LIKE for partial matches)
         if (filter.name.trim() !== '') {
@@ -235,87 +266,57 @@ const fetchFilteredActivitiesFromDatabase = async (filter) => {
         // Filter by group size (activities that can accommodate the requested size)
         if (filter.groupSize > 0) {
             whereConditions.push('a.group_size_min <= ?');
-            params.push(filter.groupSize);
-        }
-
-        if (filter.groupSize < 21) {
             whereConditions.push('a.group_size_max >= ?');
+            params.push(filter.groupSize);
             params.push(filter.groupSize);
         }
 
         // Filter by price (assuming price is max willing to pay)
-        if (filter.price >= 0) {
+        if (filter.price > -1) {
             whereConditions.push('a.prize <= ?');
             params.push(filter.price);
         }
 
-        // Handle location and distance filtering
-        if (filter.location.trim() !== '') {
-            // If location is provided, join with location table and calculate distance
-            // Using Haversine formula to calculate distance in kilometers
-            const [lat, lng] = await geocodeLocation(filter.location);
-
-            if (lat && lng) {
-                query += `
-                    , (
-                        6371 * acos(
-                            cos(radians(?)) * 
-                            cos(radians(l.latitude)) * 
-                            cos(radians(l.longitude) - radians(?)) + 
-                            sin(radians(?)) * 
-                            sin(radians(l.latitude))
-                        )
-                    ) AS distance `;
-
-                params.push(lat, lng, lat);
-
-                whereConditions.push('distance <= ?');
-                params.push(filter.distance);
-            }
-        }
-
         // Season filtering
         if (filter.season.trim() !== '') {
-            query += `
-                LEFT JOIN has_season hs ON a.id = hs.activity_id
-                LEFT JOIN season s ON hs.season_id = s.season_id `;
+            joinClauses.push('LEFT JOIN has_season hs ON a.id = hs.activity_id');
+            joinClauses.push('LEFT JOIN season s ON hs.season_id = s.season_id');
             whereConditions.push('s.name = ?');
             params.push(filter.season);
         }
 
         // Weather filtering
         if (filter.weather.trim() !== '') {
-            query += `
-                LEFT JOIN has_weather hw ON a.id = hw.activity_id
-                LEFT JOIN weather w ON hw.weather_id = w.weather_id `;
+            joinClauses.push('LEFT JOIN has_weather hw ON a.id = hw.activity_id');
+            joinClauses.push('LEFT JOIN weather w ON hw.weather_id = w.weather_id');
             whereConditions.push('w.name = ?');
             params.push(filter.weather);
         }
 
-        // Tag filtering
-        if (filter.tag.trim() !== '') {
-            query += `
-                LEFT JOIN has_tag ht ON a.id = ht.activity_id
-                LEFT JOIN tag t ON ht.tag_id = t.id `;
-            whereConditions.push('t.name = ?');
-            params.push(filter.tag);
-        }
+        // Construct the final query string by joining all the parts
+        let query = `
+            SELECT ${selectFields.join(', ')}
+            FROM activity a
+            ${joinClauses.join('\n')}
+        `;
 
-        // Add all WHERE conditions
+        // Add WHERE clause if conditions exist
         if (whereConditions.length > 0) {
             query += ' WHERE ' + whereConditions.join(' AND ');
         }
 
-        // Group by to avoid duplicates due to joins
+        // Add GROUP BY clause
         query += ' GROUP BY a.id';
 
-        // Order by distance if location is provided
-        if (filter.location.trim() !== '') {
-            query += ' ORDER BY distance ASC';
-        } else {
-            query += ' ORDER BY a.title ASC';
+        // Add HAVING clause if conditions exist
+        if (havingConditions.length > 0) {
+            query += ' HAVING ' + havingConditions.join(' AND ');
+            params.push(filter.distance);
         }
 
+        logger.info(query);
+        logger.warn(params);
+        
         const [rows] = await db.query(query, params);
         return rows.length > 0 ? rows : [];
     } catch (error) {
@@ -323,6 +324,7 @@ const fetchFilteredActivitiesFromDatabase = async (filter) => {
         throw error;
     }
 };
+
 
 const fetchUserActivityCountFromDatabase = async (userId) => {
     const query = 'SELECT count(id) as activity_count FROM activity WHERE creator_id = ? AND active_flag = 1';
@@ -336,31 +338,6 @@ const fetchUserActivityCountFromDatabase = async (userId) => {
     }
 };
 
-const geocodeLocation = async (locationString) => {
-    try {
-        // This would be replaced with your actual geocoding service
-        // e.g., Google Maps Geocoding API, Mapbox, or your own database lookup
-
-        // For example with a third-party geocoding service:
-        // const response = await geocodingService.geocode(locationString);
-        // return [response.lat, response.lng];
-
-        // Or with a database lookup:
-        const [locations] = await db.query(
-            'SELECT latitude, longitude FROM location WHERE locality LIKE ?',
-            [`%${locationString}%`]
-        );
-
-        if (locations.length > 0) {
-            return [locations[0].latitude, locations[0].longitude];
-        }
-
-        return [null, null];
-    } catch (error) {
-        logger.error(`Geocoding error for location "${locationString}": ${error.message}`);
-        return [null, null];
-    }
-};
 /**
  * Adds a new activity to the database
  * @param {Object} activity - Activity data
@@ -597,6 +574,28 @@ const updateActivityInDatabase = async (activity) => {
     }
 };
 
+const updateMemoryActivityInDatabase = async (memoryId, activityId) => {
+    const query = `
+        UPDATE memories
+        SET activity_id = ?,
+            location_id = (SELECT location_id FROM activity WHERE id = ?)
+        WHERE memory_id = ?;
+    `;
+
+    const params = [
+        activityId,
+        activityId,
+        memoryId
+    ];
+
+    try {
+        await db.query(query, params);
+    } catch (error) {
+        logger.error(`Data Access error; Error updating memory activity (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
 const deleteWeatherRelations = async (activityId) => {
     const query = `DELETE FROM has_weather WHERE activity_id = ?`;
     await db.query(query, [activityId]);
@@ -633,5 +632,6 @@ module.exports = {
     deleteWeatherRelations,
     deleteSeasonRelations,
     updateActivityThumbmailDatabase,
-    fetchUsersBookmarkedActivitiesFromDatabase
+    fetchUsersBookmarkedActivitiesFromDatabase,
+    updateMemoryActivityInDatabase
 }

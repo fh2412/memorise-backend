@@ -3,7 +3,7 @@ const router = express.Router();
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const logger = require('../../middleware/logger');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
-const { createActivity, getActivityDetails, getAllActivities, createUserActivity, updateActivityWithFiles, finalizeActivity, getAllUserActivities, getSuggestedActivity, getFilteredActivities, getActivityCreatorDetails, getUserActivityStats, archiveActivity, updateUserActivity, updateThumbmail, getBookmarkedActivities } = require('./activitiesService');
+const { createActivity, getActivityDetails, getAllActivities, createUserActivity, updateActivityWithFiles, finalizeActivity, getAllUserActivities, getSuggestedActivity, getFilteredActivities, getActivityCreatorDetails, getUserActivityStats, archiveActivity, updateUserActivity, updateThumbmail, getBookmarkedActivities, updateMemoryActivity } = require('./activitiesService');
 const { validateActivityId, validateCreateActivity, validateUpdateActivity, validateUserCreateActivity } = require('../../middleware/validation/validateActivity');
 const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
 
@@ -134,17 +134,20 @@ router.get('/filtered', authenticateFirebaseToken, async (req, res) => {
     try {
         // Extract filter parameters from query params
         const filter = {
-            location: req.query.location || "",
+            lat: req.query.lat || 0,
+            lng: req.query.lng || 0,
             distance: parseInt(req.query.distance) || 25,
-            tag: req.query.tag || "",
-            groupSize: parseInt(req.query.groupSize) || 1,
+            groupSize: parseInt(req.query.groupSize) || 0,
             price: parseInt(req.query.price) || 0,
             season: req.query.season || "",
             weather: req.query.weather || "",
-            name: req.query.name || ""
+            name: req.query.name || "",
+            activityType: req.query.activityType || "" // indoor or outdoor
         };
 
-        const activities = await getFilteredActivities(filter);
+        const userId = req.query.userId;
+
+        const activities = await getFilteredActivities(filter, userId);
         res.json(activities);
     } catch (error) {
         logger.error(`Controller error; ACTIVITY GET /filtered: ${error.message}`);
@@ -296,6 +299,25 @@ router.put('/update-user-activity/:activityId', authenticateFirebaseToken, valid
         res.json({ message: 'Activity updated successfully' });
     } catch (error) {
         logger.error(`Controller error; ACTIVITY PUT /update-user-activity: ${error.message}`);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * PUT update memory activity
+ * @route PUT /update-memory-activity/:memoryId
+ * @description Updates the activity assotiated with a memory
+ */
+router.put('/update-memory-activity/:memoryId', authenticateFirebaseToken, handleValidationErrors, async (req, res) => {
+    const memoryId = parseInt(req.params.memoryId, 10);
+    const { activityId } = req.body;
+
+    try {
+        await updateMemoryActivity(activityId, memoryId);
+
+        res.json({ message: 'Memory Activity updated successfully' });
+    } catch (error) {
+        logger.error(`Controller error; ACTIVITY PUT /update-memory-activity: ${error.message}`);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });

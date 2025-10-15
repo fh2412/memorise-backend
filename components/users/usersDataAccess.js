@@ -55,6 +55,18 @@ const fetchUserCountry = async (userId) => {
     }
 };
 
+const fetchUserStorageData = async (userId) => {
+    const query = `SELECT used_storage_space AS storageUsedBytes, account_type AS accountType FROM users WHERE user_id = ?`
+
+    try {
+        const [rows] = await db.query(query, [userId]);
+        return rows.length > 0 ? rows[0] : null;
+    } catch (error) {
+        logger.error(`Data Access error; Error selecting users country (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
 const searchUsersData = async (userId, searchTerm) => {
     const escapedTerm = `%${searchTerm.replace(/[\\%_&,/;'*!()+=${}:'<@\]^~|#?]/g, '\\$&')}%`;
 
@@ -158,4 +170,5 @@ module.exports = {
     updateUserData,
     updateUserProfilePicData,
     deleteUserData,
+    fetchUserStorageData
 };

@@ -131,4 +131,23 @@ const validateUpdateTitlePic = [
     .custom(value => value.startsWith('https://firebasestorage.googleapis.com/v0/b/memorise-910c3.appspot.com/o/memories'))
     .withMessage('Title picture URL must be in the correct format'),
 ];
-module.exports = { validateMemoryId, validateCreateMemory, validateAddFriendsToMemory, validateUpdateMemory, validateUpdatePictureCount, validateUpdateMemoryLocation, validateUpdateTitlePic };
+
+const validateShareToken = [
+    body('token')
+        .trim()
+        .notEmpty()
+        .withMessage('Share token is required')
+        .isLength({ min: 20, max: 100 })
+        .withMessage('Invalid share token format'),
+];
+
+const validateShareTokenParam = [
+    param('token')
+        .trim()
+        .notEmpty()
+        .withMessage('Share token is required')
+        .isLength({ min: 20, max: 100 })
+        .withMessage('Invalid share token format'),
+];
+
+module.exports = { validateMemoryId, validateCreateMemory, validateAddFriendsToMemory, validateUpdateMemory, validateUpdatePictureCount, validateUpdateMemoryLocation, validateUpdateTitlePic, validateShareToken, validateShareTokenParam };
