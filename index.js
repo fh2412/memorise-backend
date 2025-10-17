@@ -14,8 +14,9 @@ const errorHandler = require('./middleware/errorHandling/errorHandler');
 app.set('trust proxy', 1); 
 app.use(cors());
 app.use(bodyParser.json());
-app.use(apiLimiter);
 app.use(helmetConfig);
+
+app.use('/api/', apiLimiter);
 
 // Define components (separate files for better organization)
 const usersRoutes = require('./components/users/usersController');
