@@ -1,10 +1,16 @@
 FROM mysql:8.0
 
-# Set MySQL root password and database name
-ENV MYSQL_ROOT_PASSWORD=root
-ENV MYSQL_DATABASE=memorise_gc_db
-ENV MYSQL_USER=...
-ENV MYSQL_PASSWORD=...
+# Set environment variables (will be overridden by docker-compose)
+ENV MYSQL_DATABASE=memorise
+ENV MYSQL_USER=memorise_user
+ENV MYSQL_PASSWORD=dev_password
+ENV MYSQL_ROOT_PASSWORD=root_password
 
-# Copy the SQL dump into the Docker container's init directory
+# Copy the database dump
 COPY dump.sql /docker-entrypoint-initdb.d/
+
+# MySQL automatically executes .sql files in /docker-entrypoint-initdb.d/
+# on first container startup
+
+# Expose MySQL port
+EXPOSE 3306
