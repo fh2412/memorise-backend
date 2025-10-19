@@ -3,7 +3,8 @@ version: '3.8'
 services:
   db:
     build: .
-    container_name: memorise_mysql
+    container_name: memorise_db
+    restart: unless-stopped
     ports:
       - "3306:3306"
     environment:
@@ -11,9 +12,23 @@ services:
       MYSQL_DATABASE: ${DB_DATABASE}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - db_data:/var/lib/mysql
-    restart: unless-stopped
+volumes:
+      # Persist data between container restarts
+      - mysql_data:/var/lib/mysql
+      # Mount dump.sql for easy updates during development
+      - ./dump.sql:/docker-entrypoint-initdb.d/dump.sql
+    networks:
+      - memorise_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
-  db_data:
+  mysql_data:
+    driver: local
+
+networks:
+  memorise_network:
+    driver: bridge
