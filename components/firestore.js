@@ -167,7 +167,7 @@ router.post('/download-selected-zip', authenticateFirebaseToken, async (req, res
           name: `image_${index + 1}${fileExtension}`
         });
       } catch (downloadError) {
-        console.error(`Error downloading image ${image.fileName}:`, downloadError.message);
+        console.error('Error downloading image %s:', image.fileName, downloadError.message);
       }
     });
 
