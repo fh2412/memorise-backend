@@ -199,6 +199,36 @@ const addUserToMemory = async (userId, memoryId) => {
     }
 };
 
+const incrementPictureCountInDB = async (memoryId, increment) => {
+    const query = `
+        UPDATE memories 
+        SET picture_count = picture_count + ? 
+        WHERE memory_id = ?
+    `;
+    
+    try {
+        const [result] = await db.execute(query, [increment, memoryId]);
+        
+        // Get the updated count
+        if (result.affectedRows > 0) {
+            const [rows] = await db.execute(
+                'SELECT picture_count FROM memories WHERE memory_id = ?',
+                [memoryId]
+            );
+            
+            return {
+                affectedRows: result.affectedRows,
+                newCount: rows[0]?.picture_count || 0
+            };
+        }
+        
+        return { affectedRows: 0, newCount: null };
+    } catch (error) {
+        logger.error(`Data Access error; Error incrementing picture count (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
 const updateMemoryInDB = async (memoryId, updateData) => {
     const { title, description, memory_date, memory_end_date } = updateData;
     const query = 'UPDATE memories SET title = ?, text = ?, memory_date = ?, memory_end_date = ? WHERE memory_id = ?';
@@ -427,4 +457,5 @@ module.exports = {
     fetchMemoryByShareToken,
     checkUserMemoryMembership,
     addUserToMemoryViaToken,
+    incrementPictureCountInDB,
 }

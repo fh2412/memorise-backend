@@ -97,7 +97,7 @@ const validateUpdateMemory = [
     .isISO8601().withMessage('Memory end date must be in the format YYYY-MM-DDTHH:mm:ss.sssZ'),
 ];
 
-const validateUpdatePictureCount = [
+/*const validateUpdatePictureCount = [
   param('memoryId')
     .exists().withMessage('Memory ID is required')
     .notEmpty().withMessage('Title must not be empty')
@@ -106,7 +106,7 @@ const validateUpdatePictureCount = [
   body('picture_count')
     .exists().withMessage('Picture count is required')
     .isInt().withMessage('Picture count must be an integer'),
-];
+];*/
 
 const validateUpdateMemoryLocation = [
   param('memoryId')
@@ -150,4 +150,16 @@ const validateShareTokenParam = [
         .withMessage('Invalid share token format'),
 ];
 
-module.exports = { validateMemoryId, validateCreateMemory, validateAddFriendsToMemory, validateUpdateMemory, validateUpdatePictureCount, validateUpdateMemoryLocation, validateUpdateTitlePic, validateShareToken, validateShareTokenParam };
+const validateIncrementPictureCount = [
+    body('increment')
+        .isInt({ min: 1 })
+        .withMessage('Increment must be a positive integer')
+];
+
+const validateUpdatePictureCount = [
+    body('picture_count')
+        .isInt({ min: 0 })
+        .withMessage('Picture count must be a non-negative integer')
+];
+
+module.exports = { validateMemoryId, validateCreateMemory, validateAddFriendsToMemory, validateUpdateMemory, validateUpdatePictureCount, validateUpdateMemoryLocation, validateUpdateTitlePic, validateShareToken, validateShareTokenParam, validateIncrementPictureCount };

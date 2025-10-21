@@ -22,6 +22,7 @@ const {
     fetchMemoryByShareToken,
     checkUserMemoryMembership,
     addUserToMemoryViaToken,
+    incrementPictureCountInDB
 } = require('./memoriesDataAccess');
 const logger = require('../../middleware/logger');
 
@@ -127,6 +128,22 @@ const addFriendsToMemory = async (emails, memoryId) => {
         }
     } catch (error) {
         logger.error(`Service error; Error in addFriendsToMemory: ${error.message}`);
+        throw error;
+    }
+};
+
+const incrementMemoryPictureCount = async (memoryId, increment) => {
+    try {
+        const result = await incrementPictureCountInDB(memoryId, increment);
+        
+        if (result.affectedRows > 0) {
+            // Return the new count
+            return result.newCount;
+        }
+        
+        return null; // Memory not found
+    } catch (error) {
+        logger.error(`Service error; Error in incrementMemoryPictureCount: ${error.message}`);
         throw error;
     }
 };
@@ -337,4 +354,5 @@ module.exports = {
     validateShareToken,
     joinMemoryViaToken,
     checkMembership,
+    incrementMemoryPictureCount,
 }

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const logger = require('../../middleware/logger');
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
-const { validateMemoryId, validateCreateMemory, validateAddFriendsToMemory, validateUpdateMemory, validateUpdatePictureCount, validateUpdateMemoryLocation, validateUpdateTitlePic } = require('../../middleware/validation/validateMemory');
+const { validateMemoryId, validateCreateMemory, validateAddFriendsToMemory, validateUpdateMemory, validateUpdatePictureCount, validateUpdateMemoryLocation, validateIncrementPictureCount, validateUpdateTitlePic } = require('../../middleware/validation/validateMemory');
 const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
 const { getCreatedMemories,
@@ -22,7 +22,7 @@ const { getCreatedMemories,
     generateShareLink,
     validateShareToken,
     joinMemoryViaToken,
-    checkMembership } = require('./memoriesService');
+    checkMembership, incrementMemoryPictureCount } = require('./memoriesService');
 
 /**
  * GET created memories for a user
@@ -303,6 +303,37 @@ router.post('/share/join',
 );
 
 /**
+ * POST Increment the picture count
+ * @route POST /picturecount/:memoryId/increment
+ * @description Addes a specific number to a memories picture count
+ */
+router.post('/picturecount/:memoryId/increment', 
+    authenticateFirebaseToken, 
+    validateIncrementPictureCount, 
+    handleValidationErrors, 
+    async (req, res, next) => {
+        const memoryId = req.params.memoryId;
+        const increment = req.body.increment; // Number of pictures to add
+        
+        try {
+            const newCount = await incrementMemoryPictureCount(memoryId, increment);
+            
+            if (newCount !== null) {
+                res.json({ 
+                    message: 'Picture count incremented successfully',
+                    newCount: newCount
+                });
+            } else {
+                res.status(404).json({ error: 'Memory not found' });
+            }
+        } catch (error) {
+            logger.error(`Controller error; POST /picturecount/:memoryId/increment ${error.message}`);
+            next(error);
+        }
+    }
+);
+
+/**
  * PUT Update a memory
  * @route PUT /:memoryId
  * @description Update memory details for a specific memory
@@ -379,6 +410,9 @@ router.put('/updateMemoryLocation/:memoryId', authenticateFirebaseToken, validat
 router.put('/updateTitlePic/:imageId', authenticateFirebaseToken, validateUpdateTitlePic, handleValidationErrors, async (req, res, next) => {
     const imageId = req.params.imageId;
     const imageUrl = req.body.imageUrl;
+
+    logger.info(imageId);
+    logger.info(imageUrl);
 
     try {
         const updateResult = await updateTitlePic(imageId, imageUrl);
