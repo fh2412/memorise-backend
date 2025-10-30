@@ -1,7 +1,7 @@
 const {
     fetchUsersForMemoryFromDB,
     fetchCreatedMemoriesFromDB,
-    fetchAddedMemoriesFromDB,
+    fetchUserAllMemoriesFromDB,
     fetchAllMemoriesFromDB,
     fetchMemoryByIdFromDB,
     fetchMemoryFriendsFromDB,
@@ -36,9 +36,9 @@ const getUsersForMemory = async (memoryId) => {
     }
 };
 
-const getCreatedMemories = async (userId) => {
+const getCreatedMemories = async (userId, ascending) => {
     try {
-        const memories = await fetchCreatedMemoriesFromDB(userId);
+        const memories = await fetchCreatedMemoriesFromDB(userId, ascending);
         return memories;
     } catch (error) {
         logger.error(`Service error; Error in getCreatedMemories: ${error.message}`);
@@ -46,9 +46,9 @@ const getCreatedMemories = async (userId) => {
     }
 };
 
-const getAddedMemories = async (userId) => {
+const getUserAllMemories = async (userId, ascending) => {
     try {
-        const memories = await fetchAddedMemoriesFromDB(userId);
+        const memories = await fetchUserAllMemoriesFromDB(userId, ascending);
         return memories;
     } catch (error) {
         logger.error(`Service error; Error in getAddedMemories: ${error.message}`);
@@ -337,7 +337,7 @@ const checkMembership = async (memoryId, userId) => {
 module.exports = {
     getUsersForMemory,
     getCreatedMemories,
-    getAddedMemories,
+    getUserAllMemories,
     getAllMemories,
     getMemoryById,
     getMemoryFriends,

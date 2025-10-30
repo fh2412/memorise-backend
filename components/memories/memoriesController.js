@@ -6,7 +6,7 @@ const { validateMemoryId, validateCreateMemory, validateAddFriendsToMemory, vali
 const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
 const { getCreatedMemories,
-    getAddedMemories,
+    getUserAllMemories,
     getAllMemories,
     getMemoryById,
     getMemoryFriends,
@@ -31,9 +31,10 @@ const { getCreatedMemories,
  */
 router.get('/createdMemories/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
     const userId = req.params.userId;
+    const ascending = req.query.ascending
 
     try {
-        const memories = await getCreatedMemories(userId);
+        const memories = await getCreatedMemories(userId, ascending);
         if (memories.length > 0) {
             res.json(memories);
         } else {
@@ -45,16 +46,18 @@ router.get('/createdMemories/:userId', authenticateFirebaseToken, validateFireba
     }
 });
 
+
 /**
- * GET added memories for a user
- * @route GET /getAddedMemories/:userId
- * @description Get all memories that the user has added with location data
+ * GET all memorise a user has
+ * @route GET /all/:userId
+ * @description Get all memories that a user was eigther added to or created himself
  */
-router.get('/getAddedMemories/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
+router.get('/all/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
     const userId = req.params.userId;
+    const ascending = req.query.ascending
 
     try {
-        const memories = await getAddedMemories(userId);
+        const memories = await getUserAllMemories(userId, ascending);
         if (memories.length > 0) {
             res.json(memories);
         } else {
@@ -410,9 +413,6 @@ router.put('/updateMemoryLocation/:memoryId', authenticateFirebaseToken, validat
 router.put('/updateTitlePic/:imageId', authenticateFirebaseToken, validateUpdateTitlePic, handleValidationErrors, async (req, res, next) => {
     const imageId = req.params.imageId;
     const imageUrl = req.body.imageUrl;
-
-    logger.info(imageId);
-    logger.info(imageUrl);
 
     try {
         const updateResult = await updateTitlePic(imageId, imageUrl);

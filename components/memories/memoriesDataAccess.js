@@ -17,15 +17,15 @@ const fetchUsersForMemoryFromDB = async (memoryId) => {
         throw error;
     }
 };
-
-const fetchCreatedMemoriesFromDB = async (userId) => {
+const fetchCreatedMemoriesFromDB = async (userId, ascending) => {
+    const orderDirection = ascending ? 'ASC' : 'DESC';
     const query = `
         SELECT memories.*, users.name AS username, location.latitude, location.longitude
         FROM memories
         JOIN users ON memories.user_id = users.user_id
         JOIN location ON memories.location_id = location.location_id
-        WHERE memories.user_id = ?`;
-
+        WHERE memories.user_id = ?
+        ORDER BY memories.memory_date ${orderDirection}`;
     try {
         const [rows] = await db.query(query, [userId]);
         return rows;
@@ -35,20 +35,26 @@ const fetchCreatedMemoriesFromDB = async (userId) => {
     }
 };
 
-const fetchAddedMemoriesFromDB = async (userId) => {
+const fetchUserAllMemoriesFromDB = async (userId, ascending) => {
+    const orderDirection = ascending === 'true' ? 'ASC' : 'DESC';
     const query = `
-        SELECT memories.*, users.name AS username, location.latitude, location.longitude
+        SELECT DISTINCT 
+            memories.*, 
+            users.name AS username, 
+            location.latitude, 
+            location.longitude
         FROM memories
-        JOIN user_has_memory ON memories.memory_id = user_has_memory.memory_id
         JOIN users ON memories.user_id = users.user_id
         JOIN location ON memories.location_id = location.location_id
-        WHERE user_has_memory.user_id = ?`;
-
+        LEFT JOIN user_has_memory ON memories.memory_id = user_has_memory.memory_id 
+            AND user_has_memory.user_id = ?
+        WHERE memories.user_id = ? OR user_has_memory.user_id = ?
+        ORDER BY memories.memory_date ${orderDirection}`;
     try {
-        const [rows] = await db.query(query, [userId]);
+        const [rows] = await db.query(query, [userId, userId, userId]);
         return rows;
     } catch (error) {
-        logger.error(`Data Access error; Error fetching added memories for user (${query}): ${error.message}`);
+        logger.error(`Data Access error; Error fetching all memories for user (${query}): ${error.message}`);
         throw error;
     }
 };
@@ -436,7 +442,7 @@ const addUserToMemoryViaToken = async (userId, memoryId) => {
 module.exports = {
     fetchUsersForMemoryFromDB,
     fetchCreatedMemoriesFromDB,
-    fetchAddedMemoriesFromDB,
+    fetchUserAllMemoriesFromDB,
     fetchAllMemoriesFromDB,
     fetchMemoryByIdFromDB,
     fetchMemoryFriendsFromDB,
