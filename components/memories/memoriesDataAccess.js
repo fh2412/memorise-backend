@@ -134,31 +134,6 @@ const fetchMemoriesSearchDataFromDB = async (userId, includeShared) => {
     }
 };
 
-const fetchAllMemoriesFromDB = async (userId) => {
-    const query = `
-        SELECT memory_id, title
-        FROM memories
-        WHERE user_id = ?
-
-        UNION ALL
-
-        SELECT memories.memory_id, memories.title
-        FROM memories
-        INNER JOIN user_has_memory ON memories.memory_id = user_has_memory.memory_id
-        WHERE user_has_memory.user_id = ?`;
-
-    try {
-        const [combinedRows] = await db.query(query, [userId, userId]);
-        return combinedRows.map(memory => ({
-            memory_id: memory.memory_id,
-            title: memory.title
-        }));
-    } catch (error) {
-        logger.error(`Data Access error; Error fetching all memories for user (${query}): ${error.message}`);
-        throw error;
-    }
-};
-
 const fetchMemoryByIdFromDB = async (memoryId) => {
     const query = `
         SELECT * 
@@ -518,7 +493,6 @@ module.exports = {
     fetchUsersForMemoryFromDB,
     fetchCreatedMemoriesFromDB,
     fetchUserAllMemoriesFromDB,
-    fetchAllMemoriesFromDB,
     fetchMemoryByIdFromDB,
     fetchMemoryFriendsFromDB,
     fetchMemoryDetailFriends,

@@ -7,7 +7,6 @@ const { validateFirebaseUID } = require('../../middleware/validation/validateUse
 const handleValidationErrors = require('../../middleware/validationMiddleware');
 const { getCreatedMemories,
     getUserAllMemories,
-    getAllMemories,
     getMemoryById,
     getMemoryFriends,
     getFriendsWithSharedCount,
@@ -89,26 +88,6 @@ router.get('/searchData/:userId', authenticateFirebaseToken, validateFirebaseUID
     }
 });
 
-/**
- * GET all memories for a user (both created and added)
- * @route GET /allMemories/:userId
- * @description Get all memories created and added by the user, with memoryId and title
- */
-router.get('/allMemories/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
-    const userId = req.params.userId;
-
-    try {
-        const memories = await getAllMemories(userId);
-        if (memories.length > 0) {
-            res.json(memories);
-        } else {
-            res.status(200).json({ message: 'No memories found for this user.' });
-        }
-    } catch (error) {
-        logger.error(`Controller error; ALL MEMORIES GET /allMemories/:userId ${error.message}`);
-        next(error);
-    }
-});
 
 /**
  * GET Check if user is a member of a memory
