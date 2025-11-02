@@ -5,6 +5,7 @@ const {
     fetchMemoryByIdFromDB,
     fetchMemoryFriendsFromDB,
     fetchMemoryDetailFriends,
+    fetchMemoriesMapDataFromDB,
     getSharedMemoriesCount,
     createMemoryInDB,
     getUserIdByEmail,
@@ -62,6 +63,16 @@ const getMemoriesSearchData = async (userId, includeShared) => {
         return memories;
     } catch (error) {
         logger.error(`Service error; Error in getMemoriesSearchData: ${error.message}`);
+        throw error;
+    }
+};
+
+const getMemoriesMapData = async (userId, includeShared) => {
+    try {
+        const memories = await fetchMemoriesMapDataFromDB(userId, includeShared);
+        return memories;
+    } catch (error) {
+        logger.error(`Service error; Error in getMemoriesMapData: ${error.message}`);
         throw error;
     }
 };
@@ -340,6 +351,7 @@ module.exports = {
     getUserAllMemories,
     getMemoriesSearchData,
     getMemoryById,
+    getMemoriesMapData,
     getMemoryFriends,
     getFriendsWithSharedCount,
     createMemory,

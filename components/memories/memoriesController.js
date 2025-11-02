@@ -10,6 +10,7 @@ const { getCreatedMemories,
     getMemoryById,
     getMemoryFriends,
     getFriendsWithSharedCount,
+    getMemoriesMapData,
     createMemory,
     addFriendsToMemory,
     updateMemory,
@@ -88,6 +89,24 @@ router.get('/searchData/:userId', authenticateFirebaseToken, validateFirebaseUID
     }
 });
 
+/**
+ * GET minimal memory data for map view
+ * @route GET /mapData/:userId
+ * @description Get memory_id, latitude, and longitude for all memories
+ * @query includeShared - if 'true', includes friends' memories
+ */
+router.get('/mapData/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
+    const userId = req.params.userId;
+    const includeShared = req.query.includeShared === 'true';
+    
+    try {
+        const memories = await getMemoriesMapData(userId, includeShared);
+        res.json(memories);
+    } catch (error) {
+        logger.error(`Controller error; MAP DATA GET /mapData/:userId ${error.message}`);
+        next(error);
+    }
+});
 
 /**
  * GET Check if user is a member of a memory

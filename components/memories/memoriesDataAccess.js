@@ -134,6 +134,45 @@ const fetchMemoriesSearchDataFromDB = async (userId, includeShared) => {
     }
 };
 
+const fetchMemoriesMapDataFromDB = async (userId, includeShared) => {
+    let query;
+    let params;
+    
+    if (includeShared) {
+        // Get memories created by user OR shared with user
+        query = `
+            SELECT DISTINCT 
+                memories.memory_id,
+                location.latitude,
+                location.longitude
+            FROM memories
+            JOIN location ON memories.location_id = location.location_id
+            LEFT JOIN user_has_memory ON memories.memory_id = user_has_memory.memory_id 
+                AND user_has_memory.user_id = ?
+            WHERE memories.user_id = ? OR user_has_memory.user_id = ?`;
+        params = [userId, userId, userId];
+    } else {
+        // Get only memories created by user
+        query = `
+            SELECT 
+                memories.memory_id,
+                location.latitude,
+                location.longitude
+            FROM memories
+            JOIN location ON memories.location_id = location.location_id
+            WHERE memories.user_id = ?`;
+        params = [userId];
+    }
+    
+    try {
+        const [rows] = await db.query(query, params);
+        return rows;
+    } catch (error) {
+        logger.error(`Data Access error; Error fetching map data for memories (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
 const fetchMemoryByIdFromDB = async (memoryId) => {
     const query = `
         SELECT * 
@@ -495,6 +534,7 @@ module.exports = {
     fetchUserAllMemoriesFromDB,
     fetchMemoryByIdFromDB,
     fetchMemoryFriendsFromDB,
+    fetchMemoriesMapDataFromDB,
     fetchMemoryDetailFriends,
     getSharedMemoriesCount,
     createMemoryInDB,
