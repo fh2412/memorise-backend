@@ -25,21 +25,21 @@ const { getCreatedMemories,
     checkMembership, incrementMemoryPictureCount } = require('./memoriesService');
 
 /**
- * GET created memories for a user
+ * GET created memories for a user with pagination
  * @route GET /createdMemories/:userId
- * @description Get all memories created by a user with location data
+ * @query page - page number (0-indexed)
+ * @query pageSize - number of items per page
+ * @query ascending - sort order
  */
 router.get('/createdMemories/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
     const userId = req.params.userId;
-    const ascending = req.query.ascending
-
+    const ascending = req.query.ascending === 'true';
+    const page = parseInt(req.query.page) || 0;
+    const pageSize = parseInt(req.query.pageSize) || 9;
+    
     try {
-        const memories = await getCreatedMemories(userId, ascending);
-        if (memories.length > 0) {
-            res.json(memories);
-        } else {
-            res.status(200).json({ message: 'You haven\'t created any memories yet!' });
-        }
+        const result = await getCreatedMemories(userId, ascending, page, pageSize);
+        res.json(result);
     } catch (error) {
         logger.error(`Controller error; CREATED MEMORIES GET /createdMemories/:userId ${error.message}`);
         next(error);
@@ -48,23 +48,23 @@ router.get('/createdMemories/:userId', authenticateFirebaseToken, validateFireba
 
 
 /**
- * GET all memorise a user has
+ * GET all memories a user has with pagination
  * @route GET /all/:userId
- * @description Get all memories that a user was eigther added to or created himself
+ * @query page - page number (0-indexed)
+ * @query pageSize - number of items per page
+ * @query ascending - sort order
  */
 router.get('/all/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
     const userId = req.params.userId;
-    const ascending = req.query.ascending
-
+    const ascending = req.query.ascending === 'true';
+    const page = parseInt(req.query.page) || 0;
+    const pageSize = parseInt(req.query.pageSize) || 9;
+    
     try {
-        const memories = await getUserAllMemories(userId, ascending);
-        if (memories.length > 0) {
-            res.json(memories);
-        } else {
-            res.status(200).json({ message: 'User has not added any memories yet' });
-        }
+        const result = await getUserAllMemories(userId, ascending, page, pageSize);
+        res.json(result);
     } catch (error) {
-        logger.error(`Controller error; ADDED MEMORIES GET /getAddedMemories/:userId ${error.message}`);
+        logger.error(`Controller error; ALL MEMORIES GET /all/:userId ${error.message}`);
         next(error);
     }
 });
