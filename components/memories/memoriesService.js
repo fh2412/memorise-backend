@@ -22,7 +22,8 @@ const {
     fetchMemoryByShareToken,
     checkUserMemoryMembership,
     addUserToMemoryViaToken,
-    incrementPictureCountInDB
+    incrementPictureCountInDB,
+    fetchMemoriesSearchDataFromDB
 } = require('./memoriesDataAccess');
 const logger = require('../../middleware/logger');
 
@@ -55,6 +56,17 @@ const getUserAllMemories = async (userId, ascending, page, pageSize) => {
         throw error;
     }
 };
+
+const getMemoriesSearchData = async (userId, includeShared) => {
+    try {
+        const memories = await fetchMemoriesSearchDataFromDB(userId, includeShared);
+        return memories;
+    } catch (error) {
+        logger.error(`Service error; Error in getMemoriesSearchData: ${error.message}`);
+        throw error;
+    }
+};
+
 
 const getAllMemories = async (userId) => {
     try {
@@ -339,6 +351,7 @@ module.exports = {
     getCreatedMemories,
     getUserAllMemories,
     getAllMemories,
+    getMemoriesSearchData,
     getMemoryById,
     getMemoryFriends,
     getFriendsWithSharedCount,

@@ -22,7 +22,7 @@ const { getCreatedMemories,
     generateShareLink,
     validateShareToken,
     joinMemoryViaToken,
-    checkMembership, incrementMemoryPictureCount } = require('./memoriesService');
+    checkMembership, incrementMemoryPictureCount, getMemoriesSearchData } = require('./memoriesService');
 
 /**
  * GET created memories for a user with pagination
@@ -65,6 +65,26 @@ router.get('/all/:userId', authenticateFirebaseToken, validateFirebaseUID, handl
         res.json(result);
     } catch (error) {
         logger.error(`Controller error; ALL MEMORIES GET /all/:userId ${error.message}`);
+        next(error);
+    }
+});
+
+
+/**
+ * GET minimal memory data for search/filtering
+ * @route GET /searchData/:userId
+ * @description Get memory_id, title, and text for all memories (created or added)
+ * @query includeShared - if 'true', includes friends' memories
+ */
+router.get('/searchData/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
+    const userId = req.params.userId;
+    const includeShared = req.query.includeShared === 'true';
+    
+    try {
+        const memories = await getMemoriesSearchData(userId, includeShared);
+        res.json(memories);
+    } catch (error) {
+        logger.error(`Controller error; SEARCH DATA GET /searchData/:userId ${error.message}`);
         next(error);
     }
 });

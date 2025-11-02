@@ -97,6 +97,43 @@ const fetchUserAllMemoriesFromDB = async (userId, ascending, page, pageSize) => 
     }
 };
 
+const fetchMemoriesSearchDataFromDB = async (userId, includeShared) => {
+    let query;
+    let params;
+    
+    if (includeShared) {
+        // Get memories created by user OR shared with user
+        query = `
+            SELECT DISTINCT 
+                memories.memory_id,
+                memories.title,
+                memories.text
+            FROM memories
+            LEFT JOIN user_has_memory ON memories.memory_id = user_has_memory.memory_id 
+                AND user_has_memory.user_id = ?
+            WHERE memories.user_id = ? OR user_has_memory.user_id = ?`;
+        params = [userId, userId, userId];
+    } else {
+        // Get only memories created by user
+        query = `
+            SELECT 
+                memory_id,
+                title,
+                text
+            FROM memories
+            WHERE user_id = ?`;
+        params = [userId];
+    }
+    
+    try {
+        const [rows] = await db.query(query, params);
+        return rows;
+    } catch (error) {
+        logger.error(`Data Access error; Error fetching search data for memories (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
 const fetchAllMemoriesFromDB = async (userId) => {
     const query = `
         SELECT memory_id, title
@@ -502,4 +539,5 @@ module.exports = {
     checkUserMemoryMembership,
     addUserToMemoryViaToken,
     incrementPictureCountInDB,
+    fetchMemoriesSearchDataFromDB
 }
