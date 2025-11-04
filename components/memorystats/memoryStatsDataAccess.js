@@ -31,6 +31,23 @@ const fetchMemoryCountByYearFromDB = async (userId, year) => {
     }
 };
 
+const fetchAddedMemoryCountFromDB = async (userId) => {
+    const query = `
+        SELECT COUNT(DISTINCT memories.memory_id) as total
+        FROM memories
+        LEFT JOIN user_has_memory ON memories.memory_id = user_has_memory.memory_id 
+            AND user_has_memory.user_id = ?
+        WHERE memories.user_id = ? OR user_has_memory.user_id = ?`;
+
+    try {
+        const [[countResult]] = await db.query(query, [userId, userId, userId]);
+        return countResult.total;
+    } catch (error) {
+        logger.error(`Data Access error; Error fetching memory count for users added memories (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
 const fetchFriendCountFromDB = async (userId) => {
     const query = `
         SELECT count(user_id1) as count
@@ -70,5 +87,5 @@ const fetchSharedMemoriesCountFromDB = async (user1Id, user2Id) => {
 };
 
 module.exports = {
-    fetchMemoryCountFromDB, fetchMemoryCountByYearFromDB, fetchFriendCountFromDB, fetchSharedMemoriesCountFromDB,
+    fetchMemoryCountFromDB, fetchMemoryCountByYearFromDB, fetchAddedMemoryCountFromDB, fetchFriendCountFromDB, fetchSharedMemoriesCountFromDB,
 }

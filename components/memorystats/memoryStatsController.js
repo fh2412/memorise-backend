@@ -5,7 +5,29 @@ const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
 const { validateStatsUID } = require('../../middleware/validation/validateMemorystats');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
-const { getMemoryCountByUser, getMemoryCountByUserForYear, getFriendCountByUser, getSharedMemoriesCount } = require('./memoryStatsService');
+const { getUserDisplayStats, getMemoryCountByUser, getMemoryCountByUserForYear, getFriendCountByUser, getSharedMemoriesCount } = require('./memoryStatsService');
+
+
+/**
+ * GET the full statas for display by user
+ * @route GET /display/:userId
+ * @description Get all the needed status for the stats frontend component
+ */
+router.get('/display/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
+    const userId = req.params.userId;
+
+    try {
+        const displayStats = await getUserDisplayStats(userId);
+        if (displayStats) {
+            res.json(displayStats);
+        } else {
+            res.json({ stats: null });
+        }
+    } catch (error) {
+        logger.error(`Controller error; MEMORY STATS GET /display/:userId ${error.message}`);
+        next(error);
+    }
+});
 
 /**
  * GET count of memories created by a user
