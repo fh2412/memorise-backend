@@ -2,15 +2,15 @@ const express = require('express');
 const router = express.Router();
 const logger = require('../../middleware/logger');
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
-const { validateMemoryId, validateCreateMemory, validateAddFriendsToMemory, validateUpdateMemory, validateUpdatePictureCount, validateUpdateMemoryLocation, validateUpdateTitlePic } = require('../../middleware/validation/validateMemory');
+const { validateMemoryId, validateCreateMemory, validateAddFriendsToMemory, validateUpdateMemory, validateUpdatePictureCount, validateUpdateMemoryLocation, validateIncrementPictureCount, validateUpdateTitlePic } = require('../../middleware/validation/validateMemory');
 const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
 const { getCreatedMemories,
-    getAddedMemories,
-    getAllMemories,
+    getUserAllMemories,
     getMemoryById,
     getMemoryFriends,
     getFriendsWithSharedCount,
+    getMemoriesMapData,
     createMemory,
     addFriendsToMemory,
     updateMemory,
@@ -22,67 +22,88 @@ const { getCreatedMemories,
     generateShareLink,
     validateShareToken,
     joinMemoryViaToken,
-    checkMembership } = require('./memoriesService');
+    checkMembership, incrementMemoryPictureCount, getMemoriesSearchData } = require('./memoriesService');
 
 /**
- * GET created memories for a user
+ * GET created memories for a user with pagination
  * @route GET /createdMemories/:userId
- * @description Get all memories created by a user with location data
+ * @query page - page number (0-indexed)
+ * @query pageSize - number of items per page
+ * @query ascending - sort order
  */
 router.get('/createdMemories/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
     const userId = req.params.userId;
-
+    const ascending = req.query.ascending === 'true';
+    const page = parseInt(req.query.page) || 0;
+    const pageSize = parseInt(req.query.pageSize) || 9;
+    
     try {
-        const memories = await getCreatedMemories(userId);
-        if (memories.length > 0) {
-            res.json(memories);
-        } else {
-            res.status(200).json({ message: 'You haven\'t created any memories yet!' });
-        }
+        const result = await getCreatedMemories(userId, ascending, page, pageSize);
+        res.json(result);
     } catch (error) {
         logger.error(`Controller error; CREATED MEMORIES GET /createdMemories/:userId ${error.message}`);
         next(error);
     }
 });
 
-/**
- * GET added memories for a user
- * @route GET /getAddedMemories/:userId
- * @description Get all memories that the user has added with location data
- */
-router.get('/getAddedMemories/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
-    const userId = req.params.userId;
 
+/**
+ * GET all memories a user has with pagination
+ * @route GET /all/:userId
+ * @query page - page number (0-indexed)
+ * @query pageSize - number of items per page
+ * @query ascending - sort order
+ */
+router.get('/all/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
+    const userId = req.params.userId;
+    const ascending = req.query.ascending === 'true';
+    const page = parseInt(req.query.page) || 0;
+    const pageSize = parseInt(req.query.pageSize) || 9;
+    
     try {
-        const memories = await getAddedMemories(userId);
-        if (memories.length > 0) {
-            res.json(memories);
-        } else {
-            res.status(200).json({ message: 'User has not added any memories yet' });
-        }
+        const result = await getUserAllMemories(userId, ascending, page, pageSize);
+        res.json(result);
     } catch (error) {
-        logger.error(`Controller error; ADDED MEMORIES GET /getAddedMemories/:userId ${error.message}`);
+        logger.error(`Controller error; ALL MEMORIES GET /all/:userId ${error.message}`);
+        next(error);
+    }
+});
+
+
+/**
+ * GET minimal memory data for search/filtering
+ * @route GET /searchData/:userId
+ * @description Get memory_id, title, and text for all memories (created or added)
+ * @query includeShared - if 'true', includes friends' memories
+ */
+router.get('/searchData/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
+    const userId = req.params.userId;
+    const includeShared = req.query.includeShared === 'true';
+    
+    try {
+        const memories = await getMemoriesSearchData(userId, includeShared);
+        res.json(memories);
+    } catch (error) {
+        logger.error(`Controller error; SEARCH DATA GET /searchData/:userId ${error.message}`);
         next(error);
     }
 });
 
 /**
- * GET all memories for a user (both created and added)
- * @route GET /allMemories/:userId
- * @description Get all memories created and added by the user, with memoryId and title
+ * GET minimal memory data for map view
+ * @route GET /mapData/:userId
+ * @description Get memory_id, latitude, and longitude for all memories
+ * @query includeShared - if 'true', includes friends' memories
  */
-router.get('/allMemories/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
+router.get('/mapData/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
     const userId = req.params.userId;
-
+    const includeShared = req.query.includeShared === 'true';
+    
     try {
-        const memories = await getAllMemories(userId);
-        if (memories.length > 0) {
-            res.json(memories);
-        } else {
-            res.status(200).json({ message: 'No memories found for this user.' });
-        }
+        const memories = await getMemoriesMapData(userId, includeShared);
+        res.json(memories);
     } catch (error) {
-        logger.error(`Controller error; ALL MEMORIES GET /allMemories/:userId ${error.message}`);
+        logger.error(`Controller error; MAP DATA GET /mapData/:userId ${error.message}`);
         next(error);
     }
 });
@@ -297,6 +318,37 @@ router.post('/share/join',
             }
             
             logger.error(`Controller error; POST /share/join ${error.message}`);
+            next(error);
+        }
+    }
+);
+
+/**
+ * POST Increment the picture count
+ * @route POST /picturecount/:memoryId/increment
+ * @description Addes a specific number to a memories picture count
+ */
+router.post('/picturecount/:memoryId/increment', 
+    authenticateFirebaseToken, 
+    validateIncrementPictureCount, 
+    handleValidationErrors, 
+    async (req, res, next) => {
+        const memoryId = req.params.memoryId;
+        const increment = req.body.increment; // Number of pictures to add
+        
+        try {
+            const newCount = await incrementMemoryPictureCount(memoryId, increment);
+            
+            if (newCount !== null) {
+                res.json({ 
+                    message: 'Picture count incremented successfully',
+                    newCount: newCount
+                });
+            } else {
+                res.status(404).json({ error: 'Memory not found' });
+            }
+        } catch (error) {
+            logger.error(`Controller error; POST /picturecount/:memoryId/increment ${error.message}`);
             next(error);
         }
     }

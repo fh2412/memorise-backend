@@ -1,11 +1,11 @@
 const {
     fetchUsersForMemoryFromDB,
     fetchCreatedMemoriesFromDB,
-    fetchAddedMemoriesFromDB,
-    fetchAllMemoriesFromDB,
+    fetchUserAllMemoriesFromDB,
     fetchMemoryByIdFromDB,
     fetchMemoryFriendsFromDB,
     fetchMemoryDetailFriends,
+    fetchMemoriesMapDataFromDB,
     getSharedMemoriesCount,
     createMemoryInDB,
     getUserIdByEmail,
@@ -22,6 +22,8 @@ const {
     fetchMemoryByShareToken,
     checkUserMemoryMembership,
     addUserToMemoryViaToken,
+    incrementPictureCountInDB,
+    fetchMemoriesSearchDataFromDB
 } = require('./memoriesDataAccess');
 const logger = require('../../middleware/logger');
 
@@ -35,32 +37,42 @@ const getUsersForMemory = async (memoryId) => {
     }
 };
 
-const getCreatedMemories = async (userId) => {
+const getCreatedMemories = async (userId, ascending, page, pageSize) => {
     try {
-        const memories = await fetchCreatedMemoriesFromDB(userId);
-        return memories;
+        const result = await fetchCreatedMemoriesFromDB(userId, ascending, page, pageSize);
+        return result;
     } catch (error) {
         logger.error(`Service error; Error in getCreatedMemories: ${error.message}`);
         throw error;
     }
 };
 
-const getAddedMemories = async (userId) => {
+const getUserAllMemories = async (userId, ascending, page, pageSize) => {
     try {
-        const memories = await fetchAddedMemoriesFromDB(userId);
-        return memories;
+        const result = await fetchUserAllMemoriesFromDB(userId, ascending, page, pageSize);
+        return result;
     } catch (error) {
-        logger.error(`Service error; Error in getAddedMemories: ${error.message}`);
+        logger.error(`Service error; Error in getUserAllMemories: ${error.message}`);
         throw error;
     }
 };
 
-const getAllMemories = async (userId) => {
+const getMemoriesSearchData = async (userId, includeShared) => {
     try {
-        const memories = await fetchAllMemoriesFromDB(userId);
+        const memories = await fetchMemoriesSearchDataFromDB(userId, includeShared);
         return memories;
     } catch (error) {
-        logger.error(`Service error; Error in getAllMemories: ${error.message}`);
+        logger.error(`Service error; Error in getMemoriesSearchData: ${error.message}`);
+        throw error;
+    }
+};
+
+const getMemoriesMapData = async (userId, includeShared) => {
+    try {
+        const memories = await fetchMemoriesMapDataFromDB(userId, includeShared);
+        return memories;
+    } catch (error) {
+        logger.error(`Service error; Error in getMemoriesMapData: ${error.message}`);
         throw error;
     }
 };
@@ -127,6 +139,22 @@ const addFriendsToMemory = async (emails, memoryId) => {
         }
     } catch (error) {
         logger.error(`Service error; Error in addFriendsToMemory: ${error.message}`);
+        throw error;
+    }
+};
+
+const incrementMemoryPictureCount = async (memoryId, increment) => {
+    try {
+        const result = await incrementPictureCountInDB(memoryId, increment);
+        
+        if (result.affectedRows > 0) {
+            // Return the new count
+            return result.newCount;
+        }
+        
+        return null; // Memory not found
+    } catch (error) {
+        logger.error(`Service error; Error in incrementMemoryPictureCount: ${error.message}`);
         throw error;
     }
 };
@@ -320,9 +348,10 @@ const checkMembership = async (memoryId, userId) => {
 module.exports = {
     getUsersForMemory,
     getCreatedMemories,
-    getAddedMemories,
-    getAllMemories,
+    getUserAllMemories,
+    getMemoriesSearchData,
     getMemoryById,
+    getMemoriesMapData,
     getMemoryFriends,
     getFriendsWithSharedCount,
     createMemory,
@@ -337,4 +366,5 @@ module.exports = {
     validateShareToken,
     joinMemoryViaToken,
     checkMembership,
+    incrementMemoryPictureCount,
 }

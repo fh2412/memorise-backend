@@ -17,63 +17,158 @@ const fetchUsersForMemoryFromDB = async (memoryId) => {
         throw error;
     }
 };
-
-const fetchCreatedMemoriesFromDB = async (userId) => {
-    const query = `
-        SELECT memories.*, users.name AS username, location.latitude, location.longitude
+const fetchCreatedMemoriesFromDB = async (userId, ascending, page, pageSize) => {
+    const orderDirection = ascending ? 'ASC' : 'DESC';
+    const offset = page * pageSize;
+    
+    // Get total count
+    const countQuery = `
+        SELECT COUNT(*) as total
         FROM memories
-        JOIN users ON memories.user_id = users.user_id
-        JOIN location ON memories.location_id = location.location_id
         WHERE memories.user_id = ?`;
-
-    try {
-        const [rows] = await db.query(query, [userId]);
-        return rows;
-    } catch (error) {
-        logger.error(`Data Access error; Error fetching created memories for user (${query}): ${error.message}`);
-        throw error;
-    }
-};
-
-const fetchAddedMemoriesFromDB = async (userId) => {
-    const query = `
+    
+    // Get paginated data
+    const dataQuery = `
         SELECT memories.*, users.name AS username, location.latitude, location.longitude
         FROM memories
-        JOIN user_has_memory ON memories.memory_id = user_has_memory.memory_id
         JOIN users ON memories.user_id = users.user_id
         JOIN location ON memories.location_id = location.location_id
-        WHERE user_has_memory.user_id = ?`;
-
+        WHERE memories.user_id = ?
+        ORDER BY memories.memory_date ${orderDirection}
+        LIMIT ? OFFSET ?`;
+    
     try {
-        const [rows] = await db.query(query, [userId]);
-        return rows;
+        const [[countResult]] = await db.query(countQuery, [userId]);
+        const [rows] = await db.query(dataQuery, [userId, pageSize, offset]);
+        
+        return {
+            data: rows,
+            total: countResult.total,
+            page: page,
+            pageSize: pageSize
+        };
     } catch (error) {
-        logger.error(`Data Access error; Error fetching added memories for user (${query}): ${error.message}`);
+        logger.error(`Data Access error; Error fetching created memories: ${error.message}`);
         throw error;
     }
 };
 
-const fetchAllMemoriesFromDB = async (userId) => {
-    const query = `
-        SELECT memory_id, title
+const fetchUserAllMemoriesFromDB = async (userId, ascending, page, pageSize) => {
+    const orderDirection = ascending ? 'ASC' : 'DESC';
+    const offset = page * pageSize;
+    
+    // Get total count
+    const countQuery = `
+        SELECT COUNT(DISTINCT memories.memory_id) as total
         FROM memories
-        WHERE user_id = ?
-
-        UNION ALL
-
-        SELECT memories.memory_id, memories.title
+        LEFT JOIN user_has_memory ON memories.memory_id = user_has_memory.memory_id 
+            AND user_has_memory.user_id = ?
+        WHERE memories.user_id = ? OR user_has_memory.user_id = ?`;
+    
+    // Get paginated data
+    const dataQuery = `
+        SELECT DISTINCT 
+            memories.*, 
+            users.name AS username, 
+            location.latitude, 
+            location.longitude
         FROM memories
-        INNER JOIN user_has_memory ON memories.memory_id = user_has_memory.memory_id
-        WHERE user_has_memory.user_id = ?`;
-
+        JOIN users ON memories.user_id = users.user_id
+        JOIN location ON memories.location_id = location.location_id
+        LEFT JOIN user_has_memory ON memories.memory_id = user_has_memory.memory_id 
+            AND user_has_memory.user_id = ?
+        WHERE memories.user_id = ? OR user_has_memory.user_id = ?
+        ORDER BY memories.memory_date ${orderDirection}
+        LIMIT ? OFFSET ?`;
+    
     try {
-        const [combinedRows] = await db.query(query, [userId, userId]);
-        return combinedRows.map(memory => ({
-            memory_id: memory.memory_id,
-            title: memory.title
-        }));
+        const [[countResult]] = await db.query(countQuery, [userId, userId, userId]);
+        const [rows] = await db.query(dataQuery, [userId, userId, userId, pageSize, offset]);
+        
+        return {
+            data: rows,
+            total: countResult.total,
+            page: page,
+            pageSize: pageSize
+        };
     } catch (error) {
-        logger.error(`Data Access error; Error fetching all memories for user (${query}): ${error.message}`);
+        logger.error(`Data Access error; Error fetching all memories: ${error.message}`);
+        throw error;
+    }
+};
+
+const fetchMemoriesSearchDataFromDB = async (userId, includeShared) => {
+    let query;
+    let params;
+    
+    if (includeShared) {
+        // Get memories created by user OR shared with user
+        query = `
+            SELECT DISTINCT 
+                memories.memory_id,
+                memories.title,
+                memories.text
+            FROM memories
+            LEFT JOIN user_has_memory ON memories.memory_id = user_has_memory.memory_id 
+                AND user_has_memory.user_id = ?
+            WHERE memories.user_id = ? OR user_has_memory.user_id = ?`;
+        params = [userId, userId, userId];
+    } else {
+        // Get only memories created by user
+        query = `
+            SELECT 
+                memory_id,
+                title,
+                text
+            FROM memories
+            WHERE user_id = ?`;
+        params = [userId];
+    }
+    
+    try {
+        const [rows] = await db.query(query, params);
+        return rows;
+    } catch (error) {
+        logger.error(`Data Access error; Error fetching search data for memories (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
+const fetchMemoriesMapDataFromDB = async (userId, includeShared) => {
+    let query;
+    let params;
+    
+    if (includeShared) {
+        // Get memories created by user OR shared with user
+        query = `
+            SELECT DISTINCT 
+                memories.memory_id,
+                location.latitude,
+                location.longitude
+            FROM memories
+            JOIN location ON memories.location_id = location.location_id
+            LEFT JOIN user_has_memory ON memories.memory_id = user_has_memory.memory_id 
+                AND user_has_memory.user_id = ?
+            WHERE memories.user_id = ? OR user_has_memory.user_id = ?`;
+        params = [userId, userId, userId];
+    } else {
+        // Get only memories created by user
+        query = `
+            SELECT 
+                memories.memory_id,
+                location.latitude,
+                location.longitude
+            FROM memories
+            JOIN location ON memories.location_id = location.location_id
+            WHERE memories.user_id = ?`;
+        params = [userId];
+    }
+    
+    try {
+        const [rows] = await db.query(query, params);
+        return rows;
+    } catch (error) {
+        logger.error(`Data Access error; Error fetching map data for memories (${query}): ${error.message}`);
         throw error;
     }
 };
@@ -195,6 +290,36 @@ const addUserToMemory = async (userId, memoryId) => {
         await db.query(query, [userId, memoryId, 'friend']);
     } catch (error) {
         logger.error(`Data Access error; Error adding user to memory (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
+const incrementPictureCountInDB = async (memoryId, increment) => {
+    const query = `
+        UPDATE memories 
+        SET picture_count = picture_count + ? 
+        WHERE memory_id = ?
+    `;
+    
+    try {
+        const [result] = await db.execute(query, [increment, memoryId]);
+        
+        // Get the updated count
+        if (result.affectedRows > 0) {
+            const [rows] = await db.execute(
+                'SELECT picture_count FROM memories WHERE memory_id = ?',
+                [memoryId]
+            );
+            
+            return {
+                affectedRows: result.affectedRows,
+                newCount: rows[0]?.picture_count || 0
+            };
+        }
+        
+        return { affectedRows: 0, newCount: null };
+    } catch (error) {
+        logger.error(`Data Access error; Error incrementing picture count (${query}): ${error.message}`);
         throw error;
     }
 };
@@ -406,10 +531,10 @@ const addUserToMemoryViaToken = async (userId, memoryId) => {
 module.exports = {
     fetchUsersForMemoryFromDB,
     fetchCreatedMemoriesFromDB,
-    fetchAddedMemoriesFromDB,
-    fetchAllMemoriesFromDB,
+    fetchUserAllMemoriesFromDB,
     fetchMemoryByIdFromDB,
     fetchMemoryFriendsFromDB,
+    fetchMemoriesMapDataFromDB,
     fetchMemoryDetailFriends,
     getSharedMemoriesCount,
     createMemoryInDB,
@@ -427,4 +552,6 @@ module.exports = {
     fetchMemoryByShareToken,
     checkUserMemoryMembership,
     addUserToMemoryViaToken,
+    incrementPictureCountInDB,
+    fetchMemoriesSearchDataFromDB
 }
