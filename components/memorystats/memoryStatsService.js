@@ -17,7 +17,6 @@ const getUserDisplayStats = async (userId) => {
             friendCount: friendCount.count
         };
 
-        logger.info('User display stats retrieved:', stats);
         
         return stats;
     } catch (error) {
