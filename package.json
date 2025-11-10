@@ -23,6 +23,7 @@
     "firebase-admin": "^12.7.0",
     "firebase-functions": "^4.9.0",
     "helmet": "^8.0.0",
+    "html-entities": "^2.6.0",
     "mysql2": "^3.9.4",
     "pino": "^9.6.0",
     "pino-http": "^10.3.0",
