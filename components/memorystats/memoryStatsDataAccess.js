@@ -86,6 +86,28 @@ const fetchSharedMemoriesCountFromDB = async (user1Id, user2Id) => {
     }
 };
 
+const fetchUserVisitedCountries = async (userId) => {
+    const query = `
+        SELECT DISTINCT l.country
+        FROM location l
+        INNER JOIN (
+            SELECT location_id FROM memories WHERE user_id = ?
+            UNION
+            SELECT m.location_id
+            FROM user_has_memory uhm
+            INNER JOIN memories m ON uhm.memory_id = m.memory_id
+            WHERE uhm.user_id = ?
+        ) AS user_locations ON l.location_id = user_locations.location_id;`;
+
+    try {
+        const [rows] = await db.query(query, [userId, userId]);
+        return rows.length > 0 ? rows : null;
+    } catch (error) {
+        logger.error(`Data Access error; Error fetching friend count (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
 module.exports = {
-    fetchMemoryCountFromDB, fetchMemoryCountByYearFromDB, fetchAddedMemoryCountFromDB, fetchFriendCountFromDB, fetchSharedMemoriesCountFromDB,
+    fetchMemoryCountFromDB, fetchMemoryCountByYearFromDB, fetchAddedMemoryCountFromDB, fetchFriendCountFromDB, fetchSharedMemoriesCountFromDB, fetchUserVisitedCountries
 }

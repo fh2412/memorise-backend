@@ -5,7 +5,7 @@ const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
 const { validateStatsUID } = require('../../middleware/validation/validateMemorystats');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
-const { getUserDisplayStats, getMemoryCountByUser, getMemoryCountByUserForYear, getFriendCountByUser, getSharedMemoriesCount } = require('./memoryStatsService');
+const { getUserDisplayStats, getMemoryCountByUser, getMemoryCountByUserForYear, getFriendCountByUser, getSharedMemoriesCount, getVisitedCountries } = require('./memoryStatsService');
 
 
 /**
@@ -107,6 +107,23 @@ router.get('/shared-memories/:user1Id/:user2Id', authenticateFirebaseToken, vali
         res.json({ sharedMemoriesCount });
     } catch (error) {
         logger.error(`Controller error; SHARED MEMORIES GET /shared-memories/:user1Id/:user2Id ${error.message}`);
+        next(error);
+    }
+});
+
+/**
+ * GET List of Countries visited by the user
+ * @route GET /visitedCounties/:userId
+ * @description Get s list of all the countries a user has made memories in
+ */
+router.get('/visitedCounties/:userId', authenticateFirebaseToken, validateStatsUID, handleValidationErrors, async (req, res, next) => {
+    const userId = req.params;
+
+    try {
+        const visitedCountryList = await getVisitedCountries(userId);
+        res.json({ visitedCountryList });
+    } catch (error) {
+        logger.error(`Controller error; VISITED COUNTRY GET /shared-memories/:user1Id/:user2Id ${error.message}`);
         next(error);
     }
 });

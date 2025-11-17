@@ -1,4 +1,4 @@
-const { fetchMemoryCountFromDB, fetchMemoryCountByYearFromDB, fetchAddedMemoryCountFromDB, fetchFriendCountFromDB, fetchSharedMemoriesCountFromDB } = require('./memoryStatsDataAccess');
+const { fetchMemoryCountFromDB, fetchMemoryCountByYearFromDB, fetchAddedMemoryCountFromDB, fetchFriendCountFromDB, fetchSharedMemoriesCountFromDB, fetchUserVisitedCountries } = require('./memoryStatsDataAccess');
 const logger = require('../../middleware/logger');
 
 const getUserDisplayStats = async (userId) => {
@@ -65,6 +65,21 @@ const getSharedMemoriesCount = async (user1Id, user2Id) => {
     }
 };
 
+const getVisitedCountries = async (userId) => {
+    try {
+        //Get County Names of users memories from database
+        const countires = await fetchUserVisitedCountries(userId);
+
+        //Change List to ISO Countrie names
+
+
+        return countires;
+    } catch (error) {
+        logger.error(`Service error; Error in getFriendCountByUser: ${error.message}`);
+        throw error;
+    }
+};
+
 module.exports = {
-    getUserDisplayStats,getMemoryCountByUser, getMemoryCountByUserForYear, getFriendCountByUser, getSharedMemoriesCount,
+    getUserDisplayStats,getMemoryCountByUser, getMemoryCountByUserForYear, getFriendCountByUser, getSharedMemoriesCount, getVisitedCountries
 }
