@@ -17,14 +17,14 @@ const fetchLocationById = async (locationId) => {
     }
 };
 
-const insertLocation = async ({ lng, lat, l_country, l_city }) => {
+const insertLocation = async ({ longitude, latitude, country, city, countryCode }) => {
     const query = `
-      INSERT INTO location (longitude, latitude, country, locality)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO location (longitude, latitude, country, locality, alpha_2_codes)
+      VALUES (?, ?, ?, ?, ?)
     `;
 
     try {
-        const [result] = await db.query(query, [lng, lat, l_country, l_city]);
+        const [result] = await db.query(query, [longitude, latitude, country, city, countryCode]);
         return result.insertId;
     } catch (error) {
         logger.error(`Data Access error; Error inserting location (${query}): ${error.message}`);
@@ -32,14 +32,14 @@ const insertLocation = async ({ lng, lat, l_country, l_city }) => {
     }
 };
 
-const updateLocation = async (locationId, { lng, lat, l_country, l_city }) => {
+const updateLocation = async (locationId, { longitude, latitude, country, city, countryCode }) => {
     const query = `
       UPDATE location
-      SET longitude = ?, latitude = ?, country = ?, locality = ?
+      SET longitude = ?, latitude = ?, country = ?, locality = ?, alpha_2_codes = ?
       WHERE location_id = ?
     `;
     try {
-        const [result] = await db.query(query, [lng, lat, l_country, l_city, locationId]);
+        const [result] = await db.query(query, [longitude, latitude, country, city, countryCode, locationId]);
         return result;
     } catch (error) {
         logger.error(`Data Access error; Error updating location (${query}): ${error.message}`);

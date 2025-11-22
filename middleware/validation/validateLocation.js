@@ -9,19 +9,23 @@ const validateLocationId = [
 ];
 
 const validateCreateLocation = [
-  body('lng')
+  body('longitude')
     .exists().withMessage('Longitude is required')
     .isFloat().withMessage('Longitude must be a number'),
 
-  body('lat')
+  body('latitude')
     .exists().withMessage('Latitude is required')
     .isFloat().withMessage('Latitude must be a number'),
 
-  body('l_country')
+  body('country')
     .exists().withMessage('Country is required')
     .isString().withMessage('Country must be a string'),
 
-  body('l_city')
+  body('countryCode')
+    .exists().withMessage('countryCode is required')
+    .isString().withMessage('countryCode must be a string'),
+
+  body('city')
     .optional()
     .isString().withMessage('City must be a string'),
 ];

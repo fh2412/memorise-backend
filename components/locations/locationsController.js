@@ -33,10 +33,10 @@ router.get('/:locationId', authenticateFirebaseToken, validateLocationId, handle
 * @description creates a new location in the database
 */
 router.post('/createLocation', authenticateFirebaseToken, validateCreateLocation, handleValidationErrors, async (req, res, next) => {
-    const { lng, lat, l_country, l_city } = req.body;
+    const { country, countryCode, city, latitude, longitude } = req.body;
 
     try {
-        const locationId = await createLocationService({ lng, lat, l_country, l_city });
+        const locationId = await createLocationService({ country, countryCode, city, latitude, longitude });
         res.json({ message: 'Location created successfully', locationId: locationId });
     } catch (error) {
         logger.error(`Controller error; LOCATION POST /createLocation: ${error.message}`);
@@ -51,10 +51,10 @@ router.post('/createLocation', authenticateFirebaseToken, validateCreateLocation
 */
 router.put('/updateLocation/:locationId', authenticateFirebaseToken, validateLocationId, validateCreateLocation, handleValidationErrors, async (req, res, next) => {
     const locationId = req.params.locationId;
-    const { lng, lat, l_country, l_city } = req.body;
+    const { country, countryCode, city, latitude, longitude } = req.body;
 
     try {
-        const updateResult = await updateLocationService(locationId, { lng, lat, l_country, l_city });
+        const updateResult = await updateLocationService(locationId, { country, countryCode, city, latitude, longitude });
 
         if (!updateResult) {
             return res.status(404).json({ message: 'Location not found' });
