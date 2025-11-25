@@ -88,7 +88,7 @@ const fetchSharedMemoriesCountFromDB = async (user1Id, user2Id) => {
 
 const fetchUserVisitedCountries = async (userId) => {
     const query = `
-        SELECT DISTINCT l.country
+        SELECT DISTINCT l.alpha_2_codes
         FROM location l
         INNER JOIN (
             SELECT location_id FROM memories WHERE user_id = ?
@@ -103,7 +103,7 @@ const fetchUserVisitedCountries = async (userId) => {
         const [rows] = await db.query(query, [userId, userId]);
         return rows.length > 0 ? rows : null;
     } catch (error) {
-        logger.error(`Data Access error; Error fetching friend count (${query}): ${error.message}`);
+        logger.error(`Data Access error; Error fetching user visited country (${query}): ${error.message}`);
         throw error;
     }
 };

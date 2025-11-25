@@ -116,14 +116,13 @@ router.get('/shared-memories/:user1Id/:user2Id', authenticateFirebaseToken, vali
  * @route GET /visitedCounties/:userId
  * @description Get s list of all the countries a user has made memories in
  */
-router.get('/visitedCounties/:userId', authenticateFirebaseToken, validateStatsUID, handleValidationErrors, async (req, res, next) => {
+router.get('/visitedCounties/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
     const userId = req.params;
-
     try {
-        const visitedCountryList = await getVisitedCountries(userId);
-        res.json({ visitedCountryList });
+        const visitedCountryList = await getVisitedCountries(userId.userId);
+        res.json(visitedCountryList);
     } catch (error) {
-        logger.error(`Controller error; VISITED COUNTRY GET /shared-memories/:user1Id/:user2Id ${error.message}`);
+        logger.error(`Controller error; VISITED COUNTRY GET /visitedCounties/:userId ${error.message}`);
         next(error);
     }
 });
