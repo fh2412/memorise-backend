@@ -161,10 +161,10 @@ router.post('/', validateUserEmail, validateUserPassword, handleValidationErrors
  */
 router.put('/:userId', authenticateFirebaseToken, validateFirebaseUID, validateUserUpdate, handleValidationErrors, async (req, res) => {
     const userId = req.params.userId;
-    const { name, bio, dob, gender, country, username, instagram } = req.body;
+    const { name, bio, dob, gender, country, country_cca2, username, instagram } = req.body;
 
     try {
-        await updateUser(userId, { name, bio, dob, gender, country, username, instagram });
+        await updateUser(userId, { name, bio, dob, gender, country, country_cca2, username, instagram });
         res.status(200).json({ message: 'User updated successfully' });
     } catch (error) {
         logger.error(`Controller error; USERS PUT /:userId: ${error.message}`);

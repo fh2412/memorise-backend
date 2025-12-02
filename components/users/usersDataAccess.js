@@ -120,15 +120,15 @@ const saveUserInDatabase = async (uid, email) => {
     }
 };
 
-const updateUserData = async (userId, { name, bio, dob, gender, country, username, instagram }) => {
+const updateUserData = async (userId, { name, bio, dob, gender, country, country_cca2, username, instagram }) => {
     const query = `
       UPDATE users 
-      SET name = ?, bio = ?, dob = ?, gender = ?, country = ?, username = ?, instagram = ?
+      SET name = ?, bio = ?, dob = ?, gender = ?, country = ?, country_cca2 = ?, username = ?, instagram = ?
       WHERE user_id = ?
     `;
 
     try {
-        await db.query(query, [name, bio, dob, gender, country, username, instagram, userId]);
+        await db.query(query, [name, bio, dob, gender, country, country_cca2, username, instagram, userId]);
     } catch (error) {
         logger.error(`Data Access error; Error updating user (${query}): ${error.message}`);
         throw error;

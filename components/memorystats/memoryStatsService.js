@@ -70,12 +70,9 @@ const getVisitedCountries = async (userId) => {
         //Get County Names of users memories from database
         const countires = await fetchUserVisitedCountries(userId);
 
-        //Change List to ISO Countrie names
-
-
         return countires;
     } catch (error) {
-        logger.error(`Service error; Error in getFriendCountByUser: ${error.message}`);
+        logger.error(`Service error; Error in getVisitedCountries: ${error.message}`);
         throw error;
     }
 };
