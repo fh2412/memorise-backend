@@ -3,7 +3,6 @@ const cors = require('cors');
 const app = express();
 const bodyParser = require('body-parser');
 const PORT = process.env.PORT || 3000; // Define the port for the server
-const functions = require('firebase-functions/v2');
 const apiLimiter = require('./middleware/rateLimiter');
 const helmetConfig = require('./middleware/helmetConfig');
 const logger = require('./middleware/logger');
@@ -82,8 +81,6 @@ const gracefulShutdown = (signal) => {
 // Handle termination signals
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-
-exports.api = functions.https.onRequest(app);
 
 // In case of uncaught exceptions or unhandled rejections, log them and gracefully shutdown
 process.on('uncaughtException', (err) => {
