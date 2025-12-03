@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
-const bodyParser = require('body-parser');
 const PORT = process.env.PORT || 3000; // Define the port for the server
 const apiLimiter = require('./middleware/rateLimiter');
 const helmetConfig = require('./middleware/helmetConfig');
@@ -9,10 +8,9 @@ const logger = require('./middleware/logger');
 const errorHandler = require('./middleware/errorHandling/errorHandler');
 
 // Middleware setup
-//app.use(pinoHttp({ logger }));
 app.set('trust proxy', 1); 
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
 app.use(helmetConfig);
 
 app.use('/api/', apiLimiter);
