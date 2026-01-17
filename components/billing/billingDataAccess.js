@@ -4,7 +4,7 @@ const logger = require('../../middleware/logger');
 const updateUserStorageTakenDb = async (userId, newSpace) => {
     const query = `
         UPDATE users
-        SET used_storage_space = used_storage_space + ?
+        SET used_storage_space = GREATEST(0, used_storage_space + ?)
         WHERE user_id = ?;
     `;
     try {
