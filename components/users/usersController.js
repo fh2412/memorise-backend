@@ -3,7 +3,7 @@ const handleValidationErrors = require('../../middleware/validationMiddleware');
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const router = express.Router();
 const logger = require('../../middleware/logger');
-const { getAllUsers, getUserById, getUserMemories, getUserCountry, searchUsers, postCreateUser, updateUser, updateUserProfilePic, getUserStorageData, deleteUser } = require('./usersService');
+const { getAllUsers, getUserById, getUserMemories, getUserCountry, searchUsers, postCreateUser, updateUser, updateUserProfilePic, getUserStorageData, deleteUser, updateMobileUser } = require('./usersService');
 const { validateFirebaseUID, validateUserEmail, validateUserPassword, validateProfilePicUrl, validateUserUpdate } = require('../../middleware/validation/validateUsers');
 
 /**
@@ -165,6 +165,24 @@ router.put('/:userId', authenticateFirebaseToken, validateFirebaseUID, validateU
 
     try {
         await updateUser(userId, { name, bio, dob, gender, country, country_cca2, username, instagram });
+        res.status(200).json({ message: 'User updated successfully' });
+    } catch (error) {
+        logger.error(`Controller error; USERS PUT /:userId: ${error.message}`);
+        res.status(500).json({ message: 'An unexpected error occurred' });
+    }
+});
+
+/**
+ * PUT new userdata
+ * @route PUT /mobile/:userId
+ * @description Updated the data of a userprofile by id
+ */
+router.put('/mobile/:userId', authenticateFirebaseToken, validateFirebaseUID, validateUserUpdate, handleValidationErrors, async (req, res) => {
+    const userId = req.params.userId;
+    const { name, bio, dob, gender } = req.body;
+
+    try {
+        await updateMobileUser(userId, { name, bio, dob, gender });
         res.status(200).json({ message: 'User updated successfully' });
     } catch (error) {
         logger.error(`Controller error; USERS PUT /:userId: ${error.message}`);

@@ -1,6 +1,7 @@
 const {
     fetchUsersForMemoryFromDB,
     fetchCreatedMemoriesFromDB,
+    fetchAddedMemoriesFromDB,
     fetchUserAllMemoriesFromDB,
     fetchMemoryByIdFromDB,
     fetchMemoryFriendsFromDB,
@@ -43,6 +44,16 @@ const getCreatedMemories = async (userId, ascending, page, pageSize) => {
         return result;
     } catch (error) {
         logger.error(`Service error; Error in getCreatedMemories: ${error.message}`);
+        throw error;
+    }
+};
+
+const getAddedMemories = async (userId, ascending, page, pageSize) => {
+    try {
+        const result = await fetchAddedMemoriesFromDB(userId, ascending, page, pageSize);
+        return result;
+    } catch (error) {
+        logger.error(`Service error; Error in getAddedMemories: ${error.message}`);
         throw error;
     }
 };
@@ -348,6 +359,7 @@ const checkMembership = async (memoryId, userId) => {
 module.exports = {
     getUsersForMemory,
     getCreatedMemories,
+    getAddedMemories,
     getUserAllMemories,
     getMemoriesSearchData,
     getMemoryById,

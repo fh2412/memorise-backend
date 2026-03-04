@@ -135,6 +135,21 @@ const updateUserData = async (userId, { name, bio, dob, gender, country, country
     }
 };
 
+const updateMobileUserData = async (userId, { name, bio, dob, gender }) => {
+    const query = `
+      UPDATE users 
+      SET name = ?, bio = ?, dob = ?, gender = ?
+      WHERE user_id = ?
+    `;
+
+    try {
+        await db.query(query, [name, bio, dob, gender, userId]);
+    } catch (error) {
+        logger.error(`Data Access error; Error updating user (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
 const updateUserProfilePicData = async (userId, profilepic) => {
     const query = `UPDATE users SET profilepic = ? WHERE user_id = ?`;
 
@@ -170,5 +185,6 @@ module.exports = {
     updateUserData,
     updateUserProfilePicData,
     deleteUserData,
-    fetchUserStorageData
+    fetchUserStorageData,
+    updateMobileUserData
 };

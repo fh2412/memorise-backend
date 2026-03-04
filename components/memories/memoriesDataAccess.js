@@ -20,13 +20,13 @@ const fetchUsersForMemoryFromDB = async (memoryId) => {
 const fetchCreatedMemoriesFromDB = async (userId, ascending, page, pageSize) => {
     const orderDirection = ascending ? 'ASC' : 'DESC';
     const offset = page * pageSize;
-    
+
     // Get total count
     const countQuery = `
         SELECT COUNT(*) as total
         FROM memories
         WHERE memories.user_id = ?`;
-    
+
     // Get paginated data
     const dataQuery = `
         SELECT memories.*, users.name AS username, location.latitude, location.longitude
@@ -36,11 +36,57 @@ const fetchCreatedMemoriesFromDB = async (userId, ascending, page, pageSize) => 
         WHERE memories.user_id = ?
         ORDER BY memories.memory_date ${orderDirection}
         LIMIT ? OFFSET ?`;
-    
+
     try {
         const [[countResult]] = await db.query(countQuery, [userId]);
         const [rows] = await db.query(dataQuery, [userId, pageSize, offset]);
-        
+
+        return {
+            data: rows,
+            total: countResult.total,
+            page: page,
+            pageSize: pageSize
+        };
+    } catch (error) {
+        logger.error(`Data Access error; Error fetching created memories: ${error.message}`);
+        throw error;
+    }
+};
+
+const fetchAddedMemoriesFromDB = async (userId, ascending, page, pageSize) => {
+    const orderDirection = ascending ? 'ASC' : 'DESC';
+    const offset = page * pageSize;
+
+    // Get total count
+    const countQuery = `
+    SELECT COUNT(DISTINCT memories.memory_id) AS total
+    FROM memories
+    JOIN user_has_memory 
+        ON memories.memory_id = user_has_memory.memory_id
+    WHERE user_has_memory.user_id = ?`;
+
+    // Get paginated data
+    const dataQuery = `
+    SELECT DISTINCT
+        memories.*, 
+        users.name AS username, 
+        location.latitude, 
+        location.longitude
+    FROM memories
+    JOIN users 
+        ON memories.user_id = users.user_id
+    JOIN location 
+        ON memories.location_id = location.location_id
+    JOIN user_has_memory 
+        ON memories.memory_id = user_has_memory.memory_id
+    WHERE user_has_memory.user_id = ? AND memories.user_id != ?
+    ORDER BY memories.memory_date ${orderDirection}
+    LIMIT ? OFFSET ?`;
+
+    try {
+        const [[countResult]] = await db.query(countQuery, [userId]);
+        const [rows] = await db.query(dataQuery, [userId, userId, pageSize, offset]);
+
         return {
             data: rows,
             total: countResult.total,
@@ -56,7 +102,7 @@ const fetchCreatedMemoriesFromDB = async (userId, ascending, page, pageSize) => 
 const fetchUserAllMemoriesFromDB = async (userId, ascending, page, pageSize) => {
     const orderDirection = ascending ? 'ASC' : 'DESC';
     const offset = page * pageSize;
-    
+
     // Get total count
     const countQuery = `
         SELECT COUNT(DISTINCT memories.memory_id) as total
@@ -64,7 +110,7 @@ const fetchUserAllMemoriesFromDB = async (userId, ascending, page, pageSize) => 
         LEFT JOIN user_has_memory ON memories.memory_id = user_has_memory.memory_id 
             AND user_has_memory.user_id = ?
         WHERE memories.user_id = ? OR user_has_memory.user_id = ?`;
-    
+
     // Get paginated data
     const dataQuery = `
         SELECT DISTINCT 
@@ -80,11 +126,11 @@ const fetchUserAllMemoriesFromDB = async (userId, ascending, page, pageSize) => 
         WHERE memories.user_id = ? OR user_has_memory.user_id = ?
         ORDER BY memories.memory_date ${orderDirection}
         LIMIT ? OFFSET ?`;
-    
+
     try {
         const [[countResult]] = await db.query(countQuery, [userId, userId, userId]);
         const [rows] = await db.query(dataQuery, [userId, userId, userId, pageSize, offset]);
-        
+
         return {
             data: rows,
             total: countResult.total,
@@ -100,7 +146,7 @@ const fetchUserAllMemoriesFromDB = async (userId, ascending, page, pageSize) => 
 const fetchMemoriesSearchDataFromDB = async (userId, includeShared) => {
     let query;
     let params;
-    
+
     if (includeShared) {
         // Get memories created by user OR shared with user
         query = `
@@ -124,7 +170,7 @@ const fetchMemoriesSearchDataFromDB = async (userId, includeShared) => {
             WHERE user_id = ?`;
         params = [userId];
     }
-    
+
     try {
         const [rows] = await db.query(query, params);
         return rows;
@@ -137,7 +183,7 @@ const fetchMemoriesSearchDataFromDB = async (userId, includeShared) => {
 const fetchMemoriesMapDataFromDB = async (userId, includeShared) => {
     let query;
     let params;
-    
+
     if (includeShared) {
         // Get memories created by user OR shared with user
         query = `
@@ -163,7 +209,7 @@ const fetchMemoriesMapDataFromDB = async (userId, includeShared) => {
             WHERE memories.user_id = ?`;
         params = [userId];
     }
-    
+
     try {
         const [rows] = await db.query(query, params);
         return rows;
@@ -300,23 +346,23 @@ const incrementPictureCountInDB = async (memoryId, increment) => {
         SET picture_count = picture_count + ? 
         WHERE memory_id = ?
     `;
-    
+
     try {
         const [result] = await db.execute(query, [increment, memoryId]);
-        
+
         // Get the updated count
         if (result.affectedRows > 0) {
             const [rows] = await db.execute(
                 'SELECT picture_count FROM memories WHERE memory_id = ?',
                 [memoryId]
             );
-            
+
             return {
                 affectedRows: result.affectedRows,
                 newCount: rows[0]?.picture_count || 0
             };
         }
-        
+
         return { affectedRows: 0, newCount: null };
     } catch (error) {
         logger.error(`Data Access error; Error incrementing picture count (${query}): ${error.message}`);
@@ -531,6 +577,7 @@ const addUserToMemoryViaToken = async (userId, memoryId) => {
 module.exports = {
     fetchUsersForMemoryFromDB,
     fetchCreatedMemoriesFromDB,
+    fetchAddedMemoriesFromDB,
     fetchUserAllMemoriesFromDB,
     fetchMemoryByIdFromDB,
     fetchMemoryFriendsFromDB,

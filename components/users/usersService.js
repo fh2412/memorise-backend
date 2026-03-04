@@ -1,4 +1,4 @@
-const { fetchAllUsers, fetchUserById, fetchUserMemories, fetchUserCountry, createFirebaseUser, fetchUserStorageData, searchUsersData, generateCustomToken, saveUserInDatabase, updateUserData, updateUserProfilePicData, deleteUserData } = require('./usersDataAccess');
+const { fetchAllUsers, fetchUserById, fetchUserMemories, fetchUserCountry, createFirebaseUser, fetchUserStorageData, searchUsersData, generateCustomToken, saveUserInDatabase, updateUserData, updateUserProfilePicData, deleteUserData, updateMobileUserData } = require('./usersDataAccess');
 const logger = require('../../middleware/logger');
 
 
@@ -78,6 +78,15 @@ const updateUser = async (userId, userDetails) => {
     }
 };
 
+const updateMobileUser = async (userId, userDetails) => {
+    try {
+        await updateMobileUserData(userId, userDetails);
+    } catch (error) {
+        logger.error(`Service error; Error updateUser: ${error.message}`);
+        throw error;
+    }
+};
+
 const updateUserProfilePic = async (userId, profilepic) => {
     try {
         await updateUserProfilePicData(userId, profilepic);
@@ -107,5 +116,6 @@ module.exports = {
     updateUser,
     updateUserProfilePic,
     deleteUser,
-    getUserStorageData
+    getUserStorageData,
+    updateMobileUser
 };

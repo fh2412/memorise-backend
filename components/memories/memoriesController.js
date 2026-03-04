@@ -6,6 +6,7 @@ const { validateMemoryId, validateCreateMemory, validateAddFriendsToMemory, vali
 const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
 const { getCreatedMemories,
+    getAddedMemories,
     getUserAllMemories,
     getMemoryById,
     getMemoryFriends,
@@ -46,6 +47,27 @@ router.get('/createdMemories/:userId', authenticateFirebaseToken, validateFireba
     }
 });
 
+/**
+ * GET added memories for a user with pagination
+ * @route GET /addedMemories/:userId
+ * @query page - page number (0-indexed)
+ * @query pageSize - number of items per page
+ * @query ascending - sort order
+ */
+router.get('/addedMemories/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
+    const userId = req.params.userId;
+    const ascending = req.query.ascending === 'true';
+    const page = parseInt(req.query.page) || 0;
+    const pageSize = parseInt(req.query.pageSize) || 9;
+    
+    try {
+        const result = await getAddedMemories(userId, ascending, page, pageSize);
+        res.json(result);
+    } catch (error) {
+        logger.error(`Controller error; ADDED MEMORIES GET /addedMemories/:userId ${error.message}`);
+        next(error);
+    }
+});
 
 /**
  * GET all memories a user has with pagination
