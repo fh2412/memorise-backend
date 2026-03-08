@@ -110,10 +110,10 @@ const generateCustomToken = async (uid) => {
 };
 
 const saveUserInDatabase = async (uid, email) => {
-    const query = `INSERT INTO users (user_id, email) VALUES (?, ?)`;
+    const query = `INSERT INTO users (user_id, email, name) VALUES (?, ?, ?)`;
 
     try {
-        await db.query(query, [uid, email]);
+        await db.query(query, [uid, email, 'N A']);
     } catch (error) {
         logger.error(`Data Access error; Error creating users (${query}): ${error.message}`);
         throw error;
