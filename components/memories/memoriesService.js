@@ -200,9 +200,9 @@ const updateMemoryLocation = async (memoryId, locationId) => {
     }
 };
 
-const updateTitlePic = async (imageId, imageUrl) => {
+const updateTitlePic = async (memoryId, imageUrl) => {
     try {
-        const result = await updateTitlePicInDB(imageId, imageUrl);
+        const result = await updateTitlePicInDB(memoryId, imageUrl);
         return result.affectedRows > 0;
     } catch (error) {
         logger.error(`Service error; Error in updateTitlePic: ${error.message}`);

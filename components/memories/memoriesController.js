@@ -248,11 +248,11 @@ router.get('/:memoryId/:userId/friends-with-shared-count', authenticateFirebaseT
  * @description Create a new memory and store it in the database
  */
 router.post('/createMemory', authenticateFirebaseToken, validateCreateMemory, handleValidationErrors, async (req, res, next) => {
-    const { creator_id, title, description, firestore_bucket_url, location_id, memory_date, memory_end_date, title_pic, activity_id } = req.body;
+    const { creator_id, title, description, location_id, memory_date, memory_end_date, title_pic, activity_id } = req.body;
 
     try {
         const memory_id = await createMemory({
-            creator_id, title, description, firestore_bucket_url, location_id, memory_date, memory_end_date, title_pic, activity_id
+            creator_id, title, description, location_id, memory_date, memory_end_date, title_pic, activity_id
         });
         res.json({ message: 'Memory created successfully', memory_id });
     } catch (error) {
@@ -450,12 +450,12 @@ router.put('/updateMemoryLocation/:memoryId', authenticateFirebaseToken, validat
  * @route PUT /updateTitlePic/:imageId
  * @description Update the title picture for a specific memory
  */
-router.put('/updateTitlePic/:imageId', authenticateFirebaseToken, validateUpdateTitlePic, handleValidationErrors, async (req, res, next) => {
-    const imageId = req.params.imageId;
+router.put('/updateTitlePic/:memoryId', authenticateFirebaseToken, validateUpdateTitlePic, handleValidationErrors, async (req, res, next) => {
+    const memoryId = req.params.memoryId;
     const imageUrl = req.body.imageUrl;
 
     try {
-        const updateResult = await updateTitlePic(imageId, imageUrl);
+        const updateResult = await updateTitlePic(memoryId, imageUrl);
 
         if (updateResult) {
             res.json({ message: 'Memory updated successfully' });
@@ -463,7 +463,7 @@ router.put('/updateTitlePic/:imageId', authenticateFirebaseToken, validateUpdate
             res.status(404).json({ error: 'Memory not found or no changes made' });
         }
     } catch (error) {
-        logger.error(`Controller error; UPDATE PUT /updateTitlePic/:imageId ${error.message}`);
+        logger.error(`Controller error; UPDATE PUT /updateTitlePic/:memoryId ${error.message}`);
         next(error);
     }
 });

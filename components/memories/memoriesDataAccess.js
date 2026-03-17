@@ -302,14 +302,14 @@ const getSharedMemoriesCount = async (userId1, userId2) => {
     }
 };
 
-const createMemoryInDB = async ({ creator_id, title, description, firestore_bucket_url, location_id, memory_date, memory_end_date, title_pic, activity_id }) => {
+const createMemoryInDB = async ({ creator_id, title, description, location_id, memory_date, memory_end_date, title_pic, activity_id }) => {
     const query = `
-        INSERT INTO memories (user_id, title, text, image_url, location_id, memory_date, memory_end_date, title_pic, activity_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO memories (user_id, title, text, location_id, memory_date, memory_end_date, title_pic, activity_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     try {
-        const [result] = await db.query(query, [creator_id, title, description, firestore_bucket_url, location_id, memory_date, memory_end_date, title_pic, activity_id]);
+        const [result] = await db.query(query, [creator_id, title, description, location_id, memory_date, memory_end_date, title_pic, activity_id]);
         return result.insertId;
     } catch (error) {
         logger.error(`Data Access error; Error inserting memory (${query}): ${error.message}`);
@@ -407,10 +407,10 @@ const updateLocationInDB = async (memoryId, locationId) => {
     }
 };
 
-const updateTitlePicInDB = async (imageId, imageUrl) => {
-    const query = 'UPDATE memories SET title_pic = ? WHERE image_url = ?';
+const updateTitlePicInDB = async (memoryId, imageUrl) => {
+    const query = 'UPDATE memories SET title_pic = ? WHERE memory_id = ?';
     try {
-        const [result] = await db.execute(query, [imageUrl, imageId]);
+        const [result] = await db.execute(query, [imageUrl, memoryId]);
         return result;
     } catch (error) {
         logger.error(`Data Access error; Error updating title picture (${query}): ${error.message}`);

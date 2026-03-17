@@ -24,12 +24,7 @@ const validateCreateMemory = [
     .optional()
     .isString().withMessage('Description must be a string')
     .isLength({ max: 10000 }).withMessage('Description is to long'),
-
-  body('firestore_bucket_url')
-    .exists().withMessage('Firebase Storage bucket URL is required')
-    .isString().isLength({ min: 35, max: 45 })
-    .withMessage('Firebase Storage bucket URL must be in the correct format'),
-
+    
   body('location_id')
     .exists().withMessage('Location ID is required')
     .notEmpty().withMessage('Location ID must not be empty')
@@ -47,12 +42,6 @@ const validateCreateMemory = [
   body('memory_end_date')
     .optional()
     .isISO8601().withMessage('Memory end date must be in the format YYYY-MM-DDTHH:mm:ss.sssZ'),
-
-  body('title_pic')
-    .exists().withMessage('Title picture URL is required')
-    .isURL().withMessage('Title picture URL must be a valid URL')
-    .custom(value => value.startsWith('https://firebasestorage.googleapis.com/v0/b/memorise-910c3.appspot.com/o/memories'))
-    .withMessage('Title picture URL must be in the correct format'),
 ];
 
 const validateAddFriendsToMemory = [
@@ -122,8 +111,8 @@ const validateUpdateMemoryLocation = [
 ];
 
 const validateUpdateTitlePic = [
-  param('imageId')
-    .exists().withMessage('Image ID is required'),
+  param('memoryId')
+    .exists().withMessage('memoryId is required'),
 
   body('imageUrl')
     .exists().withMessage('Title picture URL is required')
