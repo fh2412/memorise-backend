@@ -29,6 +29,7 @@ const activityRoutes = require('./components/activities/activitiesController');
 const bookmarkingRoutes = require('./components/activity_bookmarking/bookmarkingController');
 const feedbackRoutes = require('./components/feedback');
 const billingRoutes = require('./components/billing/billingController');
+const inviteRoutes = require('./components/invitations/invitationsController');
 const ogPreviewRouter = require('./components/og-preview-route');
 
 
@@ -45,6 +46,7 @@ app.use('/api/activity', activityRoutes);
 app.use('/api/bookmarking', bookmarkingRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/billing', billingRoutes);
+app.use('/api/invite', inviteRoutes);
 app.use('/og', ogPreviewRouter);
 
 app.get('/health', (req, res) => {
