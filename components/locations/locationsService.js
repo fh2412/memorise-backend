@@ -1,4 +1,4 @@
-const { fetchLocationById, insertLocation, updateLocation } = require('./locationsDataAccess');
+const { fetchLocationById, insertLocation, updateLocation, fetchAutocompleteFromGoogle, fetchPlaceDetailsFromGoogle } = require('./locationsDataAccess');
 const logger = require('../../middleware/logger');
 
 const getLocationByIdService = async (locationId) => {
@@ -30,8 +30,30 @@ const updateLocationService = async (locationId, locationData) => {
     }
 };
 
+const getAutocompleteService = async (input) => {
+    try {
+        const predictions = await fetchAutocompleteFromGoogle(input);
+        return predictions;
+    } catch (error) {
+        logger.error(`Service error; Error getAutocompleteService: ${error.message}`);
+        throw error;
+    }
+};
+
+const getPlaceDetailsService = async (placeId) => {
+    try {
+        const details = await fetchPlaceDetailsFromGoogle(placeId);
+        return details;
+    } catch (error) {
+        logger.error(`Service error; Error getPlaceDetailsService: ${error.message}`);
+        throw error;
+    }
+};
+
 module.exports = {
     getLocationByIdService,
     createLocationService,
     updateLocationService,
+    getAutocompleteService,
+    getPlaceDetailsService
 }

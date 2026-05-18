@@ -1,4 +1,4 @@
-const { param, body } = require('express-validator');
+const { param, body, query } = require('express-validator');
 
 
 const validateLocationId = [
@@ -30,4 +30,18 @@ const validateCreateLocation = [
     .isString().withMessage('City must be a string'),
 ];
 
-module.exports = { validateLocationId, validateCreateLocation }
+const validateAutocompleteInput = [
+  query('input')
+    .exists().withMessage('Input query parameter is required')
+    .notEmpty().withMessage('Input query parameter cannot be empty')
+    .isString().withMessage('Input must be a string'),
+];
+
+const validatePlaceIdParam = [
+  param('placeId')
+    .exists().withMessage('Place ID parameter is required')
+    .notEmpty().withMessage('Place ID parameter cannot be empty')
+    .isString().withMessage('Place ID must be a string'),
+];
+
+module.exports = { validateLocationId, validateCreateLocation, validateAutocompleteInput, validatePlaceIdParam }

@@ -27,7 +27,7 @@ const handleValidationErrors = (req, res, next) => {
     error.status = 400;
     error.errors = errorMessages;
     error.validationError = true;
-    return next(error); // Key change: Pass the error to next()
+    return next(error);
   }
   next();
 };
