@@ -98,10 +98,6 @@ const fetchAutocompleteFromGoogle = async (input) => {
     }
 };
 
-/**
- * Fetches coordinate details using the Place Details API (New)
- * Endpoint: GET https://places.googleapis.com/v1/places/{placeId}
- */
 const fetchPlaceDetailsFromGoogle = async (placeId) => {
     const apiKey = process.env.GOOGLE_PLACES_KEY;
     const url = `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`;
@@ -111,8 +107,7 @@ const fetchPlaceDetailsFromGoogle = async (placeId) => {
             method: 'GET',
             headers: {
                 'X-Goog-Api-Key': apiKey,
-                // Field masks are strictly required. "location" contains latitude and longitude.
-                'X-Goog-FieldMask': 'id,location'
+                'X-Goog-FieldMask': 'id,location,formattedAddress,addressComponents'
             }
         });
 
@@ -122,27 +117,42 @@ const fetchPlaceDetailsFromGoogle = async (placeId) => {
         }
 
         const data = await response.json();
+        if (!data || !data.location) return null;
 
-        if (!data || !data.location) {
-            return null;
-        }
+        // Parse Google-specific components here
+        let country = '';
+        let countryCode = '';
+        let city = null;
 
-        // --- TRANSFORMATION LAYER ---
-        // Remap Google's new { latitude, longitude } format back to your Flutter app's legacy expectation
-        return {
-            geometry: {
-                location: {
-                    lat: data.location.latitude,
-                    lng: data.location.longitude
+        if (data.addressComponents) {
+            for (const component of data.addressComponents) {
+                if (component.types.includes('country')) {
+                    country = component.longText;
+                    countryCode = component.shortText;
+                }
+                if (component.types.includes('locality') || component.types.includes('postal_town')) {
+                    city = component.longText;
                 }
             }
-        };
+        }
 
+        return {
+            latitude: data.location.latitude,
+            longitude: data.location.longitude,
+            address: data.formattedAddress || '',
+            country: country,
+            alpha_2_codes: countryCode,
+            locality: city,
+            location_id: 1
+        };
     } catch (error) {
         logger.error(`Data Access error; Error fetchPlaceDetailsFromGoogle: ${error.message}`);
         throw error;
     }
 };
+
+
+
 module.exports = {
     fetchLocationById,
     insertLocation,

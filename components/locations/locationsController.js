@@ -89,7 +89,7 @@ router.get('/autocomplete', authenticateFirebaseToken, validateAutocompleteInput
  * @route GET /details/:placeId
  * @description Get specific coordinates and details for a Google Place ID
  */
-router.get('/details/:placeId', authenticateFirebaseToken, validatePlaceIdParam, handleValidationErrors, async (req, res, next) => {
+router.get('/googleplaces/details/:placeId', authenticateFirebaseToken, validatePlaceIdParam, handleValidationErrors, async (req, res, next) => {
     const placeId = req.params.placeId;
 
     try {

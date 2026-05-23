@@ -42,8 +42,9 @@ const getAutocompleteService = async (input) => {
 
 const getPlaceDetailsService = async (placeId) => {
     try {
-        const details = await fetchPlaceDetailsFromGoogle(placeId);
-        return details;
+        const locationDetails = await fetchPlaceDetailsFromGoogle(placeId);
+        console.log(locationDetails);
+        return locationDetails;
     } catch (error) {
         logger.error(`Service error; Error getPlaceDetailsService: ${error.message}`);
         throw error;
