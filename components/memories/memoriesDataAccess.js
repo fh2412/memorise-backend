@@ -53,39 +53,65 @@ const fetchCreatedMemoriesFromDB = async (userId, ascending, page, pageSize) => 
     }
 };
 
-const fetchAddedMemoriesFromDB = async (userId, ascending, page, pageSize) => {
+const fetchAddedMemoriesFromDB = async (userId, ascending, page, pageSize, filter) => {
     const orderDirection = ascending ? 'ASC' : 'DESC';
     const offset = page * pageSize;
 
-    // Get total count
-    const countQuery = `
-    SELECT COUNT(DISTINCT memories.memory_id) AS total
-    FROM memories
-    JOIN user_has_memory 
-        ON memories.memory_id = user_has_memory.memory_id
-    WHERE user_has_memory.user_id = ?`;
+    // Base Queries
+    let countQuery = `
+        SELECT COUNT(DISTINCT memories.memory_id) AS total
+        FROM memories
+        JOIN user_has_memory ON memories.memory_id = user_has_memory.memory_id
+        WHERE user_has_memory.user_id = ?`;
 
-    // Get paginated data
-    const dataQuery = `
-    SELECT DISTINCT
-        memories.*, 
-        users.name AS username, 
-        location.latitude, 
-        location.longitude
-    FROM memories
-    JOIN users 
-        ON memories.user_id = users.user_id
-    JOIN location 
-        ON memories.location_id = location.location_id
-    JOIN user_has_memory 
-        ON memories.memory_id = user_has_memory.memory_id
-    WHERE user_has_memory.user_id = ? AND memories.user_id != ?
-    ORDER BY memories.memory_date ${orderDirection}
-    LIMIT ? OFFSET ?`;
+    let dataQuery = `
+        SELECT DISTINCT
+            memories.*, 
+            users.name AS username, 
+            location.latitude, 
+            location.longitude
+        FROM memories
+        JOIN users ON memories.user_id = users.user_id
+        JOIN location ON memories.location_id = location.location_id
+        JOIN user_has_memory ON memories.memory_id = user_has_memory.memory_id
+        WHERE user_has_memory.user_id = ? AND memories.user_id != ?`;
+
+    const countParams = [userId];
+    const dataParams = [userId, userId];
+
+    // Dynamic Date Filtering Logic
+    let dateCondition = '';
+    
+    if (filter === 'future') {
+        // 1. Future: Hasn't started yet OR the start date is explicitly NULL
+        dateCondition = ' AND (memories.memory_date > NOW() OR memories.memory_date IS NULL)';
+    } 
+    else if (filter === 'active') {
+        // 2. Active: It has started, and either hasn't ended yet OR is happening today (if no end date exists)
+        dateCondition = ` AND memories.memory_date <= NOW() 
+                          AND (
+                              memories.memory_end_date >= NOW() 
+                              OR (memories.memory_end_date IS NULL AND DATE(memories.memory_date) = CURRENT_DATE())
+                          )`;
+    } 
+    else if (filter === 'past') {
+        // 3. Past: Must have a valid start date, and the end date (or start date if no end date exists) is in the past
+        dateCondition = ` AND memories.memory_date IS NOT NULL 
+                          AND IFNULL(memories.memory_end_date, memories.memory_date) < NOW()`;
+    }
+
+    if (dateCondition) {
+        countQuery += dateCondition;
+        dataQuery += dateCondition;
+    }
+
+    // Append ordering and pagination
+    dataQuery += ` ORDER BY memories.memory_date ${orderDirection} LIMIT ? OFFSET ?`;
+    dataParams.push(pageSize, offset);
 
     try {
-        const [[countResult]] = await db.query(countQuery, [userId]);
-        const [rows] = await db.query(dataQuery, [userId, userId, pageSize, offset]);
+        const [[countResult]] = await db.query(countQuery, countParams);
+        const [rows] = await db.query(dataQuery, dataParams);
 
         return {
             data: rows,
@@ -99,20 +125,19 @@ const fetchAddedMemoriesFromDB = async (userId, ascending, page, pageSize) => {
     }
 };
 
-const fetchUserAllMemoriesFromDB = async (userId, ascending, page, pageSize) => {
+const fetchUserAllMemoriesFromDB = async (userId, ascending, page, pageSize, filter) => {
     const orderDirection = ascending ? 'ASC' : 'DESC';
     const offset = page * pageSize;
 
-    // Get total count
-    const countQuery = `
+    // Base Queries - Wrapped the OR condition in parentheses for safe appending
+    let countQuery = `
         SELECT COUNT(DISTINCT memories.memory_id) as total
         FROM memories
         LEFT JOIN user_has_memory ON memories.memory_id = user_has_memory.memory_id 
             AND user_has_memory.user_id = ?
-        WHERE memories.user_id = ? OR user_has_memory.user_id = ?`;
+        WHERE (memories.user_id = ? OR user_has_memory.user_id = ?)`;
 
-    // Get paginated data
-    const dataQuery = `
+    let dataQuery = `
         SELECT DISTINCT 
             memories.*, 
             users.name AS username, 
@@ -123,13 +148,43 @@ const fetchUserAllMemoriesFromDB = async (userId, ascending, page, pageSize) => 
         JOIN location ON memories.location_id = location.location_id
         LEFT JOIN user_has_memory ON memories.memory_id = user_has_memory.memory_id 
             AND user_has_memory.user_id = ?
-        WHERE memories.user_id = ? OR user_has_memory.user_id = ?
-        ORDER BY memories.memory_date ${orderDirection}
-        LIMIT ? OFFSET ?`;
+        WHERE (memories.user_id = ? OR user_has_memory.user_id = ?)`;
+
+    // Base parameters matching the three ? placeholders above
+    const countParams = [userId, userId, userId];
+    const dataParams = [userId, userId, userId];
+
+    // Dynamic Date Filtering Logic
+    let dateCondition = '';
+    
+    if (filter === 'future') {
+        dateCondition = ' AND (memories.memory_date > NOW() OR memories.memory_date IS NULL)';
+    } 
+    else if (filter === 'active') {
+        dateCondition = ` AND memories.memory_date <= NOW() 
+                          AND (
+                              memories.memory_end_date >= NOW() 
+                              OR (memories.memory_end_date IS NULL AND DATE(memories.memory_date) = CURRENT_DATE())
+                          )`;
+    } 
+    else if (filter === 'past') {
+        dateCondition = ` AND memories.memory_date IS NOT NULL 
+                          AND IFNULL(memories.memory_end_date, memories.memory_date) < NOW()`;
+    }
+
+    // Append date conditions if a filter is active
+    if (dateCondition) {
+        countQuery += dateCondition;
+        dataQuery += dateCondition;
+    }
+
+    // Append ordering and pagination to the data query
+    dataQuery += ` ORDER BY memories.memory_date ${orderDirection} LIMIT ? OFFSET ?`;
+    dataParams.push(pageSize, offset);
 
     try {
-        const [[countResult]] = await db.query(countQuery, [userId, userId, userId]);
-        const [rows] = await db.query(dataQuery, [userId, userId, userId, pageSize, offset]);
+        const [[countResult]] = await db.query(countQuery, countParams);
+        const [rows] = await db.query(dataQuery, dataParams);
 
         return {
             data: rows,

@@ -48,20 +48,18 @@ const getCreatedMemories = async (userId, ascending, page, pageSize) => {
     }
 };
 
-const getAddedMemories = async (userId, ascending, page, pageSize) => {
+const getAddedMemories = async (userId, ascending, page, pageSize, filter) => {
     try {
-        const result = await fetchAddedMemoriesFromDB(userId, ascending, page, pageSize);
-        return result;
+        return await fetchAddedMemoriesFromDB(userId, ascending, page, pageSize, filter);
     } catch (error) {
         logger.error(`Service error; Error in getAddedMemories: ${error.message}`);
         throw error;
     }
 };
 
-const getUserAllMemories = async (userId, ascending, page, pageSize) => {
+const getUserAllMemories = async (userId, ascending, page, pageSize, filter) => {
     try {
-        const result = await fetchUserAllMemoriesFromDB(userId, ascending, page, pageSize);
-        return result;
+        return await fetchUserAllMemoriesFromDB(userId, ascending, page, pageSize, filter);
     } catch (error) {
         logger.error(`Service error; Error in getUserAllMemories: ${error.message}`);
         throw error;

@@ -26,7 +26,7 @@ const { getCreatedMemories,
     checkMembership, incrementMemoryPictureCount, getMemoriesSearchData } = require('./memoriesService');
 
 /**
- * GET created memories for a user with pagination
+ * GET ARCHIVED created memories for a user with pagination
  * @route GET /createdMemories/:userId
  * @query page - page number (0-indexed)
  * @query pageSize - number of items per page
@@ -48,7 +48,7 @@ router.get('/createdMemories/:userId', authenticateFirebaseToken, validateFireba
 });
 
 /**
- * GET added memories for a user with pagination
+ * GET added memories for a user with pagination and filter (active/past/future)
  * @route GET /addedMemories/:userId
  * @query page - page number (0-indexed)
  * @query pageSize - number of items per page
@@ -59,9 +59,10 @@ router.get('/addedMemories/:userId', authenticateFirebaseToken, validateFirebase
     const ascending = req.query.ascending === 'true';
     const page = parseInt(req.query.page) || 0;
     const pageSize = parseInt(req.query.pageSize) || 9;
+    const filter = req.query.filter; // 'past', 'active', or 'future'
     
     try {
-        const result = await getAddedMemories(userId, ascending, page, pageSize);
+        const result = await getAddedMemories(userId, ascending, page, pageSize, filter);
         res.json(result);
     } catch (error) {
         logger.error(`Controller error; ADDED MEMORIES GET /addedMemories/:userId ${error.message}`);
@@ -70,7 +71,7 @@ router.get('/addedMemories/:userId', authenticateFirebaseToken, validateFirebase
 });
 
 /**
- * GET all memories a user has with pagination
+ * GET all ARCHIVED memories a user has with pagination
  * @route GET /all/:userId
  * @query page - page number (0-indexed)
  * @query pageSize - number of items per page
@@ -81,9 +82,10 @@ router.get('/all/:userId', authenticateFirebaseToken, validateFirebaseUID, handl
     const ascending = req.query.ascending === 'true';
     const page = parseInt(req.query.page) || 0;
     const pageSize = parseInt(req.query.pageSize) || 9;
-    
+    const filter = req.query.filter; // 'past', 'active', or 'future'
+
     try {
-        const result = await getUserAllMemories(userId, ascending, page, pageSize);
+        const result = await getUserAllMemories(userId, ascending, page, pageSize, filter);
         res.json(result);
     } catch (error) {
         logger.error(`Controller error; ALL MEMORIES GET /all/:userId ${error.message}`);

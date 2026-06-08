@@ -19,6 +19,7 @@ const getFriendsFromDB = async (userId) => {
     }
 };
 
+
 const getFriendshipStatusFromDB = async (userId1, userId2) => {
     const query = `
       SELECT status, user_id1, user_id2

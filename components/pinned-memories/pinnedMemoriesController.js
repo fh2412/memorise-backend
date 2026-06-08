@@ -27,17 +27,17 @@ router.get('/:userId/favourite-memories', authenticateFirebaseToken, validateFir
 
 /**
  * GET fav memories by memory id
- * @route GET /favourite-memorie/:memoryId
+ * @route GET /favourite-memory/:memoryId
  * @description get alle the entrys for a memory if it is delcared at least once as favourite memory
  */
-router.get('/favourite-memorie/:memoryId', validateMemoryId, handleValidationErrors, async (req, res, next) => {
+router.get('/favourite-memory/:memoryId', validateMemoryId, handleValidationErrors, async (req, res, next) => {
     const memoryId = req.params.memoryId;
 
     try {
         const favoriteMemory = await getFavouriteMemory(memoryId);
         res.json(favoriteMemory);
     } catch (error) {
-        logger.error(`Controller error; FAV MEMORIES GET /favourite-memorie/:memoryId ${error.message}`);
+        logger.error(`Controller error; FAV MEMORIES GET /favourite-memory/:memoryId ${error.message}`);
         next(error);
     }
 });
@@ -123,17 +123,17 @@ router.delete('/:userId/favourite-memories/:memoryId', authenticateFirebaseToken
 
 /**
  * DELETE a memory from all favourite users memories
- * @route DELETE /favourite-memorie/:memoryId
+ * @route DELETE /favourite-memory/:memoryId
  * @description when a memory gets deleted, thsi makes sure it does not remain as a favourite anywhere
  */
-router.delete('/favourite-memorie/:memoryId', authenticateFirebaseToken, validateMemoryId, handleValidationErrors, async (req, res, next) => {
+router.delete('/favourite-memory/:memoryId', authenticateFirebaseToken, validateMemoryId, handleValidationErrors, async (req, res, next) => {
     const memoryId = req.params.memoryId;
 
     try {
         const result = await deleteFavouriteMemoryAll(memoryId);
         res.json(result);
     } catch (error) {
-        logger.error(`Controller error; FAV MEMORIES DELETE /favourite-memorie/:memoryId ${error.message}`);
+        logger.error(`Controller error; FAV MEMORIES DELETE /favourite-memory/:memoryId ${error.message}`);
         next(error);
     }
 });

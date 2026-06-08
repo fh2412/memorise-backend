@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const logger = require('../../middleware/logger');
-const { getFriendsService, getFriendshipStatusService, getMissingMemoryFriendsService, getPendingFriendsService, getIngoingFriendRequestsService, getFriendSuggestionsService, sendFriendRequestService, addFriendService, acceptFriendRequestService, removeFriend } = require('./friendsService');
+const { getFriendsService, getFriendshipStatusService, getFriendsWithSharedCount, getMissingMemoryFriendsService, getPendingFriendsService, getIngoingFriendRequestsService, getFriendSuggestionsService, sendFriendRequestService, addFriendService, acceptFriendRequestService, removeFriend } = require('./friendsService');
 const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
 const { validateMemoryId } = require('../../middleware/validation/validateMemory');
 const { validateStatsUID } = require('../../middleware/validation/validateMemorystats');
@@ -23,6 +23,23 @@ router.get('/:userId', authenticateFirebaseToken, validateFirebaseUID, handleVal
         res.json(friends);
     } catch (error) {
         logger.error(`Controller error; FRIENDS GET /:userId: ${error.message}`);
+        next(error);
+    }
+});
+
+/**
+ * GET friends with shared memory count
+ * @route GET /:userId/friends-with-shared-count
+ * @description Get all friends with their shared memory count
+ */
+router.get('/:userId/friends-with-shared-count', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
+    const { memoryId, userId } = req.params;
+
+    try {
+        const friendsWithSharedCount = await getFriendsWithSharedCount(memoryId, userId);
+        res.json(friendsWithSharedCount);
+    } catch (error) {
+        console.error('Controller error; GET /:userId/friends-with-shared-count', error.message);
         next(error);
     }
 });

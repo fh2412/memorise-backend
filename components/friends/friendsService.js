@@ -1,4 +1,5 @@
 const { getFriendsFromDB, getFriendshipStatusFromDB, getMissingMemoryFriendsFromDB, getPendingFriendsFromDB, getIngoingFriendRequestsFromDB, getFriendSuggestionsFromDB, insertFriendRequest, insertFriend, updateFriendRequestStatus, removeFriendFromDB } = require('./friendsDataAccess')
+const { getSharedMemoriesCount } = require('../memories/memoriesDataAccess');
 const logger = require('../../middleware/logger');
 
 const getFriendsService = async (userId) => {
@@ -7,6 +8,26 @@ const getFriendsService = async (userId) => {
         return friends;
     } catch (error) {
         logger.error(`Service error; Error getFriendsService: ${error.message}`);
+        throw error;
+    }
+};
+
+const getFriendsWithSharedCount = async (memoryId, userId) => {
+    try {
+        // Step 1: Get the list of friends
+        const friends = await getFriendsFromDB(userId);
+
+        // Step 2: Get shared memories count for each friend
+        const friendsWithSharedCount = await Promise.all(friends.map(friend =>
+            getSharedMemoriesCount(userId, friend.user_id).then(sharedCount => ({
+                ...friend,
+                sharedMemoriesCount: sharedCount
+            }))
+        ));
+
+        return friendsWithSharedCount;
+    } catch (error) {
+        logger.error(`Service error; Error in getFriendsWithSharedCount: ${error.message}`);
         throw error;
     }
 };
@@ -122,4 +143,5 @@ module.exports = {
     addFriendService,
     acceptFriendRequestService,
     removeFriend,
+    getFriendsWithSharedCount
 }
