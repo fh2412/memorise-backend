@@ -3,9 +3,11 @@ const logger = require('../../middleware/logger');
 
 const getUserDisplayStats = async (userId) => {
     try {
+
+        const currentYear = new Date().getFullYear();
         const [memoryCount, yearCount, allCount, friendCount] = await Promise.all([
             fetchMemoryCountFromDB(userId),
-            fetchMemoryCountByYearFromDB(userId),
+            fetchMemoryCountByYearFromDB(userId, currentYear),
             fetchAddedMemoryCountFromDB(userId),
             fetchFriendCountFromDB(userId)
         ]);
