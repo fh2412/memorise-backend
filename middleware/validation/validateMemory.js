@@ -35,13 +35,6 @@ const validateCreateMemory = [
     .notEmpty().withMessage('Activity ID must not be empty')
     .isInt().withMessage('Activity ID must be an INT'),
 
-  body('memory_date')
-    .exists().withMessage('Memory date is required')
-    .isISO8601().withMessage('Memory date must be in the format YYYY-MM-DDTHH:mm:ss.sssZ'),
-
-  body('memory_end_date')
-    .optional()
-    .isISO8601().withMessage('Memory end date must be in the format YYYY-MM-DDTHH:mm:ss.sssZ'),
 ];
 
 const validateAddFriendsToMemory = [
