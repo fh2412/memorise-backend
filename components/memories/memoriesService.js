@@ -3,6 +3,7 @@ const {
     fetchCreatedMemoriesFromDB,
     fetchAddedMemoriesFromDB,
     fetchUserAllMemoriesFromDB,
+    fetchUserPlannedMemoriesFromDB,
     fetchMemoryByIdFromDB,
     fetchMemoryFriendsFromDB,
     fetchMemoryDetailFriends,
@@ -15,6 +16,7 @@ const {
     updatePictureCountInDB,
     updateLocationInDB,
     updateTitlePicInDB,
+    updateMemoryTitleInDB,
     checkMemoryExists,
     deleteFriendsByMemoryId,
     deleteMemoryById,
@@ -62,6 +64,46 @@ const getUserAllMemories = async (userId, ascending, page, pageSize, filter) => 
         return await fetchUserAllMemoriesFromDB(userId, ascending, page, pageSize, filter);
     } catch (error) {
         logger.error(`Service error; Error in getUserAllMemories: ${error.message}`);
+        throw error;
+    }
+};
+
+const getUserPlannedMemories = async (userId) => {
+    try {
+        logger.error(userId);
+        const flatRows = await fetchUserPlannedMemoriesFromDB(userId);
+        
+        const memoriesMap = flatRows.reduce((acc, row) => {
+            if (!acc[row.memory_id]) {
+                acc[row.memory_id] = {
+                    memory_id: row.memory_id,
+                    title: row.title,
+                    memory_date: row.memory_date ? new Date(row.memory_date) : null,
+                    memory_end_date: row.memory_end_date ? new Date(row.memory_end_date) : null,
+                    crew_members: []
+                };
+            }
+
+            if (row.crew_user_id) {
+                acc[row.memory_id].crew_members.push({
+                    user_id: row.crew_user_id,
+                    name: row.crew_name,
+                    email: row.crew_email,
+                    dob: row.crew_dob ? new Date(row.crew_dob) : null,
+                    gender: row.crew_gender,
+                    profilepic: row.crew_profilepic,
+                    country: row.crew_country,
+                    isCreator: row.is_creator,
+                    sharedMemoriesCount: 0 
+                });
+            }
+
+            return acc;
+        }, {});
+        return Object.values(memoriesMap);
+
+    } catch (error) {
+        logger.error(`Service error; Error in getUserPlannedMemories: ${error.message}`);
         throw error;
     }
 };
@@ -204,6 +246,16 @@ const updateTitlePic = async (memoryId, imageUrl) => {
         return result.affectedRows > 0;
     } catch (error) {
         logger.error(`Service error; Error in updateTitlePic: ${error.message}`);
+        throw error;
+    }
+};
+
+const updateMemoryTitle = async (memoryId, newTitle) => {
+    try {
+        const result = await updateMemoryTitleInDB(memoryId, newTitle);
+        return result.affectedRows > 0;
+    } catch (error) {
+        logger.error(`Service error; Error in updateMemoryTitle: ${error.message}`);
         throw error;
     }
 };
@@ -358,6 +410,7 @@ module.exports = {
     getUsersForMemory,
     getCreatedMemories,
     getAddedMemories,
+    getUserPlannedMemories,
     getUserAllMemories,
     getMemoriesSearchData,
     getMemoryById,
@@ -370,6 +423,7 @@ module.exports = {
     updateMemoryPictureCount,
     updateMemoryLocation,
     updateTitlePic,
+    updateMemoryTitle,
     deleteMemoryAndFriends,
     removeFriendFromMemory,
     generateShareLink,

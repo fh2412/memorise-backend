@@ -2,12 +2,13 @@ const express = require('express');
 const router = express.Router();
 const logger = require('../../middleware/logger');
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
-const { validateMemoryId, validateCreateMemory, validateAddFriendsToMemory, validateUpdateMemory, validateUpdatePictureCount, validateUpdateMemoryLocation, validateIncrementPictureCount, validateUpdateTitlePic } = require('../../middleware/validation/validateMemory');
+const { validateMemoryId, validateCreateMemory, validateAddFriendsToMemory, validateUpdateMemory, validateUpdatePictureCount, validateUpdateMemoryLocation, validateIncrementPictureCount, validateUpdateTitlePic, validateUpdateTitle } = require('../../middleware/validation/validateMemory');
 const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
 const { getCreatedMemories,
     getAddedMemories,
     getUserAllMemories,
+    getUserPlannedMemories,
     getMemoryById,
     getMemoryFriends,
     getFriendsWithSharedCount,
@@ -18,6 +19,7 @@ const { getCreatedMemories,
     updateMemoryPictureCount,
     updateMemoryLocation,
     updateTitlePic,
+    updateMemoryTitle,
     deleteMemoryAndFriends,
     removeFriendFromMemory, 
     generateShareLink,
@@ -89,6 +91,27 @@ router.get('/all/:userId', authenticateFirebaseToken, validateFirebaseUID, handl
         res.json(result);
     } catch (error) {
         logger.error(`Controller error; ALL MEMORIES GET /all/:userId ${error.message}`);
+        next(error);
+    }
+});
+
+/**
+ * GET all PLANNED memories of a user
+ * @route GET /planned/:userId
+ */
+router.get(
+  '/planned/:userId', 
+  authenticateFirebaseToken, 
+  validateFirebaseUID, 
+  handleValidationErrors, 
+  async (req, res, next) => {
+    const { userId } = req.params;
+
+    try {
+        const result = await getUserPlannedMemories(userId);
+        res.json(result);
+    } catch (error) {
+        logger.error(`Controller error; GET /planned/:userId - ${error.message}`);
         next(error);
     }
 });
@@ -466,6 +489,29 @@ router.put('/updateTitlePic/:memoryId', authenticateFirebaseToken, validateUpdat
         }
     } catch (error) {
         logger.error(`Controller error; UPDATE PUT /updateTitlePic/:memoryId ${error.message}`);
+        next(error);
+    }
+});
+
+/**
+ * Update the title picture of a memory
+ * @route PUT /updateTitlePic/:imageId
+ * @description Update the title picture for a specific memory
+ */
+router.put('/updateMemoryTitle/:memoryId', authenticateFirebaseToken, validateUpdateTitle, handleValidationErrors, async (req, res, next) => {
+    const memoryId = req.params.memoryId;
+    const newTitle = req.body.newTitle;
+
+    try {
+        const updateResult = await updateMemoryTitle(memoryId, newTitle);
+
+        if (updateResult) {
+            res.json({ message: 'Memory updated successfully' });
+        } else {
+            res.status(404).json({ error: 'Memory not found or no changes made' });
+        }
+    } catch (error) {
+        logger.error(`Controller error; UPDATE PUT /updateMemoryTitle/:memoryId ${error.message}`);
         next(error);
     }
 });

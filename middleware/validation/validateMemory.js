@@ -103,6 +103,20 @@ const validateUpdateMemoryLocation = [
 
 ];
 
+const validateUpdateTitle = [
+  param('memoryId')
+    .trim()
+    .notEmpty().withMessage('memoryId is required')
+    .isInt().withMessage('memoryId must be a valid integer'),
+
+  body('newTitle')
+    .exists({ checkFalsy: true }).withMessage('Title is required')
+    .isString().withMessage('Title must be a valid string')
+    .trim()
+    .notEmpty().withMessage('Title cannot be empty or just whitespace')
+    .isLength({ max: 100 }).withMessage('Title cannot exceed 100 characters')
+];
+
 const validateUpdateTitlePic = [
   param('memoryId')
     .exists().withMessage('memoryId is required'),
@@ -144,4 +158,4 @@ const validateUpdatePictureCount = [
         .withMessage('Picture count must be a non-negative integer')
 ];
 
-module.exports = { validateMemoryId, validateCreateMemory, validateAddFriendsToMemory, validateUpdateMemory, validateUpdatePictureCount, validateUpdateMemoryLocation, validateUpdateTitlePic, validateShareToken, validateShareTokenParam, validateIncrementPictureCount };
+module.exports = { validateMemoryId, validateCreateMemory, validateAddFriendsToMemory, validateUpdateMemory, validateUpdatePictureCount, validateUpdateMemoryLocation, validateUpdateTitlePic, validateUpdateTitle, validateShareToken, validateShareTokenParam, validateIncrementPictureCount };

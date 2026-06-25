@@ -81,11 +81,11 @@ const fetchAddedMemoriesFromDB = async (userId, ascending, page, pageSize, filte
 
     // Dynamic Date Filtering Logic
     let dateCondition = '';
-    
+
     if (filter === 'future') {
         // 1. Future: Hasn't started yet OR the start date is explicitly NULL
         dateCondition = ' AND (memories.memory_date > NOW() OR memories.memory_date IS NULL)';
-    } 
+    }
     else if (filter === 'active') {
         // 2. Active: It has started, and either hasn't ended yet OR is happening today (if no end date exists)
         dateCondition = ` AND memories.memory_date <= NOW() 
@@ -93,7 +93,7 @@ const fetchAddedMemoriesFromDB = async (userId, ascending, page, pageSize, filte
                               memories.memory_end_date >= NOW() 
                               OR (memories.memory_end_date IS NULL AND DATE(memories.memory_date) = CURRENT_DATE())
                           )`;
-    } 
+    }
     else if (filter === 'past') {
         // 3. Past: Must have a valid start date, and the end date (or start date if no end date exists) is in the past
         dateCondition = ` AND memories.memory_date IS NOT NULL 
@@ -156,17 +156,17 @@ const fetchUserAllMemoriesFromDB = async (userId, ascending, page, pageSize, fil
 
     // Dynamic Date Filtering Logic
     let dateCondition = '';
-    
+
     if (filter === 'future') {
         dateCondition = ' AND (memories.memory_date > NOW() OR memories.memory_date IS NULL)';
-    } 
+    }
     else if (filter === 'active') {
         dateCondition = ` AND memories.memory_date <= NOW() 
                           AND (
                               memories.memory_end_date >= NOW() 
                               OR (memories.memory_end_date IS NULL AND DATE(memories.memory_date) = CURRENT_DATE())
                           )`;
-    } 
+    }
     else if (filter === 'past') {
         dateCondition = ` AND memories.memory_date IS NOT NULL 
                           AND IFNULL(memories.memory_end_date, memories.memory_date) < NOW()`;
@@ -194,6 +194,46 @@ const fetchUserAllMemoriesFromDB = async (userId, ascending, page, pageSize, fil
         };
     } catch (error) {
         logger.error(`Data Access error; Error fetching all memories: ${error.message}`);
+        throw error;
+    }
+};
+
+const fetchUserPlannedMemoriesFromDB = async (userId) => {
+const queryText = `
+        SELECT 
+            m.memory_id, 
+            m.title, 
+            m.memory_date, 
+            m.memory_end_date,
+            u.user_id AS crew_user_id,
+            u.name AS crew_name,
+            u.email AS crew_email,
+            u.dob AS crew_dob,
+            u.gender AS crew_gender,
+            u.profilepic AS crew_profilepic,
+            u.country AS crew_country,
+            (u.user_id = m.user_id) AS is_creator
+        FROM memories AS m
+        INNER JOIN (
+            SELECT memory_id, user_id FROM user_has_memory WHERE status = 'friend'
+            UNION
+            SELECT memory_id, user_id FROM memories
+        ) AS participants ON m.memory_id = participants.memory_id
+        INNER JOIN users AS u ON participants.user_id = u.user_id
+        WHERE m.memory_id IN (
+            SELECT memory_id FROM memories WHERE user_id = ?
+            UNION
+            SELECT memory_id FROM user_has_memory WHERE user_id = ?
+        ) AND
+        (m.memory_date IS NULL OR m.memory_date > NOW())
+        ORDER BY m.memory_date ASC;
+    `;
+
+    try {
+        const [result] = await db.query(queryText, [userId, userId]);
+        return result; 
+    } catch (error) {
+        logger.error(`Database DAL error; Error in fetchUserPlannedMemoriesFromDB: ${error.message}`);
         throw error;
     }
 };
@@ -462,7 +502,19 @@ const updateLocationInDB = async (memoryId, locationId) => {
     }
 };
 
+const updateMemoryTitleInDB = async (memoryId, newTitle) => {
+    const query = 'UPDATE memories SET title = ? WHERE memory_id = ?';
+    try {
+        const [result] = await db.execute(query, [newTitle, memoryId]);
+        return result;
+    } catch (error) {
+        logger.error(`Data Access error; Error updating title (${query}): ${error.message}`);
+        throw error;
+    }
+};
+
 const updateTitlePicInDB = async (memoryId, imageUrl) => {
+    logger.info("Updating title to $")
     const query = 'UPDATE memories SET title_pic = ? WHERE memory_id = ?';
     try {
         const [result] = await db.execute(query, [imageUrl, memoryId]);
@@ -634,6 +686,7 @@ module.exports = {
     fetchCreatedMemoriesFromDB,
     fetchAddedMemoriesFromDB,
     fetchUserAllMemoriesFromDB,
+    fetchUserPlannedMemoriesFromDB,
     fetchMemoryByIdFromDB,
     fetchMemoryFriendsFromDB,
     fetchMemoriesMapDataFromDB,
@@ -646,6 +699,7 @@ module.exports = {
     updatePictureCountInDB,
     updateLocationInDB,
     updateTitlePicInDB,
+    updateMemoryTitleInDB,
     checkMemoryExists,
     deleteFriendsByMemoryId,
     deleteMemoryById,
