@@ -14,7 +14,7 @@
   "dependencies": {
     "@google-cloud/secret-manager": "^6.2.0",
     "@octokit/rest": "^21.1.1",
-    "archiver": "^8.0.0",
+    "archiver": "^6.0.2",
     "axios": "^1.18.1",
     "cors": "^2.8.6",
     "dotenv": "^16.4.7",
