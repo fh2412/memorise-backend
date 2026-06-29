@@ -99,12 +99,7 @@ router.get('/all/:userId', authenticateFirebaseToken, validateFirebaseUID, handl
  * GET all PLANNED memories of a user
  * @route GET /planned/:userId
  */
-router.get(
-  '/planned/:userId', 
-  authenticateFirebaseToken, 
-  validateFirebaseUID, 
-  handleValidationErrors, 
-  async (req, res, next) => {
+router.get('/planned/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
     const { userId } = req.params;
 
     try {

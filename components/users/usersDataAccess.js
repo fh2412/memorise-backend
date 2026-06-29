@@ -150,11 +150,11 @@ const updateMobileUserData = async (userId, { name, bio, dob, gender }) => {
     }
 };
 
-const updateUserProfilePicData = async (userId, profilepic) => {
-    const query = `UPDATE users SET profilepic = ? WHERE user_id = ?`;
+const updateUserProfilePicData = async (userId, profilepic, profilepic_thumb) => {
+    const query = `UPDATE users SET profilepic = ?, profilepic_thumb = ? WHERE user_id = ?`;
 
     try {
-        await db.query(query, [profilepic, userId]);
+        await db.query(query, [profilepic, profilepic_thumb, userId]);
     } catch (error) {
         logger.error(`Data Access error; Error updating users profile pic (${query}): ${error.message}`);
         throw error;

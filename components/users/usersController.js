@@ -197,10 +197,10 @@ router.put('/mobile/:userId', authenticateFirebaseToken, validateFirebaseUID, va
  */
 router.put('/profilepic/:userId', authenticateFirebaseToken, validateFirebaseUID, validateProfilePicUrl, handleValidationErrors, async (req, res) => {
     const userId = req.params.userId;
-    const { profilepic } = req.body;
+    const { profilepic, profilepic_thumb } = req.body;
 
     try {
-        await updateUserProfilePic(userId, profilepic);
+        await updateUserProfilePic(userId, profilepic, profilepic_thumb);
         res.status(200).json({ message: 'User updated successfully' });
     } catch (error) {
         logger.error(`Controller error; USERS PUT /profilepic/:userId: ${error.message}`);

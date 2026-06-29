@@ -211,6 +211,7 @@ const queryText = `
             u.dob AS crew_dob,
             u.gender AS crew_gender,
             u.profilepic AS crew_profilepic,
+            u.profilepic_thumb AS crew_profilepic_thumb,
             u.country AS crew_country,
             (u.user_id = m.user_id) AS is_creator
         FROM memories AS m

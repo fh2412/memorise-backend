@@ -92,6 +92,7 @@ const getUserPlannedMemories = async (userId) => {
                     dob: row.crew_dob ? new Date(row.crew_dob) : null,
                     gender: row.crew_gender,
                     profilepic: row.crew_profilepic,
+                    profilepic_thumb: row.crew_profilepic_thumb,
                     country: row.crew_country,
                     isCreator: row.is_creator,
                     sharedMemoriesCount: 0 

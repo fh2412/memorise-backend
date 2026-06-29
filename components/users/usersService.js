@@ -87,9 +87,9 @@ const updateMobileUser = async (userId, userDetails) => {
     }
 };
 
-const updateUserProfilePic = async (userId, profilepic) => {
+const updateUserProfilePic = async (userId, profilepic, profilepic_thumb) => {
     try {
-        await updateUserProfilePicData(userId, profilepic);
+        await updateUserProfilePicData(userId, profilepic, profilepic_thumb);
     } catch (error) {
         logger.error(`Service error; Error updateUserProfilePic: ${error.message}`);
         throw error;
