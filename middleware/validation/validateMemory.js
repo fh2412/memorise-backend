@@ -16,9 +16,7 @@ const validateCreateMemory = [
     .withMessage('Invalid UUID format. Must be a 28-character base64 URL-safe string.'),
 
   body('title')
-    .exists().withMessage('Title is required')
-    .isString().withMessage('Title must be a string')
-    .notEmpty().withMessage('Title must not be empty'),
+    .isString().withMessage('Title must be a string'),
 
   body('description')
     .optional()
