@@ -41,15 +41,9 @@ const validateAddFriendsToMemory = [
     .notEmpty().withMessage('Title must not be empty')
     .isInt().withMessage('Memory ID must be an INT'),
 
-  body('emails')
-    .exists().withMessage('Email list is required')
-    .isArray().withMessage('Emails must be provided in an array')
-    .custom(emails => {
-      if (!emails.every(email => typeof email === 'string' && email.trim() !== '')) {
-        throw new Error('Email list must contain only valid email addresses');
-      }
-      return true;
-    }).withMessage('Email list must contain only valid email addresses'),
+  body('friendIds')
+    .exists().withMessage('friendIds list is required')
+    .isArray().withMessage('friendIds must be provided in an array'),
 ];
 
 const validateUpdateMemory = [

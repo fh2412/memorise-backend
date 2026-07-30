@@ -199,7 +199,7 @@ const fetchUserAllMemoriesFromDB = async (userId, ascending, page, pageSize, fil
 };
 
 const fetchUserPlannedMemoriesFromDB = async (userId) => {
-const queryText = `
+    const queryText = `
         SELECT 
             m.memory_id, 
             m.title, 
@@ -232,9 +232,51 @@ const queryText = `
 
     try {
         const [result] = await db.query(queryText, [userId, userId]);
-        return result; 
+        return result;
     } catch (error) {
         logger.error(`Database DAL error; Error in fetchUserPlannedMemoriesFromDB: ${error.message}`);
+        throw error;
+    }
+};
+
+const fetchSinglePlannedMemoryFromDB = async (memoryId) => {
+    const queryText = `
+        SELECT 
+            m.memory_id, 
+            m.title, 
+            m.memory_date, 
+            m.memory_end_date,
+            u.user_id AS crew_user_id,
+            u.name AS crew_name,
+            u.email AS crew_email,
+            u.dob AS crew_dob,
+            u.gender AS crew_gender,
+            u.profilepic AS crew_profilepic,
+            u.profilepic_thumb AS crew_profilepic_thumb,
+            u.country AS crew_country,
+            participants.color AS crew_color,
+            (u.user_id = m.user_id) AS is_creator
+        FROM memories AS m
+        INNER JOIN (
+            SELECT memory_id, user_id, color 
+            FROM user_has_memory 
+            WHERE status = 'friend'
+
+            UNION
+
+            SELECT memory_id, user_id, NULL AS color 
+            FROM memories
+        ) AS participants ON m.memory_id = participants.memory_id
+        INNER JOIN users AS u ON participants.user_id = u.user_id
+        WHERE m.memory_id = ? 
+        AND (m.memory_date IS NULL OR m.memory_date > NOW());
+    `;
+
+    try {
+        const [result] = await db.query(queryText, [memoryId]);
+        return result;
+    } catch (error) {
+        logger.error(`Database DAL error; Error in fetchSinglePlannedMemoryFromDB: ${error.message}`);
         throw error;
     }
 };
@@ -409,18 +451,6 @@ const createMemoryInDB = async ({ creator_id, title, description, location_id, m
         return result.insertId;
     } catch (error) {
         logger.error(`Data Access error; Error inserting memory (${query}): ${error.message}`);
-        throw error;
-    }
-};
-
-const getUserIdByEmail = async (email) => {
-    const query = 'SELECT user_id FROM users WHERE email = ?';
-
-    try {
-        const [result] = await db.query(query, [email]);
-        return result.length > 0 ? result[0].user_id : null;
-    } catch (error) {
-        logger.error(`Data Access error; Error fetching user ID by email (${query}): ${error.message}`);
         throw error;
     }
 };
@@ -688,13 +718,13 @@ module.exports = {
     fetchAddedMemoriesFromDB,
     fetchUserAllMemoriesFromDB,
     fetchUserPlannedMemoriesFromDB,
+    fetchSinglePlannedMemoryFromDB,
     fetchMemoryByIdFromDB,
     fetchMemoryFriendsFromDB,
     fetchMemoriesMapDataFromDB,
     fetchMemoryDetailFriends,
     getSharedMemoriesCount,
     createMemoryInDB,
-    getUserIdByEmail,
     addUserToMemory,
     updateMemoryInDB,
     updatePictureCountInDB,

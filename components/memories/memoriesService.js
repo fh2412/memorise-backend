@@ -3,6 +3,7 @@ const {
     fetchCreatedMemoriesFromDB,
     fetchAddedMemoriesFromDB,
     fetchUserAllMemoriesFromDB,
+    fetchSinglePlannedMemoryFromDB,
     fetchUserPlannedMemoriesFromDB,
     fetchMemoryByIdFromDB,
     fetchMemoryFriendsFromDB,
@@ -10,7 +11,6 @@ const {
     fetchMemoriesMapDataFromDB,
     getSharedMemoriesCount,
     createMemoryInDB,
-    getUserIdByEmail,
     addUserToMemory,
     updateMemoryInDB,
     updatePictureCountInDB,
@@ -70,7 +70,6 @@ const getUserAllMemories = async (userId, ascending, page, pageSize, filter) => 
 
 const getUserPlannedMemories = async (userId) => {
     try {
-        logger.error(userId);
         const flatRows = await fetchUserPlannedMemoriesFromDB(userId);
         
         const memoriesMap = flatRows.reduce((acc, row) => {
@@ -105,6 +104,53 @@ const getUserPlannedMemories = async (userId) => {
 
     } catch (error) {
         logger.error(`Service error; Error in getUserPlannedMemories: ${error.message}`);
+        throw error;
+    }
+};
+
+const getSinglePlannedMemory = async (memoryId) => {
+    try {
+        const flatRows = await fetchSinglePlannedMemoryFromDB(memoryId);
+        
+        if (flatRows.length === 0) {
+            return null;
+        }
+
+        const memoriesMap = flatRows.reduce((acc, row) => {
+            if (!acc[row.memory_id]) {
+                acc[row.memory_id] = {
+                    memory_id: row.memory_id,
+                    title: row.title,
+                    memory_date: row.memory_date ? new Date(row.memory_date) : null,
+                    memory_end_date: row.memory_end_date ? new Date(row.memory_end_date) : null,
+                    crew_members: []
+                };
+            }
+
+            if (row.crew_user_id) {
+                acc[row.memory_id].crew_members.push({
+                    user_id: row.crew_user_id,
+                    name: row.crew_name,
+                    email: row.crew_email,
+                    dob: row.crew_dob ? new Date(row.crew_dob) : null,
+                    gender: row.crew_gender,
+                    profilepic: row.crew_profilepic,
+                    profilepic_thumb: row.crew_profilepic_thumb,
+                    country: row.crew_country,
+                    color: row.crew_color,
+                    isCreator: row.is_creator,
+                    sharedMemoriesCount: 0 
+                });
+            }
+
+            return acc;
+        }, {});
+
+        // Since it's a single item query, return the object directly instead of an array
+        return memoriesMap[memoryId] || null;
+
+    } catch (error) {
+        logger.error(`Service error; Error in getSinglePlannedMemory: ${error.message}`);
         throw error;
     }
 };
@@ -179,15 +225,10 @@ const createMemory = async (memoryData) => {
     }
 };
 
-const addFriendsToMemory = async (emails, memoryId) => {
+const addFriendsToMemory = async (friendIds, memoryId) => {
     try {
-        for (const email of emails) {
-            const userId = await getUserIdByEmail(email);
-            if (userId) {
-                await addUserToMemory(userId, memoryId);
-            } else {
-                logger.warn(`Service warning; User not found for email: ${email}`);
-            }
+        for (const id of friendIds) {
+            await addUserToMemory(id, memoryId);
         }
     } catch (error) {
         logger.error(`Service error; Error in addFriendsToMemory: ${error.message}`);
@@ -412,6 +453,7 @@ module.exports = {
     getCreatedMemories,
     getAddedMemories,
     getUserPlannedMemories,
+    getSinglePlannedMemory,
     getUserAllMemories,
     getMemoriesSearchData,
     getMemoryById,

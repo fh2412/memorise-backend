@@ -9,6 +9,7 @@ const { getCreatedMemories,
     getAddedMemories,
     getUserAllMemories,
     getUserPlannedMemories,
+    getSinglePlannedMemory,
     getMemoryById,
     getMemoryFriends,
     getFriendsWithSharedCount,
@@ -107,6 +108,27 @@ router.get('/planned/:userId', authenticateFirebaseToken, validateFirebaseUID, h
         res.json(result);
     } catch (error) {
         logger.error(`Controller error; GET /planned/:userId - ${error.message}`);
+        next(error);
+    }
+});
+
+/**
+ * GET details of a specific PLANNED memory
+ * @route GET /memories/planning/:memoryId
+ */
+router.get('/planning/:memoryId', authenticateFirebaseToken, handleValidationErrors, async (req, res, next) => {
+    const { memoryId } = req.params;
+
+    try {
+        const result = await getSinglePlannedMemory(memoryId);
+        
+        if (!result) {
+            return res.status(404).json({ message: 'Planned memory not found' });
+        }
+        
+        res.json(result);
+    } catch (error) {
+        logger.error(`Controller error; GET /memories/planning/:memoryId - ${error.message}`);
         next(error);
     }
 });
@@ -287,10 +309,10 @@ router.post('/createMemory', authenticateFirebaseToken, validateCreateMemory, ha
  * @description Add friends to a memory by their emails
  */
 router.post('/addFriendsToMemory', authenticateFirebaseToken, validateAddFriendsToMemory, handleValidationErrors, async (req, res, next) => {
-    const { emails, memoryId } = req.body;
+    const { friendIds, memoryId } = req.body;
 
     try {
-        await addFriendsToMemory(emails, memoryId);
+        await addFriendsToMemory(friendIds, memoryId);
         res.json({ success: true });
     } catch (error) {
         logger.error(`Controller error; ADD FRIENDS POST /addFriendsToMemory ${error.message}`);
