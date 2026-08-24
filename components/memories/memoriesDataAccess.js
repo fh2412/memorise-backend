@@ -335,7 +335,10 @@ const fetchMemoriesMapDataFromDB = async (userId, includeShared) => {
             JOIN location ON memories.location_id = location.location_id
             LEFT JOIN user_has_memory ON memories.memory_id = user_has_memory.memory_id 
                 AND user_has_memory.user_id = ?
-            WHERE memories.user_id = ? OR user_has_memory.user_id = ?`;
+            WHERE (memories.user_id = ? OR user_has_memory.user_id = ?)
+                AND memories.memory_date IS NOT NULL 
+                AND IFNULL(memories.memory_end_date, memories.memory_date) < NOW()
+                AND memories.location_id != 1`;
         params = [userId, userId, userId];
     } else {
         // Get only memories created by user
