@@ -3,7 +3,7 @@ const logger = require('../../middleware/logger');
 
 const getFriendsFromDB = async (userId) => {
     const query = `
-      SELECT u.user_id, u.name, u.email, u.dob, u.gender, u.profilepic
+      SELECT u.user_id, u.name, u.email, u.dob, u.gender, u.profilepic, u.profilepic_thumb
       FROM friendships f
       JOIN users u ON (f.user_id1 = u.user_id OR f.user_id2 = u.user_id)
       WHERE (f.user_id1 = ? OR f.user_id2 = ?)
