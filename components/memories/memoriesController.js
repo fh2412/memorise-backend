@@ -26,7 +26,7 @@ const { getCreatedMemories,
     generateShareLink,
     validateShareToken,
     joinMemoryViaToken,
-    checkMembership, incrementMemoryPictureCount, getMemoriesSearchData } = require('./memoriesService');
+    checkMembership, incrementMemoryPictureCount, getMemoriesSearchData, addPlaceholdersToMemory, removePlaceholderFromMemory } = require('./memoriesService');
 
 /**
  * GET ARCHIVED created memories for a user with pagination
@@ -321,6 +321,27 @@ router.post('/addFriendsToMemory', authenticateFirebaseToken, validateAddFriends
 });
 
 /**
+ * POST Add placeholders to a memory
+ * @route POST /addPlaceholdersToMemory
+ */
+router.post(
+  '/addPlaceholdersToMemory',
+  authenticateFirebaseToken,
+  handleValidationErrors,
+  async (req, res, next) => {
+    const { placeholders, memoryId } = req.body;
+    const createdBy = req.user.uid;
+    try {
+      const results = await addPlaceholdersToMemory(placeholders, memoryId, createdBy);
+      res.json({ success: true, placeholders: results });
+    } catch (error) {
+      logger.error(`Controller error; POST /addPlaceholdersToMemory ${error.message}`);
+      next(error);
+    }
+  }
+);
+
+/**
  * POST Generate or get share link for a memory
  * @route POST /memories/:memoryId/share
  * @description Generate a shareable link for a memory
@@ -571,5 +592,26 @@ router.delete('/:memoryId/:userId', authenticateFirebaseToken, validateMemoryId,
         next(error);
     }
 });
+
+/**
+ * DELETE Remove a placeholder from a memory
+ * @route DELETE /deletePlaceholderFromMemory
+ */
+router.delete(
+  '/deletePlaceholderFromMemory',
+  authenticateFirebaseToken,
+  handleValidationErrors,
+  async (req, res, next) => {
+    const { placeholderId, memoryId } = req.body;
+
+    try {
+      await removePlaceholderFromMemory(placeholderId, memoryId);
+      res.json({ success: true });
+    } catch (error) {
+      logger.error(`Controller error; DELETE /deletePlaceholderFromMemory ${error.message}`);
+      next(error);
+    }
+  }
+);
 
 module.exports = router;

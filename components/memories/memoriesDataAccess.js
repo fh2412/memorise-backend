@@ -717,6 +717,62 @@ const addUserToMemoryViaToken = async (userId, memoryId) => {
     }
 };
 
+const createPlaceholderAndAssignToMemory = async (placeholderData, memoryId, createdBy) => {
+  const placeholderId = crypto.randomUUID();
+  const inviteToken = crypto.randomBytes(32).toString('hex');
+
+  const insertPlaceholderQuery = `
+    INSERT INTO placeholders (id, created_by, name, invite_token)
+    VALUES (?, ?, ?, ?)
+  `;
+
+  const insertRelationQuery = `
+    INSERT INTO placeholder_has_memory (placeholder_id, memory_id)
+    VALUES (?, ?)
+  `;
+
+  try {
+    // Insert into placeholders table
+    await db.query(insertPlaceholderQuery, [
+      placeholderId,
+      createdBy,
+      placeholderData.name,
+      inviteToken,
+    ]);
+
+    // Insert into join table
+    await db.query(insertRelationQuery, [placeholderId, memoryId]);
+
+    return {
+      id: placeholderId,
+      name: placeholderData.name,
+      email: placeholderData.email,
+      inviteToken
+    };
+  } catch (error) {
+    logger.error(`Data Access error; Error creating placeholder (${insertPlaceholderQuery}): ${error.message}`);
+    throw error;
+  }
+};
+
+/**
+ * Removes placeholder relation and placeholder entry.
+ */
+const deletePlaceholderFromMemoryDL = async (placeholderId, memoryId) => {
+  // Cascading deletes on foreign keys will clean up placeholder_has_memory automatically,
+  // but explicitly deleting from join table + entity table ensures safety.
+  const queryRelation = 'DELETE FROM placeholder_has_memory WHERE placeholder_id = ? AND memory_id = ?';
+  const queryPlaceholder = 'DELETE FROM placeholders WHERE id = ?';
+
+  try {
+    await db.query(queryRelation, [placeholderId, memoryId]);
+    await db.query(queryPlaceholder, [placeholderId]);
+  } catch (error) {
+    logger.error(`Data Access error; Error deleting placeholder from memory (${queryRelation}): ${error.message}`);
+    throw error;
+  }
+};
+
 module.exports = {
     fetchUsersForMemoryFromDB,
     fetchCreatedMemoriesFromDB,
@@ -745,5 +801,7 @@ module.exports = {
     checkUserMemoryMembership,
     addUserToMemoryViaToken,
     incrementPictureCountInDB,
-    fetchMemoriesSearchDataFromDB
+    fetchMemoriesSearchDataFromDB,
+    createPlaceholderAndAssignToMemory,
+    deletePlaceholderFromMemoryDL
 }

@@ -26,7 +26,9 @@ const {
     checkUserMemoryMembership,
     addUserToMemoryViaToken,
     incrementPictureCountInDB,
-    fetchMemoriesSearchDataFromDB
+    fetchMemoriesSearchDataFromDB,
+    createPlaceholderAndAssignToMemory,
+    deletePlaceholderFromMemoryDL
 } = require('./memoriesDataAccess');
 const logger = require('../../middleware/logger');
 
@@ -448,6 +450,29 @@ const checkMembership = async (memoryId, userId) => {
     }
 };
 
+const addPlaceholdersToMemory = async (placeholders, memoryId, createdBy) => {
+  try {
+    const createdPlaceholders = [];
+    for (const placeholderData of placeholders) {
+      const created = await createPlaceholderAndAssignToMemory(placeholderData, memoryId, createdBy);
+      createdPlaceholders.push(created);
+    }
+    return createdPlaceholders;
+  } catch (error) {
+    logger.error(`Service error; Error in addPlaceholdersToMemory: ${error.message}`);
+    throw error;
+  }
+};
+
+const removePlaceholderFromMemory = async (placeholderId, memoryId) => {
+  try {
+    await deletePlaceholderFromMemoryDL(placeholderId, memoryId);
+  } catch (error) {
+    logger.error(`Service error; Error in removePlaceholderFromMemory: ${error.message}`);
+    throw error;
+  }
+};
+
 module.exports = {
     getUsersForMemory,
     getCreatedMemories,
@@ -474,4 +499,6 @@ module.exports = {
     joinMemoryViaToken,
     checkMembership,
     incrementMemoryPictureCount,
+    addPlaceholdersToMemory,
+    removePlaceholderFromMemory
 }
