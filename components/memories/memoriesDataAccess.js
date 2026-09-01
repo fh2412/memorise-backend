@@ -246,28 +246,48 @@ const fetchSinglePlannedMemoryFromDB = async (memoryId) => {
             m.title, 
             m.memory_date, 
             m.memory_end_date,
-            u.user_id AS crew_user_id,
-            u.name AS crew_name,
-            u.email AS crew_email,
-            u.dob AS crew_dob,
-            u.gender AS crew_gender,
-            u.profilepic AS crew_profilepic,
-            u.profilepic_thumb AS crew_profilepic_thumb,
-            u.country AS crew_country,
-            participants.color AS crew_color,
-            (u.user_id = m.user_id) AS is_creator
+            crew.user_id AS crew_user_id,
+            crew.name AS crew_name,
+            crew.email AS crew_email,
+            crew.dob AS crew_dob,
+            crew.gender AS crew_gender,
+            crew.profilepic AS crew_profilepic,
+            crew.profilepic_thumb AS crew_profilepic_thumb,
+            crew.country AS crew_country,
+            crew.is_creator,
+            crew.is_placeholder
         FROM memories AS m
         INNER JOIN (
-            SELECT memory_id, user_id, color 
-            FROM user_has_memory 
-            WHERE status = 'friend'
+            -- 1. Real Friends
+            SELECT 
+                uhm.memory_id, u.user_id, u.name, u.email, u.dob, u.gender, 
+                u.profilepic, u.profilepic_thumb, u.country, 
+                FALSE AS is_creator, FALSE AS is_placeholder
+            FROM user_has_memory uhm
+            JOIN users u ON uhm.user_id = u.user_id
+            WHERE uhm.status = 'friend'
 
-            UNION
+            UNION ALL
 
-            SELECT memory_id, user_id, NULL AS color 
-            FROM memories
-        ) AS participants ON m.memory_id = participants.memory_id
-        INNER JOIN users AS u ON participants.user_id = u.user_id
+            -- 2. Memory Creator
+            SELECT 
+                m_creator.memory_id, u.user_id, u.name, u.email, u.dob, u.gender, 
+                u.profilepic, u.profilepic_thumb, u.country, 
+                TRUE AS is_creator, FALSE AS is_placeholder
+            FROM memories m_creator
+            JOIN users u ON m_creator.user_id = u.user_id
+
+            UNION ALL
+
+            -- 3. Placeholders
+            SELECT 
+                phm.memory_id, p.id AS user_id, p.name, NULL as email, NULL AS dob, NULL AS gender, 
+                NULL AS profilepic, NULL AS profilepic_thumb, NULL AS country, 
+                FALSE AS is_creator, TRUE AS is_placeholder
+            FROM placeholder_has_memory phm
+            JOIN placeholders p ON phm.placeholder_id = p.id
+            
+        ) AS crew ON m.memory_id = crew.memory_id
         WHERE m.memory_id = ? 
         AND (m.memory_date IS NULL OR m.memory_date > NOW());
     `;

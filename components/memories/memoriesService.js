@@ -140,15 +140,16 @@ const getSinglePlannedMemory = async (memoryId) => {
                     profilepic_thumb: row.crew_profilepic_thumb,
                     country: row.crew_country,
                     color: row.crew_color,
-                    isCreator: row.is_creator,
-                    sharedMemoriesCount: 0 
+                    isCreator: Boolean(row.is_creator),
+                    isPlaceholder: Boolean(row.is_placeholder), // Extract placeholder status
+                    sharedMemoriesCount: 0,
+                    status: row.is_placeholder ? 'offline' : 'online' // Give placeholders a default status
                 });
             }
 
             return acc;
         }, {});
 
-        // Since it's a single item query, return the object directly instead of an array
         return memoriesMap[memoryId] || null;
 
     } catch (error) {
