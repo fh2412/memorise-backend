@@ -28,7 +28,9 @@ const {
     incrementPictureCountInDB,
     fetchMemoriesSearchDataFromDB,
     createPlaceholderAndAssignToMemory,
-    deletePlaceholderFromMemoryDL
+    deletePlaceholderFromMemoryDL,
+    claimPlaceholderTransactionDL,
+    fetchUnclaimedPlaceholdersForMemory,
 } = require('./memoriesDataAccess');
 const logger = require('../../middleware/logger');
 
@@ -366,28 +368,32 @@ const generateShareLink = async (memoryId, userId) => {
     }
 };
 
-/**
- * Validate share token and return memory details
- */
 const validateShareToken = async (token, userId = null) => {
     try {
-        // Find memory by token
         const memory = await fetchMemoryByShareToken(token);
 
         if (!memory) {
             return { valid: false };
         }
 
-        // If userId is provided, check if already a member
         let alreadyMember = false;
         if (userId) {
             alreadyMember = await checkUserMemoryMembership(memory.memory_id, userId);
         }
 
+        // Determine if this is a past memory or an upcoming trip
+        const isPast = memory.memory_date ? new Date(memory.memory_date) < new Date() : false;
+
+        // Fetch unclaimed placeholders for this memory
+        const placeholders = await fetchUnclaimedPlaceholdersForMemory(memory.memory_id);
+
         return {
             valid: true,
-            memory,
-            alreadyMember
+            memoryId: memory.memory_id,
+            title: memory.title,
+            alreadyMember,
+            isPast,
+            placeholders
         };
     } catch (error) {
         logger.error(`Service error; Error in validateShareToken: ${error.message}`);
@@ -398,39 +404,40 @@ const validateShareToken = async (token, userId = null) => {
 /**
  * Join a memory via share token
  */
-const joinMemoryViaToken = async (token, userId) => {
+const joinMemoryViaToken = async (token, userId, placeholderId = null) => {
     try {
-        // First validate the token and get memory
         const memory = await fetchMemoryByShareToken(token);
 
         if (!memory) {
             throw new Error('Invalid or expired share link');
         }
 
-        // Check if user is the creator
-        if (memory.user_id === userId) {
+        const isPast = memory.memory_date ? new Date(memory.memory_date) < new Date() : false;
+        const targetRoute = isPast ? `/memories/${memory.memory_id}` : `/planning/${memory.memory_id}`;
+
+        // Check if user is already creator or member
+        const alreadyMember = await checkUserMemoryMembership(memory.memory_id, userId);
+        if (alreadyMember) {
             return {
-                message: 'You are the creator of this memory',
+                message: 'You are already a member of this trip',
                 alreadyMember: true,
-                memory
+                memoryId: memory.memory_id,
+                targetRoute
             };
         }
 
-        // Add user to memory
-        const result = await addUserToMemoryViaToken(userId, memory.memory_id);
-
-        if (result.alreadyMember) {
-            return {
-                message: 'You are already a member of this memory',
-                alreadyMember: true,
-                memory
-            };
+        // Handle join or claim
+        if (placeholderId) {
+            await claimPlaceholderTransactionDL(userId, placeholderId, memory.memory_id);
+        } else {
+            await addUserToMemoryViaToken(userId, memory.memory_id);
         }
 
         return {
             message: 'Successfully joined memory',
             alreadyMember: false,
-            memory
+            memoryId: memory.memory_id,
+            targetRoute
         };
     } catch (error) {
         logger.error(`Service error; Error in joinMemoryViaToken: ${error.message}`);

@@ -737,6 +737,56 @@ const addUserToMemoryViaToken = async (userId, memoryId) => {
     }
 };
 
+const fetchUnclaimedPlaceholdersForMemory = async (memoryId) => {
+    const query = `
+        SELECT p.id, p.name
+        FROM placeholders p
+        JOIN placeholder_has_memory phm ON p.id = phm.placeholder_id
+        WHERE phm.memory_id = ? AND p.claimed_by_user_id IS NULL
+    `;
+    try {
+        const [rows] = await db.query(query, [memoryId]);
+        return rows;
+    } catch (error) {
+        logger.error(`Data Access error; Error fetching placeholders: ${error.message}`);
+        throw error;
+    }
+};
+
+/**
+ * DB Transaction: Adds real user to memory and deletes/claims placeholder
+ */
+const claimPlaceholderTransactionDL = async (userId, placeholderId, memoryId) => {
+    const connection = await db.getConnection();
+    try {
+        await connection.beginTransaction();
+
+        // 1. Add user to memory
+        const insertUser = `
+            INSERT INTO user_has_memory (user_id, memory_id, status) 
+            VALUES (?, ?, 'friend')
+            ON DUPLICATE KEY UPDATE status='friend'
+        `;
+        await connection.query(insertUser, [userId, memoryId]);
+
+        // 2. Delete join table relation for placeholder
+        const deleteJoin = `DELETE FROM placeholder_has_memory WHERE placeholder_id = ? AND memory_id = ?`;
+        await connection.query(deleteJoin, [placeholderId, memoryId]);
+
+        // 3. Delete placeholder record
+        const deletePlaceholder = `DELETE FROM placeholders WHERE id = ?`;
+        await connection.query(deletePlaceholder, [placeholderId]);
+
+        await connection.commit();
+    } catch (error) {
+        await connection.rollback();
+        logger.error(`Data Access error; Error in claimPlaceholderTransaction: ${error.message}`);
+        throw error;
+    } finally {
+        connection.release();
+    }
+};
+
 const createPlaceholderAndAssignToMemory = async (placeholderData, memoryId, createdBy) => {
   const placeholderId = crypto.randomUUID();
   const inviteToken = crypto.randomBytes(32).toString('hex');
@@ -823,5 +873,7 @@ module.exports = {
     incrementPictureCountInDB,
     fetchMemoriesSearchDataFromDB,
     createPlaceholderAndAssignToMemory,
-    deletePlaceholderFromMemoryDL
+    deletePlaceholderFromMemoryDL,
+    claimPlaceholderTransactionDL,
+    fetchUnclaimedPlaceholdersForMemory
 }
