@@ -5,8 +5,7 @@ const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const { validateMemoryId, validateCreateMemory, validateAddFriendsToMemory, validateUpdateMemory, validateUpdatePictureCount, validateUpdateMemoryLocation, validateIncrementPictureCount, validateUpdateTitlePic, validateUpdateTitle } = require('../../middleware/validation/validateMemory');
 const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
-const { getCreatedMemories,
-    getAddedMemories,
+const { getAddedMemories,
     getUserAllMemories,
     getUserPlannedMemories,
     getSinglePlannedMemory,
@@ -27,28 +26,6 @@ const { getCreatedMemories,
     validateShareToken,
     joinMemoryViaToken,
     checkMembership, incrementMemoryPictureCount, getMemoriesSearchData, addPlaceholdersToMemory, removePlaceholderFromMemory } = require('./memoriesService');
-
-/**
- * GET ARCHIVED created memories for a user with pagination
- * @route GET /createdMemories/:userId
- * @query page - page number (0-indexed)
- * @query pageSize - number of items per page
- * @query ascending - sort order
- */
-router.get('/createdMemories/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
-    const userId = req.params.userId;
-    const ascending = req.query.ascending === 'true';
-    const page = parseInt(req.query.page) || 0;
-    const pageSize = parseInt(req.query.pageSize) || 9;
-    
-    try {
-        const result = await getCreatedMemories(userId, ascending, page, pageSize);
-        res.json(result);
-    } catch (error) {
-        logger.error(`Controller error; CREATED MEMORIES GET /createdMemories/:userId ${error.message}`);
-        next(error);
-    }
-});
 
 /**
  * GET added memories for a user with pagination and filter (active/past/future)

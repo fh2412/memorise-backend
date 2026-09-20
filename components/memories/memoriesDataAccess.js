@@ -17,41 +17,6 @@ const fetchUsersForMemoryFromDB = async (memoryId) => {
         throw error;
     }
 };
-const fetchCreatedMemoriesFromDB = async (userId, ascending, page, pageSize) => {
-    const orderDirection = ascending ? 'ASC' : 'DESC';
-    const offset = page * pageSize;
-
-    // Get total count
-    const countQuery = `
-        SELECT COUNT(*) as total
-        FROM memories
-        WHERE memories.user_id = ?`;
-
-    // Get paginated data
-    const dataQuery = `
-        SELECT memories.*, users.name AS username, location.latitude, location.longitude
-        FROM memories
-        JOIN users ON memories.user_id = users.user_id
-        JOIN location ON memories.location_id = location.location_id
-        WHERE memories.user_id = ?
-        ORDER BY memories.memory_date ${orderDirection}
-        LIMIT ? OFFSET ?`;
-
-    try {
-        const [[countResult]] = await db.query(countQuery, [userId]);
-        const [rows] = await db.query(dataQuery, [userId, pageSize, offset]);
-
-        return {
-            data: rows,
-            total: countResult.total,
-            page: page,
-            pageSize: pageSize
-        };
-    } catch (error) {
-        logger.error(`Data Access error; Error fetching created memories: ${error.message}`);
-        throw error;
-    }
-};
 
 const fetchAddedMemoriesFromDB = async (userId, ascending, page, pageSize, filter) => {
     const orderDirection = ascending ? 'ASC' : 'DESC';
@@ -845,7 +810,6 @@ const deletePlaceholderFromMemoryDL = async (placeholderId, memoryId) => {
 
 module.exports = {
     fetchUsersForMemoryFromDB,
-    fetchCreatedMemoriesFromDB,
     fetchAddedMemoriesFromDB,
     fetchUserAllMemoriesFromDB,
     fetchUserPlannedMemoriesFromDB,

@@ -1,6 +1,5 @@
 const {
     fetchUsersForMemoryFromDB,
-    fetchCreatedMemoriesFromDB,
     fetchAddedMemoriesFromDB,
     fetchUserAllMemoriesFromDB,
     fetchSinglePlannedMemoryFromDB,
@@ -40,16 +39,6 @@ const getUsersForMemory = async (memoryId) => {
         return users;
     } catch (error) {
         logger.error(`Service error; Error in getUsersForMemory: ${error.message}`);
-        throw error;
-    }
-};
-
-const getCreatedMemories = async (userId, ascending, page, pageSize) => {
-    try {
-        const result = await fetchCreatedMemoriesFromDB(userId, ascending, page, pageSize);
-        return result;
-    } catch (error) {
-        logger.error(`Service error; Error in getCreatedMemories: ${error.message}`);
         throw error;
     }
 };
@@ -483,7 +472,6 @@ const removePlaceholderFromMemory = async (placeholderId, memoryId) => {
 
 module.exports = {
     getUsersForMemory,
-    getCreatedMemories,
     getAddedMemories,
     getUserPlannedMemories,
     getSinglePlannedMemory,
