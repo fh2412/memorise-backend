@@ -93,75 +93,81 @@ const fetchAddedMemoriesFromDB = async (userId, ascending, page, pageSize, filte
 const fetchUserAllMemoriesFromDB = async (userId, ascending, page, pageSize, filter) => {
     const orderDirection = ascending ? 'ASC' : 'DESC';
     const offset = page * pageSize;
-
-    // Base Queries - Wrapped the OR condition in parentheses for safe appending
-    let countQuery = `
-        SELECT COUNT(DISTINCT memories.memory_id) as total
-        FROM memories
-        LEFT JOIN user_has_memory ON memories.memory_id = user_has_memory.memory_id 
-            AND user_has_memory.user_id = ?
-        WHERE (memories.user_id = ? OR user_has_memory.user_id = ?)`;
-
-    let dataQuery = `
-        SELECT DISTINCT 
-            memories.*, 
-            users.name AS username, 
-            location.latitude, 
-            location.longitude
-        FROM memories
-        JOIN users ON memories.user_id = users.user_id
-        JOIN location ON memories.location_id = location.location_id
-        LEFT JOIN user_has_memory ON memories.memory_id = user_has_memory.memory_id 
-            AND user_has_memory.user_id = ?
-        WHERE (memories.user_id = ? OR user_has_memory.user_id = ?)`;
-
-    // Base parameters matching the three ? placeholders above
-    const countParams = [userId, userId, userId];
-    const dataParams = [userId, userId, userId];
-
-    // Dynamic Date Filtering Logic
+ 
+    // Dynamic date filtering
     let dateCondition = '';
-
     if (filter === 'future') {
-        dateCondition = ' AND (memories.memory_date > NOW() OR memories.memory_date IS NULL)';
-    }
-    else if (filter === 'active') {
-        dateCondition = ` AND memories.memory_date <= NOW() 
+        dateCondition = ' AND (m.memory_date > NOW() OR m.memory_date IS NULL)';
+    } else if (filter === 'active') {
+        dateCondition = ` AND m.memory_date <= NOW()
                           AND (
-                              memories.memory_end_date >= NOW() 
-                              OR (memories.memory_end_date IS NULL AND DATE(memories.memory_date) = CURRENT_DATE())
+                              m.memory_end_date >= NOW()
+                              OR (m.memory_end_date IS NULL AND DATE(m.memory_date) = CURRENT_DATE())
                           )`;
+    } else if (filter === 'past') {
+        dateCondition = ` AND m.memory_date IS NOT NULL
+                          AND IFNULL(m.memory_end_date, m.memory_date) < NOW()`;
     }
-    else if (filter === 'past') {
-        dateCondition = ` AND memories.memory_date IS NOT NULL 
-                          AND IFNULL(memories.memory_end_date, memories.memory_date) < NOW()`;
-    }
-
-    // Append date conditions if a filter is active
-    if (dateCondition) {
-        countQuery += dateCondition;
-        dataQuery += dateCondition;
-    }
-
-    // Append ordering and pagination to the data query
-    dataQuery += ` ORDER BY memories.memory_date ${orderDirection} LIMIT ? OFFSET ?`;
-    dataParams.push(pageSize, offset);
-
+ 
+    // EXISTS instead of LEFT JOIN + DISTINCT: no duplicate rows possible
+    const accessCondition = `
+        (m.user_id = ? OR EXISTS (
+            SELECT 1 FROM user_has_memory uhm
+            WHERE uhm.memory_id = m.memory_id AND uhm.user_id = ?
+        ))`;
+ 
+    const countQuery = `
+        SELECT COUNT(*) AS total
+        FROM memories m
+        WHERE ${accessCondition}${dateCondition}`;
+ 
+    // memory_id as tie-breaker keeps pagination stable when dates are equal / NULL
+    const memoryQuery = `
+        SELECT m.memory_id, m.title, m.title_pic, m.memory_date, m.memory_end_date
+        FROM memories m
+        WHERE ${accessCondition}${dateCondition}
+        ORDER BY m.memory_date ${orderDirection}, m.memory_id ${orderDirection}
+        LIMIT ? OFFSET ?`;
+ 
+    const crewQuery = `
+        SELECT
+            participants.memory_id,
+            u.user_id AS crew_user_id,
+            u.name AS crew_name,
+            u.email AS crew_email,
+            u.dob AS crew_dob,
+            u.gender AS crew_gender,
+            u.profilepic AS crew_profilepic,
+            u.profilepic_thumb AS crew_profilepic_thumb,
+            u.country AS crew_country,
+            (u.user_id = m.user_id) AS is_creator
+        FROM (
+            SELECT memory_id, user_id FROM user_has_memory
+            WHERE status = 'friend' AND memory_id IN (?)
+            UNION
+            SELECT memory_id, user_id FROM memories WHERE memory_id IN (?)
+        ) AS participants
+        INNER JOIN memories AS m ON m.memory_id = participants.memory_id
+        INNER JOIN users AS u ON u.user_id = participants.user_id
+        ORDER BY participants.memory_id, is_creator DESC, u.name ASC`;
+ 
     try {
-        const [[countResult]] = await db.query(countQuery, countParams);
-        const [rows] = await db.query(dataQuery, dataParams);
-
-        return {
-            data: rows,
-            total: countResult.total,
-            page: page,
-            pageSize: pageSize
-        };
+        const [[countResult]] = await db.query(countQuery, [userId, userId]);
+        const [memoryRows] = await db.query(memoryQuery, [userId, userId, pageSize, offset]);
+ 
+        let crewRows = [];
+        if (memoryRows.length > 0) {
+            const memoryIds = memoryRows.map(r => r.memory_id);
+            [crewRows] = await db.query(crewQuery, [memoryIds, memoryIds]);
+        }
+ 
+        return { memoryRows, crewRows, total: countResult.total };
     } catch (error) {
         logger.error(`Data Access error; Error fetching all memories: ${error.message}`);
         throw error;
     }
 };
+
 
 const fetchUserPlannedMemoriesFromDB = async (userId) => {
     const queryText = `

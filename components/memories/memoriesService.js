@@ -54,12 +54,53 @@ const getAddedMemories = async (userId, ascending, page, pageSize, filter) => {
 
 const getUserAllMemories = async (userId, ascending, page, pageSize, filter) => {
     try {
-        return await fetchUserAllMemoriesFromDB(userId, ascending, page, pageSize, filter);
+        const { memoryRows, crewRows, total } =
+            await fetchUserAllMemoriesFromDB(userId, ascending, page, pageSize, filter);
+ 
+        // Build the memories in the SAME order as the paginated query returned them
+        const memoriesMap = new Map();
+        for (const row of memoryRows) {
+            memoriesMap.set(row.memory_id, {
+                memory_id: row.memory_id,
+                title: row.title,
+                title_pic: row.title_pic,
+                memory_date: row.memory_date ? new Date(row.memory_date) : null,
+                memory_end_date: row.memory_end_date ? new Date(row.memory_end_date) : null,
+                crew_members: []
+            });
+        }
+ 
+        // Attach the crew members to their memory
+        for (const row of crewRows) {
+            const memory = memoriesMap.get(row.memory_id);
+            if (!memory) continue;
+ 
+            memory.crew_members.push({
+                user_id: row.crew_user_id,
+                name: row.crew_name,
+                email: row.crew_email,
+                dob: row.crew_dob ? new Date(row.crew_dob) : null,
+                gender: row.crew_gender,
+                profilepic: row.crew_profilepic,
+                profilepic_thumb: row.crew_profilepic_thumb,
+                country: row.crew_country,
+                isCreator: Boolean(row.is_creator),
+                sharedMemoriesCount: 0
+            });
+        }
+ 
+        return {
+            data: Array.from(memoriesMap.values()),
+            total,
+            page,
+            pageSize
+        };
     } catch (error) {
         logger.error(`Service error; Error in getUserAllMemories: ${error.message}`);
         throw error;
     }
 };
+
 
 const getUserPlannedMemories = async (userId) => {
     try {

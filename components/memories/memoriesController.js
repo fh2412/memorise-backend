@@ -63,7 +63,7 @@ router.get('/all/:userId', authenticateFirebaseToken, validateFirebaseUID, handl
     const page = parseInt(req.query.page) || 0;
     const pageSize = parseInt(req.query.pageSize) || 9;
     const filter = req.query.filter; // 'past', 'active', or 'future'
-
+ 
     try {
         const result = await getUserAllMemories(userId, ascending, page, pageSize, filter);
         res.json(result);
@@ -72,6 +72,7 @@ router.get('/all/:userId', authenticateFirebaseToken, validateFirebaseUID, handl
         next(error);
     }
 });
+
 
 /**
  * GET all PLANNED memories of a user
