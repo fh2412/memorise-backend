@@ -64,6 +64,7 @@ const getUserAllMemories = async (userId, ascending, page, pageSize, filter) => 
                 memory_id: row.memory_id,
                 title: row.title,
                 title_pic: row.title_pic,
+                isPinned: Boolean(row.is_pinned),
                 memory_date: row.memory_date ? new Date(row.memory_date) : null,
                 memory_end_date: row.memory_end_date ? new Date(row.memory_end_date) : null,
                 crew_members: []
@@ -100,6 +101,7 @@ const getUserAllMemories = async (userId, ascending, page, pageSize, filter) => 
         throw error;
     }
 };
+
 
 
 const getUserPlannedMemories = async (userId) => {

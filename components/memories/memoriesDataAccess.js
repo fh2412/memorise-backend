@@ -123,7 +123,11 @@ const fetchUserAllMemoriesFromDB = async (userId, ascending, page, pageSize, fil
  
     // memory_id as tie-breaker keeps pagination stable when dates are equal / NULL
     const memoryQuery = `
-        SELECT m.memory_id, m.title, m.title_pic, m.memory_date, m.memory_end_date
+        SELECT m.memory_id, m.title, m.title_pic, m.memory_date, m.memory_end_date,
+            EXISTS (
+                SELECT 1 FROM favourite_memories fm
+                WHERE fm.memory_id = m.memory_id AND fm.user_id = ?
+            ) AS is_pinned
         FROM memories m
         WHERE ${accessCondition}${dateCondition}
         ORDER BY m.memory_date ${orderDirection}, m.memory_id ${orderDirection}
@@ -153,7 +157,7 @@ const fetchUserAllMemoriesFromDB = async (userId, ascending, page, pageSize, fil
  
     try {
         const [[countResult]] = await db.query(countQuery, [userId, userId]);
-        const [memoryRows] = await db.query(memoryQuery, [userId, userId, pageSize, offset]);
+        const [memoryRows] = await db.query(memoryQuery, [userId, userId, userId, pageSize, offset]);
  
         let crewRows = [];
         if (memoryRows.length > 0) {
