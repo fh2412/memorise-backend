@@ -57,21 +57,29 @@ router.get('/addedMemories/:userId', authenticateFirebaseToken, validateFirebase
  * @query pageSize - number of items per page
  * @query ascending - sort order
  */
+const MAX_PAGE_SIZE = 50;
+const MAX_SEARCH_LENGTH = 100;
+
 router.get('/all/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
     const userId = req.params.userId;
     const ascending = req.query.ascending === 'true';
-    const page = parseInt(req.query.page) || 0;
-    const pageSize = parseInt(req.query.pageSize) || 9;
+    const page = Math.max(parseInt(req.query.page) || 0, 0);
+    const pageSize = Math.min(Math.max(parseInt(req.query.pageSize) || 9, 1), MAX_PAGE_SIZE);
     const filter = req.query.filter; // 'past', 'active', or 'future'
+    const search = typeof req.query.search === 'string'
+        ? req.query.search.trim().slice(0, MAX_SEARCH_LENGTH)
+        : '';
+    const pinnedOnly = req.query.pinnedOnly === 'true';
  
     try {
-        const result = await getUserAllMemories(userId, ascending, page, pageSize, filter);
+        const result = await getUserAllMemories(userId, { ascending, page, pageSize, filter, search, pinnedOnly });
         res.json(result);
     } catch (error) {
         logger.error(`Controller error; ALL MEMORIES GET /all/:userId ${error.message}`);
         next(error);
     }
 });
+
 
 
 /**

@@ -52,10 +52,10 @@ const getAddedMemories = async (userId, ascending, page, pageSize, filter) => {
     }
 };
 
-const getUserAllMemories = async (userId, ascending, page, pageSize, filter) => {
+const getUserAllMemories = async (userId, { ascending, page, pageSize, filter, search, pinnedOnly }) => {
     try {
         const { memoryRows, crewRows, total } =
-            await fetchUserAllMemoriesFromDB(userId, ascending, page, pageSize, filter);
+            await fetchUserAllMemoriesFromDB(userId, { ascending, page, pageSize, filter, search, pinnedOnly });
  
         // Build the memories in the SAME order as the paginated query returned them
         const memoriesMap = new Map();
@@ -101,6 +101,7 @@ const getUserAllMemories = async (userId, ascending, page, pageSize, filter) => 
         throw error;
     }
 };
+
 
 
 

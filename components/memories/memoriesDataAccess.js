@@ -90,7 +90,7 @@ const fetchAddedMemoriesFromDB = async (userId, ascending, page, pageSize, filte
     }
 };
 
-const fetchUserAllMemoriesFromDB = async (userId, ascending, page, pageSize, filter) => {
+const fetchUserAllMemoriesFromDB = async (userId, { ascending, page, pageSize, filter, search, pinnedOnly }) => {
     const orderDirection = ascending ? 'ASC' : 'DESC';
     const offset = page * pageSize;
  
@@ -109,6 +109,28 @@ const fetchUserAllMemoriesFromDB = async (userId, ascending, page, pageSize, fil
                           AND IFNULL(m.memory_end_date, m.memory_date) < NOW()`;
     }
  
+    // Optional filters. The params are pushed in the SAME order as the
+    // placeholders appear in the SQL (access -> search -> pinned).
+    let optionalConditions = '';
+    const optionalParams = [];
+ 
+    if (search) {
+        // escape LIKE wildcards so "100%" or "a_b" are matched literally
+        // (backslash is MySQL's default LIKE escape character)
+        const escaped = search.replace(/[\\%_]/g, '\\$&');
+        optionalConditions += ' AND m.title LIKE ?';
+        optionalParams.push(`%${escaped}%`);
+    }
+ 
+    if (pinnedOnly) {
+        optionalConditions += `
+            AND EXISTS (
+                SELECT 1 FROM favourite_memories fp
+                WHERE fp.memory_id = m.memory_id AND fp.user_id = ?
+            )`;
+        optionalParams.push(userId);
+    }
+ 
     // EXISTS instead of LEFT JOIN + DISTINCT: no duplicate rows possible
     const accessCondition = `
         (m.user_id = ? OR EXISTS (
@@ -119,7 +141,7 @@ const fetchUserAllMemoriesFromDB = async (userId, ascending, page, pageSize, fil
     const countQuery = `
         SELECT COUNT(*) AS total
         FROM memories m
-        WHERE ${accessCondition}${dateCondition}`;
+        WHERE ${accessCondition}${dateCondition}${optionalConditions}`;
  
     // memory_id as tie-breaker keeps pagination stable when dates are equal / NULL
     const memoryQuery = `
@@ -129,7 +151,7 @@ const fetchUserAllMemoriesFromDB = async (userId, ascending, page, pageSize, fil
                 WHERE fm.memory_id = m.memory_id AND fm.user_id = ?
             ) AS is_pinned
         FROM memories m
-        WHERE ${accessCondition}${dateCondition}
+        WHERE ${accessCondition}${dateCondition}${optionalConditions}
         ORDER BY m.memory_date ${orderDirection}, m.memory_id ${orderDirection}
         LIMIT ? OFFSET ?`;
  
@@ -156,8 +178,8 @@ const fetchUserAllMemoriesFromDB = async (userId, ascending, page, pageSize, fil
         ORDER BY participants.memory_id, is_creator DESC, u.name ASC`;
  
     try {
-        const [[countResult]] = await db.query(countQuery, [userId, userId]);
-        const [memoryRows] = await db.query(memoryQuery, [userId, userId, userId, pageSize, offset]);
+        const [[countResult]] = await db.query(countQuery, [userId, userId, ...optionalParams]);
+        const [memoryRows] = await db.query(memoryQuery, [userId, userId, userId, ...optionalParams, pageSize, offset]);
  
         let crewRows = [];
         if (memoryRows.length > 0) {
@@ -171,7 +193,6 @@ const fetchUserAllMemoriesFromDB = async (userId, ascending, page, pageSize, fil
         throw error;
     }
 };
-
 
 const fetchUserPlannedMemoriesFromDB = async (userId) => {
     const queryText = `
