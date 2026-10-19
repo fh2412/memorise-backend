@@ -16,7 +16,7 @@ const formatErrorResponse = (err, req, res, isProduction) => {
 };
 
 // Central Error Handler Middleware
-const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res) => {
     const isProduction = process.env.NODE_ENV === 'production';
 
     // Log the error
@@ -32,7 +32,7 @@ const errorHandler = (err, req, res, next) => {
     });
 
     // Format the error response
-    const errorResponse = formatErrorResponse(err, req, res, next, isProduction);
+    const errorResponse = formatErrorResponse(err.code, req, res, isProduction);
 
     // Send the response
     res.status(err.status || 500).json(errorResponse);
