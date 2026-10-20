@@ -17,14 +17,14 @@ const fetchLocationById = async (locationId) => {
     }
 };
 
-const insertLocation = async ({ longitude, latitude, country, city, countryCode }) => {
+const insertLocation = async ({ longitude, latitude, country, city, countryCode }, conn = db) => {
     const query = `
-      INSERT INTO location (longitude, latitude, country, locality, alpha_2_codes)
-      VALUES (?, ?, ?, ?, ?)
+        INSERT INTO location (longitude, latitude, country, locality, alpha_2_codes)
+        VALUES (?, ?, ?, ?, ?)
     `;
 
     try {
-        const [result] = await db.query(query, [longitude, latitude, country, city, countryCode]);
+        const [result] = await conn.query(query, [longitude, latitude, country, city, countryCode]);
         return result.insertId;
     } catch (error) {
         logger.error(`Data Access error; Error inserting location (${query}): ${error.message}`);

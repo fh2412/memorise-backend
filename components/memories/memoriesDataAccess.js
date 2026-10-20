@@ -461,14 +461,19 @@ const getSharedMemoriesCount = async (userId1, userId2) => {
     }
 };
 
-const createMemoryInDB = async ({ creator_id, title, description, location_id, memory_date, memory_end_date, title_pic, activity_id }) => {
+const createMemoryInDB = async (
+    { creator_id, title, description, location_id, memory_date, memory_end_date, title_pic, activity_id, create_request_id = null },
+    conn = db
+) => {
     const query = `
-        INSERT INTO memories (user_id, title, text, location_id, memory_date, memory_end_date, title_pic, activity_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO memories (user_id, title, text, location_id, memory_date, memory_end_date, title_pic, activity_id, create_request_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     try {
-        const [result] = await db.query(query, [creator_id, title, description, location_id, memory_date, memory_end_date, title_pic, activity_id]);
+        const [result] = await conn.query(query, [
+            creator_id, title, description, location_id, memory_date, memory_end_date, title_pic, activity_id, create_request_id,
+        ]);
         return result.insertId;
     } catch (error) {
         logger.error(`Data Access error; Error inserting memory (${query}): ${error.message}`);
@@ -476,11 +481,11 @@ const createMemoryInDB = async ({ creator_id, title, description, location_id, m
     }
 };
 
-const addUserToMemory = async (userId, memoryId) => {
+const addUserToMemory = async (userId, memoryId, conn = db) => {
     const query = 'INSERT INTO user_has_memory (user_id, memory_id, status) VALUES (?, ?, ?)';
 
     try {
-        await db.query(query, [userId, memoryId, 'friend']);
+        await conn.query(query, [userId, memoryId, 'friend']);
     } catch (error) {
         logger.error(`Data Access error; Error adding user to memory (${query}): ${error.message}`);
         throw error;
@@ -783,42 +788,34 @@ const claimPlaceholderTransactionDL = async (userId, placeholderId, memoryId) =>
     }
 };
 
-const createPlaceholderAndAssignToMemory = async (placeholderData, memoryId, createdBy) => {
-  const placeholderId = crypto.randomUUID();
-  const inviteToken = crypto.randomBytes(32).toString('hex');
+const createPlaceholderAndAssignToMemory = async (placeholderData, memoryId, createdBy, conn = db) => {
+    const placeholderId = crypto.randomUUID();
+    const inviteToken = crypto.randomBytes(32).toString('hex');
 
-  const insertPlaceholderQuery = `
-    INSERT INTO placeholders (id, created_by, name, invite_token)
-    VALUES (?, ?, ?, ?)
-  `;
+    const insertPlaceholderQuery = `
+        INSERT INTO placeholders (id, created_by, name, invite_token)
+        VALUES (?, ?, ?, ?)
+    `;
 
-  const insertRelationQuery = `
-    INSERT INTO placeholder_has_memory (placeholder_id, memory_id)
-    VALUES (?, ?)
-  `;
+    const insertRelationQuery = `
+        INSERT INTO placeholder_has_memory (placeholder_id, memory_id)
+        VALUES (?, ?)
+    `;
 
-  try {
-    // Insert into placeholders table
-    await db.query(insertPlaceholderQuery, [
-      placeholderId,
-      createdBy,
-      placeholderData.name,
-      inviteToken,
-    ]);
+    try {
+        await conn.query(insertPlaceholderQuery, [placeholderId, createdBy, placeholderData.name, inviteToken]);
+        await conn.query(insertRelationQuery, [placeholderId, memoryId]);
 
-    // Insert into join table
-    await db.query(insertRelationQuery, [placeholderId, memoryId]);
-
-    return {
-      id: placeholderId,
-      name: placeholderData.name,
-      email: placeholderData.email,
-      inviteToken
-    };
-  } catch (error) {
-    logger.error(`Data Access error; Error creating placeholder (${insertPlaceholderQuery}): ${error.message}`);
-    throw error;
-  }
+        return {
+            id: placeholderId,
+            name: placeholderData.name,
+            email: placeholderData.email,
+            inviteToken
+        };
+    } catch (error) {
+        logger.error(`Data Access error; Error creating placeholder (${insertPlaceholderQuery}): ${error.message}`);
+        throw error;
+    }
 };
 
 /**

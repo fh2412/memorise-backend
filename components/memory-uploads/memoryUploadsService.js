@@ -47,10 +47,41 @@ const verifyStoredObjects = async (userId, storagePath, thumbPath) => {
   return { originalSize: original.size, thumbSize: thumb.size, contentType: original.contentType };
 };
 
+// ── Reusable transaction building blocks (also used by memory-create) ────────
+
+/**
+ * Locks the user row and checks used + reserved + expected <= plan limit.
+ * Call this BEFORE other writes in the transaction (lock order: user first).
+ * @returns {{ storageUsedBytes: number }} usage incl. the new reservation
+ */
+const reserveQuota = async (conn, userId, expectedBytes) => {
+  const user = await lockUserOrThrow(conn, userId);
+  const limit = getStorageLimitBytes(user.accountType);
+  const reserved = await dl.sumActiveReservationsDb(conn, userId);
+
+  if (user.usedBytes + reserved + expectedBytes > limit) {
+    throw httpError(409, 'Not enough storage left', 'STORAGE_FULL');
+  }
+  return { storageUsedBytes: user.usedBytes + reserved + expectedBytes };
+};
+
+/** Inserts the session row. Call after reserveQuota() in the same transaction. */
+const openUploadSession = async (conn, { memoryId, userId, expectedFileCount, expectedBytes }) => {
+  const sessionId = crypto.randomUUID();
+  await dl.insertUploadSessionDb(conn, {
+    sessionId,
+    memoryId,
+    userId,
+    expectedFileCount,
+    reservedBytes: expectedBytes,
+  });
+  return sessionId;
+};
+
 // ── Use cases ────────────────────────────────────────────────────────────────
 
 /**
- * Reserves storage for an upload batch.
+ * Reserves storage for an upload batch to an EXISTING memory.
  * 409 STORAGE_FULL if used + other reservations + expected > limit.
  */
 const createUploadSession = async (memoryId, userId, { expectedFileCount, expectedBytes }) => {
@@ -60,28 +91,9 @@ const createUploadSession = async (memoryId, userId, { expectedFileCount, expect
 
     return await dl.withTransaction(async (conn) => {
       await assertMemoryAccess(conn, memoryId, userId);
-
-      const user = await lockUserOrThrow(conn, userId);
-      const limit = getStorageLimitBytes(user.accountType);
-      const reserved = await dl.sumActiveReservationsDb(conn, userId);
-
-      if (user.usedBytes + reserved + expectedBytes > limit) {
-        throw httpError(409, 'Not enough storage left', 'STORAGE_FULL');
-      }
-
-      const sessionId = crypto.randomUUID();
-      await dl.insertUploadSessionDb(conn, {
-        sessionId,
-        memoryId,
-        userId,
-        expectedFileCount,
-        reservedBytes: expectedBytes,
-      });
-
-      return {
-        uploadSessionId: sessionId,
-        storageUsedBytes: user.usedBytes + reserved + expectedBytes,
-      };
+      const quota = await reserveQuota(conn, userId, expectedBytes);
+      const uploadSessionId = await openUploadSession(conn, { memoryId, userId, expectedFileCount, expectedBytes });
+      return { uploadSessionId, storageUsedBytes: quota.storageUsedBytes };
     });
   } catch (error) {
     if (!error.status) logger.error(`Service error; createUploadSession: ${error.message}`);
@@ -147,6 +159,7 @@ const registerPhoto = async (memoryId, userId, body) => {
         height: body.height,
         mimeType: stored.contentType,
         originalFileName: body.originalFileName,
+        // Local wall-clock time – stored as-is, no time zone conversion (Phase 4).
         takenAt: body.takenAt ? body.takenAt.replace('T', ' ') : null,
         lat: body.lat ?? null,
         lng: body.lng ?? null,
@@ -217,6 +230,8 @@ const filterUnregistered = async (memoryId, clientIds) => {
 const expireStaleUploadSessions = () => dl.expireStaleUploadSessionsDb();
 
 module.exports = {
+  reserveQuota,
+  openUploadSession,
   createUploadSession,
   registerPhoto,
   completeUploadSession,
