@@ -147,7 +147,7 @@ const registerPhoto = async (memoryId, userId, body) => {
         height: body.height,
         mimeType: stored.contentType,
         originalFileName: body.originalFileName,
-        takenAt: body.takenAt ? new Date(body.takenAt) : null,
+        takenAt: body.takenAt ? body.takenAt.replace('T', ' ') : null,
         lat: body.lat ?? null,
         lng: body.lng ?? null,
       });
