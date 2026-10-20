@@ -26,7 +26,7 @@ const validateRegisterPhoto = [
   body('mimeType').isString().matches(/^image\/[a-z0-9.+-]+$/i),
   body('originalFileName').optional().isString().isLength({ max: 255 }),
   body('isCover').isBoolean().toBoolean(),
-  body('takenAt').optional({ values: 'null' }).isISO8601(),
+  body('takenAt').optional({ values: 'null' }).matches(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/),
   body('lat').optional({ values: 'null' }).isFloat({ min: -90, max: 90 }).toFloat(),
   body('lng').optional({ values: 'null' }).isFloat({ min: -180, max: 180 }).toFloat(),
 ];
