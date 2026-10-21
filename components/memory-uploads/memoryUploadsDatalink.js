@@ -201,6 +201,21 @@ const insertPhotoDb = async (conn, photo) => {
   ]);
 };
 
+const listMemoryPhotosDb = async (conn, memoryId) => {
+  return run(conn, `
+    SELECT
+      p.photo_id, p.client_id, p.download_url, p.thumb_url,
+      p.width, p.height, p.size_bytes, p.mime_type,
+      DATE_FORMAT(p.taken_at, '%Y-%m-%dT%H:%i:%s') AS taken_at,
+      p.lat, p.lng, p.uploaded_by, p.created_at,
+      (m.title_pic IS NOT NULL AND p.download_url = m.title_pic) AS is_cover
+    FROM memory_photos p
+    JOIN memories m ON m.memory_id = p.memory_id
+    WHERE p.memory_id = ?
+    ORDER BY is_cover DESC, (p.taken_at IS NULL), p.taken_at, p.created_at
+  `, [memoryId]);
+};
+
 // ── Memories ─────────────────────────────────────────────────────────────────
 
 const incrementPictureCountDb = async (conn, memoryId, increment) => {
@@ -234,4 +249,5 @@ module.exports = {
   incrementPictureCountDb,
   getPictureCountDb,
   setTitlePicDb,
+  listMemoryPhotosDb,
 };

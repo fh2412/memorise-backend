@@ -15,6 +15,26 @@ const {
 } = require('./memoryUploadsService');
 
 /**
+ * GET All photos of a memory
+ * @route GET /:memoryId/photos
+ * @returns 200 { photos: MemoryPhoto[] } | 403 | 404
+ */
+router.get('/:memoryId/photos',
+  authenticateFirebaseToken,
+  validateListMemoryPhotos,
+  handleValidationErrors,
+  async (req, res, next) => {
+    try {
+      const photos = await listMemoryPhotos(req.params.memoryId, req.user.uid);
+      res.json({ photos });
+    } catch (error) {
+      logger.error(`Controller error; GET /:memoryId/photos ${error.message}`);
+      next(error);
+    }
+  }
+);
+
+/**
  * POST Reserve storage for an upload batch
  * @route POST /:memoryId/upload-sessions
  * @returns 201 { uploadSessionId, storageUsedBytes } | 409 STORAGE_FULL

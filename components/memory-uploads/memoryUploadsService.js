@@ -226,6 +226,34 @@ const filterUnregistered = async (memoryId, clientIds) => {
   });
 };
 
+const listMemoryPhotos = async (memoryId, userId) => {
+  try {
+    return await dl.withTransaction(async (conn) => {
+      await assertMemoryAccess(conn, memoryId, userId);
+      const rows = await dl.listMemoryPhotosDb(conn, memoryId);
+      return rows.map(row => ({
+        photoId: row.photo_id,
+        clientId: row.client_id,
+        downloadUrl: row.download_url,
+        thumbUrl: row.thumb_url,
+        width: Number(row.width),
+        height: Number(row.height),
+        sizeBytes: Number(row.size_bytes),
+        mimeType: row.mime_type,
+        takenAt: row.taken_at,                       // "YYYY-MM-DDTHH:mm:ss" or null
+        lat: row.lat === null ? null : Number(row.lat),
+        lng: row.lng === null ? null : Number(row.lng),
+        uploadedBy: row.uploaded_by,
+        createdAt: new Date(row.created_at).toISOString(),
+        isCover: Boolean(row.is_cover),
+      }));
+    });
+  } catch (error) {
+    if (!error.status) logger.error(`Service error; listMemoryPhotos: ${error.message}`);
+    throw error;
+  }
+};
+
 /** For a scheduler later (Cloud Scheduler / cron). */
 const expireStaleUploadSessions = () => dl.expireStaleUploadSessionsDb();
 
@@ -236,4 +264,5 @@ module.exports = {
   registerPhoto,
   completeUploadSession,
   expireStaleUploadSessions,
+  listMemoryPhotos,
 };

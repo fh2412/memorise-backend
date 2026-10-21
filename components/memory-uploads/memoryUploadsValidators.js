@@ -40,8 +40,12 @@ const validateCompleteUploadSession = [
   body('canceledClientIds.*').isUUID(4),
 ];
 
+const validateListMemoryPhotos = [memoryIdParam];
+
+
 module.exports = {
   validateCreateUploadSession,
   validateRegisterPhoto,
   validateCompleteUploadSession,
+  validateListMemoryPhotos,
 };
