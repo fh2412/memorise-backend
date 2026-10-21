@@ -20,7 +20,7 @@ const hasValue = (field) => body(field).exists({ values: 'null' });
 const validateCreateMemory = [
   body('requestId').isUUID(4).withMessage('requestId must be a UUID v4'),
 
-  body('title').isString().trim().isLength({ min: 1, max: 255 }),
+  body('title').isString().trim().isLength({ min: 0, max: 255 }),
   body('description').optional({ values: 'null' }).isString().isLength({ max: 5000 }),
 
   // Calendar days without time zone ("YYYY-MM-DD"). Optional → planned memories.
