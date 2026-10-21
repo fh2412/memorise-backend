@@ -461,26 +461,6 @@ const getSharedMemoriesCount = async (userId1, userId2) => {
     }
 };
 
-const createMemoryInDB = async (
-    { creator_id, title, description, location_id, memory_date, memory_end_date, title_pic, activity_id, create_request_id = null },
-    conn = db
-) => {
-    const query = `
-        INSERT INTO memories (user_id, title, text, location_id, memory_date, memory_end_date, title_pic, activity_id, create_request_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-
-    try {
-        const [result] = await conn.query(query, [
-            creator_id, title, description, location_id, memory_date, memory_end_date, title_pic, activity_id, create_request_id,
-        ]);
-        return result.insertId;
-    } catch (error) {
-        logger.error(`Data Access error; Error inserting memory (${query}): ${error.message}`);
-        throw error;
-    }
-};
-
 const addUserToMemory = async (userId, memoryId, conn = db) => {
     const query = 'INSERT INTO user_has_memory (user_id, memory_id, status) VALUES (?, ?, ?)';
 
@@ -488,36 +468,6 @@ const addUserToMemory = async (userId, memoryId, conn = db) => {
         await conn.query(query, [userId, memoryId, 'friend']);
     } catch (error) {
         logger.error(`Data Access error; Error adding user to memory (${query}): ${error.message}`);
-        throw error;
-    }
-};
-
-const incrementPictureCountInDB = async (memoryId, increment) => {
-    const query = `
-        UPDATE memories 
-        SET picture_count = picture_count + ? 
-        WHERE memory_id = ?
-    `;
-
-    try {
-        const [result] = await db.execute(query, [increment, memoryId]);
-
-        // Get the updated count
-        if (result.affectedRows > 0) {
-            const [rows] = await db.execute(
-                'SELECT picture_count FROM memories WHERE memory_id = ?',
-                [memoryId]
-            );
-
-            return {
-                affectedRows: result.affectedRows,
-                newCount: rows[0]?.picture_count || 0
-            };
-        }
-
-        return { affectedRows: 0, newCount: null };
-    } catch (error) {
-        logger.error(`Data Access error; Error incrementing picture count (${query}): ${error.message}`);
         throw error;
     }
 };
@@ -847,7 +797,6 @@ module.exports = {
     fetchMemoriesMapDataFromDB,
     fetchMemoryDetailFriends,
     getSharedMemoriesCount,
-    createMemoryInDB,
     addUserToMemory,
     updateMemoryInDB,
     updatePictureCountInDB,
@@ -862,7 +811,6 @@ module.exports = {
     fetchMemoryByShareToken,
     checkUserMemoryMembership,
     addUserToMemoryViaToken,
-    incrementPictureCountInDB,
     fetchMemoriesSearchDataFromDB,
     createPlaceholderAndAssignToMemory,
     deletePlaceholderFromMemoryDL,
