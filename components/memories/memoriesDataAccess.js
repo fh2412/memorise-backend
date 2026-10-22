@@ -472,19 +472,6 @@ const addUserToMemory = async (userId, memoryId, conn = db) => {
     }
 };
 
-const updateMemoryInDB = async (memoryId, updateData) => {
-    const { title, description, memory_date, memory_end_date } = updateData;
-    const query = 'UPDATE memories SET title = ?, text = ?, memory_date = ?, memory_end_date = ? WHERE memory_id = ?';
-
-    try {
-        const [result] = await db.execute(query, [title, description, memory_date, memory_end_date, memoryId]);
-        return result;
-    } catch (error) {
-        logger.error(`Data Access error; Error updating memory (${query}): ${error.message}`);
-        throw error;
-    }
-};
-
 const updatePictureCountInDB = async (memoryId, pictureCount) => {
     const query = 'UPDATE memories SET picture_count = ? WHERE memory_id = ?';
 
@@ -497,17 +484,6 @@ const updatePictureCountInDB = async (memoryId, pictureCount) => {
     }
 };
 
-const updateLocationInDB = async (memoryId, locationId) => {
-    const query = 'UPDATE memories SET location_id = ? WHERE memory_id = ?';
-
-    try {
-        const [result] = await db.execute(query, [locationId, memoryId]);
-        return result;
-    } catch (error) {
-        logger.error(`Data Access error; Error updating location (${query}): ${error.message}`);
-        throw error;
-    }
-};
 
 const updateMemoryTitleInDB = async (memoryId, newTitle) => {
     const query = 'UPDATE memories SET title = ? WHERE memory_id = ?';
@@ -516,18 +492,6 @@ const updateMemoryTitleInDB = async (memoryId, newTitle) => {
         return result;
     } catch (error) {
         logger.error(`Data Access error; Error updating title (${query}): ${error.message}`);
-        throw error;
-    }
-};
-
-const updateTitlePicInDB = async (memoryId, imageUrl) => {
-    logger.info("Updating title to $")
-    const query = 'UPDATE memories SET title_pic = ? WHERE memory_id = ?';
-    try {
-        const [result] = await db.execute(query, [imageUrl, memoryId]);
-        return result;
-    } catch (error) {
-        logger.error(`Data Access error; Error updating title picture (${query}): ${error.message}`);
         throw error;
     }
 };
@@ -771,20 +735,18 @@ const createPlaceholderAndAssignToMemory = async (placeholderData, memoryId, cre
 /**
  * Removes placeholder relation and placeholder entry.
  */
-const deletePlaceholderFromMemoryDL = async (placeholderId, memoryId) => {
-  // Cascading deletes on foreign keys will clean up placeholder_has_memory automatically,
-  // but explicitly deleting from join table + entity table ensures safety.
-  const queryRelation = 'DELETE FROM placeholder_has_memory WHERE placeholder_id = ? AND memory_id = ?';
-  const queryPlaceholder = 'DELETE FROM placeholders WHERE id = ?';
-
-  try {
-    await db.query(queryRelation, [placeholderId, memoryId]);
-    await db.query(queryPlaceholder, [placeholderId]);
-  } catch (error) {
-    logger.error(`Data Access error; Error deleting placeholder from memory (${queryRelation}): ${error.message}`);
-    throw error;
-  }
-};
+const deletePlaceholderFromMemoryDL = async (placeholderId, memoryId, conn = db) => {
+    const queryRelation = 'DELETE FROM placeholder_has_memory WHERE placeholder_id = ? AND memory_id = ?';
+    const queryPlaceholder = 'DELETE FROM placeholders WHERE id = ?';
+  
+    try {
+      await conn.query(queryRelation, [placeholderId, memoryId]);
+      await conn.query(queryPlaceholder, [placeholderId]);
+    } catch (error) {
+      logger.error(`Data Access error; Error deleting placeholder from memory (${queryRelation}): ${error.message}`);
+      throw error;
+    }
+  };
 
 module.exports = {
     fetchUsersForMemoryFromDB,
@@ -798,10 +760,7 @@ module.exports = {
     fetchMemoryDetailFriends,
     getSharedMemoriesCount,
     addUserToMemory,
-    updateMemoryInDB,
     updatePictureCountInDB,
-    updateLocationInDB,
-    updateTitlePicInDB,
     updateMemoryTitleInDB,
     checkMemoryExists,
     deleteFriendsByMemoryId,

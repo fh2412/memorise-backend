@@ -201,6 +201,21 @@ const insertPhotoDb = async (conn, photo) => {
   ]);
 };
 
+const listMemoryPhotosDb = async (conn, memoryId) => {
+  return run(conn, `
+    SELECT
+      p.photo_id, p.client_id, p.download_url, p.thumb_url,
+      p.width, p.height, p.size_bytes, p.mime_type,
+      DATE_FORMAT(p.taken_at, '%Y-%m-%dT%H:%i:%s') AS taken_at,
+      p.lat, p.lng, p.uploaded_by, p.created_at,
+      (m.title_pic IS NOT NULL AND p.download_url = m.title_pic) AS is_cover
+    FROM memory_photos p
+    JOIN memories m ON m.memory_id = p.memory_id
+    WHERE p.memory_id = ?
+    ORDER BY is_cover DESC, (p.taken_at IS NULL), p.taken_at, p.created_at
+  `, [memoryId]);
+};
+
 // ── Memories ─────────────────────────────────────────────────────────────────
 
 const incrementPictureCountDb = async (conn, memoryId, increment) => {
@@ -214,6 +229,92 @@ const getPictureCountDb = async (conn, memoryId) => {
 
 const setTitlePicDb = async (conn, memoryId, imageUrl, thumbUrl) => {
   await run(conn, 'UPDATE memories SET title_pic = ?, title_pic_thumb = ? WHERE memory_id = ?', [imageUrl, thumbUrl, memoryId]);
+};
+
+/** Locks the memory row. Used by delete photos, set cover and the edit endpoint. */
+const lockMemoryDb = async (conn, memoryId) => {
+  const rows = await run(conn, `
+    SELECT memory_id, user_id, location_id, title_pic
+    FROM memories WHERE memory_id = ? FOR UPDATE
+  `, [memoryId]);
+  if (rows.length === 0) return null;
+  return {
+    memoryId: Number(rows[0].memory_id),
+    userId: rows[0].user_id,
+    locationId: Number(rows[0].location_id),
+    titlePic: rows[0].title_pic,
+  };
+};
+
+const inList = (ids) => ids.map(() => '?').join(',');
+
+/** Uploaders of the given photos – read WITHOUT lock to determine the lock order. */
+const listPhotoOwnersDb = async (conn, memoryId, photoIds) => {
+  if (photoIds.length === 0) return [];
+  const rows = await run(conn, `
+    SELECT DISTINCT uploaded_by FROM memory_photos
+    WHERE memory_id = ? AND photo_id IN (${inList(photoIds)})
+  `, [memoryId, ...photoIds]);
+  return rows.map(r => r.uploaded_by);
+};
+
+const selectPhotosForUpdateDb = async (conn, memoryId, photoIds) => {
+  if (photoIds.length === 0) return [];
+  const rows = await run(conn, `
+    SELECT photo_id, uploaded_by, storage_path, thumb_path, size_bytes, thumb_size_bytes, download_url
+    FROM memory_photos
+    WHERE memory_id = ? AND photo_id IN (${inList(photoIds)})
+    FOR UPDATE
+  `, [memoryId, ...photoIds]);
+  return rows.map(r => ({
+    photoId: r.photo_id,
+    uploadedBy: r.uploaded_by,
+    storagePath: r.storage_path,
+    thumbPath: r.thumb_path,
+    bytes: Number(r.size_bytes) + Number(r.thumb_size_bytes),
+    downloadUrl: r.download_url,
+  }));
+};
+
+const deletePhotosDb = async (conn, memoryId, photoIds) => {
+  if (photoIds.length === 0) return;
+  await run(conn, `
+    DELETE FROM memory_photos WHERE memory_id = ? AND photo_id IN (${inList(photoIds)})
+  `, [memoryId, ...photoIds]);
+};
+
+const decrementPictureCountDb = async (conn, memoryId, count) => {
+  await run(conn, `
+    UPDATE memories SET picture_count = GREATEST(0, CAST(picture_count AS SIGNED) - ?) WHERE memory_id = ?
+  `, [count, memoryId]);
+};
+
+/** Next cover candidate: same order as GET /photos (by capture time, then upload). */
+const firstRemainingPhotoDb = async (conn, memoryId) => {
+  const rows = await run(conn, `
+    SELECT download_url, thumb_url FROM memory_photos
+    WHERE memory_id = ?
+    ORDER BY (taken_at IS NULL), taken_at, created_at
+    LIMIT 1
+  `, [memoryId]);
+  return rows[0] ?? null;
+};
+
+const getPhotoDb = async (conn, memoryId, photoId) => {
+  const rows = await run(conn, `
+    SELECT photo_id, download_url, thumb_url FROM memory_photos WHERE memory_id = ? AND photo_id = ?
+  `, [memoryId, photoId]);
+  return rows[0] ?? null;
+};
+
+const currentCoverPhotoIdDb = async (conn, memoryId) => {
+  const rows = await run(conn, `
+    SELECT p.photo_id FROM memory_photos p
+    JOIN memories m ON m.memory_id = p.memory_id
+    WHERE p.memory_id = ? AND p.download_url = m.title_pic
+    LIMIT 1
+  `, [memoryId]);
+  return rows[0]?.photo_id ?? null;
 };
 
 module.exports = {
@@ -234,4 +335,13 @@ module.exports = {
   incrementPictureCountDb,
   getPictureCountDb,
   setTitlePicDb,
+  listMemoryPhotosDb,
+  lockMemoryDb,
+  listPhotoOwnersDb,
+  selectPhotosForUpdateDb,
+  deletePhotosDb,
+  decrementPictureCountDb,
+  firstRemainingPhotoDb,
+  getPhotoDb,
+  currentCoverPhotoIdDb,
 };
