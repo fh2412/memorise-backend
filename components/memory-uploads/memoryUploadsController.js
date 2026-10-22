@@ -9,6 +9,7 @@ const {
   validateCompleteUploadSession,
   validateDeletePhotos,
   validateSetCover,
+  validateListMemoryPhotos,
 } = require('./memoryUploadsValidators');
 const {
   createUploadSession,
@@ -16,6 +17,7 @@ const {
   completeUploadSession,
   deleteMemoryPhotos,
   setCoverPhoto,
+  listMemoryPhotos,
 } = require('./memoryUploadsService');
 
 /**
