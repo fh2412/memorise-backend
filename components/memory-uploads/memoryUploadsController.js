@@ -7,11 +7,15 @@ const {
   validateCreateUploadSession,
   validateRegisterPhoto,
   validateCompleteUploadSession,
+  validateDeletePhotos,
+  validateSetCover,
 } = require('./memoryUploadsValidators');
 const {
   createUploadSession,
   registerPhoto,
   completeUploadSession,
+  deleteMemoryPhotos,
+  setCoverPhoto,
 } = require('./memoryUploadsService');
 
 /**
@@ -97,6 +101,44 @@ router.post('/:memoryId/upload-sessions/:sessionId/complete',
       res.json(result);
     } catch (error) {
       logger.error(`Controller error; POST /:memoryId/upload-sessions/:sessionId/complete ${error.message}`);
+      next(error);
+    }
+  }
+);
+
+/**
+ * POST Delete photos of a memory
+ * @route POST /:memoryId/photos/delete
+ * @returns 200 { deletedPhotoIds, pictureCount, coverPhotoId, storageUsedBytes } | 403 NOT_PHOTO_OWNER
+ */
+router.post('/:memoryId(\\d+)/photos/delete',
+  authenticateFirebaseToken,
+  validateDeletePhotos,
+  handleValidationErrors,
+  async (req, res, next) => {
+    try {
+      res.json(await deleteMemoryPhotos(req.params.memoryId, req.user.uid, req.body.photoIds));
+    } catch (error) {
+      logger.error(`Controller error; POST /:memoryId/photos/delete ${error.message}`);
+      next(error);
+    }
+  }
+);
+
+/**
+ * PUT Set the cover photo
+ * @route PUT /:memoryId/cover
+ * @returns 200 { coverPhotoId } | 404 PHOTO_NOT_FOUND
+ */
+router.put('/:memoryId(\\d+)/cover',
+  authenticateFirebaseToken,
+  validateSetCover,
+  handleValidationErrors,
+  async (req, res, next) => {
+    try {
+      res.json(await setCoverPhoto(req.params.memoryId, req.user.uid, req.body.photoId));
+    } catch (error) {
+      logger.error(`Controller error; PUT /:memoryId/cover ${error.message}`);
       next(error);
     }
   }

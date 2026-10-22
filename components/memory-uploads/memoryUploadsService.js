@@ -254,6 +254,91 @@ const listMemoryPhotos = async (memoryId, userId) => {
   }
 };
 
+/**
+ * Deletes photos: DB rows, storage accounting of each uploader, picture count and
+ * – if the cover is affected – picks the next cover. Files are removed from Storage
+ * AFTER the commit (a failed file delete never leaves a half-deleted photo in the DB).
+ *
+ * Rules: the creator may delete every photo, members only their own uploads.
+ * Idempotent: ids that no longer exist are ignored.
+ */
+const deleteMemoryPhotos = async (memoryId, userId, photoIds) => {
+  try {
+    const result = await dl.withTransaction(async (conn) => {
+      // Lock order like registerPhoto: users (sorted) → memory → photos
+      const owners = await dl.listPhotoOwnersDb(conn, memoryId, photoIds);
+      const lockIds = [...new Set([...owners, userId])].sort();
+      const users = new Map();
+      for (const id of lockIds) users.set(id, await dl.lockUserStorageDb(conn, id));
+
+      const memory = await dl.lockMemoryDb(conn, memoryId);
+      if (!memory) throw httpError(404, 'Memory not found', 'MEMORY_NOT_FOUND');
+      await assertMemoryAccess(conn, memoryId, userId);
+
+      const isCreator = String(memory.userId) === userId;
+      const photos = await dl.selectPhotosForUpdateDb(conn, memoryId, photoIds);
+      if (!isCreator && photos.some(p => p.uploadedBy !== userId)) {
+        throw httpError(403, 'You can only delete photos you uploaded', 'NOT_PHOTO_OWNER');
+      }
+
+      const freedByUser = new Map();
+      if (photos.length > 0) {
+        await dl.deletePhotosDb(conn, memoryId, photos.map(p => p.photoId));
+
+        for (const photo of photos) {
+          freedByUser.set(photo.uploadedBy, (freedByUser.get(photo.uploadedBy) ?? 0) + photo.bytes);
+        }
+        for (const [ownerId, bytes] of freedByUser) {
+          if (users.get(ownerId)) await dl.addUserStorageDb(conn, ownerId, -bytes); // owner may be deleted
+        }
+
+        await dl.decrementPictureCountDb(conn, memoryId, photos.length);
+
+        if (memory.titlePic && photos.some(p => p.downloadUrl === memory.titlePic)) {
+          const next = await dl.firstRemainingPhotoDb(conn, memoryId);
+          await dl.setTitlePicDb(conn, memoryId, next?.download_url ?? '', next?.thumb_url ?? null);
+        }
+      }
+
+      const me = users.get(userId);
+      const reserved = await dl.sumActiveReservationsDb(conn, userId);
+      return {
+        deletedPhotoIds: photos.map(p => p.photoId),
+        paths: photos.flatMap(p => [p.storagePath, p.thumbPath]),
+        pictureCount: await dl.getPictureCountDb(conn, memoryId),
+        coverPhotoId: await dl.currentCoverPhotoIdDb(conn, memoryId),
+        storageUsedBytes: me ? Math.max(0, me.usedBytes - (freedByUser.get(userId) ?? 0)) + reserved : null,
+      };
+    });
+
+    if (result.paths.length > 0) {
+      storage.deleteObjects(result.paths).catch(() => { /* logged in storage module */ });
+    }
+    const { paths, ...response } = result; // eslint-disable-line no-unused-vars
+    return response;
+  } catch (error) {
+    if (!error.status) logger.error(`Service error; deleteMemoryPhotos: ${error.message}`);
+    throw error;
+  }
+};
+
+/** Creator and members may choose the cover (same as before). */
+const setCoverPhoto = async (memoryId, userId, photoId) => {
+  try {
+    return await dl.withTransaction(async (conn) => {
+      await assertMemoryAccess(conn, memoryId, userId);
+      const photo = await dl.getPhotoDb(conn, memoryId, photoId);
+      if (!photo) throw httpError(404, 'Photo not found', 'PHOTO_NOT_FOUND');
+      await dl.setTitlePicDb(conn, memoryId, photo.download_url, photo.thumb_url);
+      return { coverPhotoId: photo.photo_id };
+    });
+  } catch (error) {
+    if (!error.status) logger.error(`Service error; setCoverPhoto: ${error.message}`);
+    throw error;
+  }
+};
+
+
 /** For a scheduler later (Cloud Scheduler / cron). */
 const expireStaleUploadSessions = () => dl.expireStaleUploadSessionsDb();
 
@@ -265,4 +350,6 @@ module.exports = {
   completeUploadSession,
   expireStaleUploadSessions,
   listMemoryPhotos,
+  deleteMemoryPhotos,
+  setCoverPhoto,
 };

@@ -10,10 +10,7 @@ const {
     fetchMemoriesMapDataFromDB,
     getSharedMemoriesCount,
     addUserToMemory,
-    updateMemoryInDB,
     updatePictureCountInDB,
-    updateLocationInDB,
-    updateTitlePicInDB,
     updateMemoryTitleInDB,
     checkMemoryExists,
     deleteFriendsByMemoryId,
@@ -262,42 +259,12 @@ const addFriendsToMemory = async (friendIds, memoryId) => {
     }
 };
 
-const updateMemory = async (memoryId, updateData) => {
-    try {
-        const result = await updateMemoryInDB(memoryId, updateData);
-        return result.affectedRows > 0;
-    } catch (error) {
-        logger.error(`Service error; Error in updateMemory: ${error.message}`);
-        throw error;
-    }
-};
-
 const updateMemoryPictureCount = async (memoryId, pictureCount) => {
     try {
         const result = await updatePictureCountInDB(memoryId, pictureCount);
         return result.affectedRows > 0;
     } catch (error) {
         logger.error(`Service error; Error in updateMemoryPictureCount: ${error.message}`);
-        throw error;
-    }
-};
-
-const updateMemoryLocation = async (memoryId, locationId) => {
-    try {
-        const result = await updateLocationInDB(memoryId, locationId);
-        return result.affectedRows > 0;
-    } catch (error) {
-        logger.error(`Service error; Error in updateMemoryLocation: ${error.message}`);
-        throw error;
-    }
-};
-
-const updateTitlePic = async (memoryId, imageUrl) => {
-    try {
-        const result = await updateTitlePicInDB(memoryId, imageUrl);
-        return result.affectedRows > 0;
-    } catch (error) {
-        logger.error(`Service error; Error in updateTitlePic: ${error.message}`);
         throw error;
     }
 };
@@ -498,10 +465,7 @@ module.exports = {
     getMemoryFriends,
     getFriendsWithSharedCount,
     addFriendsToMemory,
-    updateMemory,
     updateMemoryPictureCount,
-    updateMemoryLocation,
-    updateTitlePic,
     updateMemoryTitle,
     deleteMemoryAndFriends,
     removeFriendFromMemory,

@@ -18,6 +18,7 @@ app.use('/api/', apiLimiter);
 // Define components (separate files for better organization)
 const usersRoutes = require('./components/users/usersController');
 const memoryCreateRoutes = require('./components/memory-create/memoryCreateController');
+const memoryEditRoutes = require('./components/memory-edit/memoryEditController');
 const memoryUploadRoutes = require('./components/memory-uploads/memoryUploadsController');
 const memoriesRoutes = require('./components/memories/memoriesController');
 const friendsRoutes = require('./components/friends/friendsController');
@@ -37,6 +38,7 @@ const ogPreviewRouter = require('./components/og-preview-route');
 
 app.use('/api/users', usersRoutes);
 app.use('/api/memories', memoryCreateRoutes);
+app.use('/api/memories', memoryEditRoutes);
 app.use('/api/memories', memoryUploadRoutes);
 app.use('/api/memories', memoriesRoutes);
 app.use('/api/friends', friendsRoutes); 

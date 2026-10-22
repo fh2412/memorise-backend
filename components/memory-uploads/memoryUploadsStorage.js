@@ -41,4 +41,14 @@ const deleteByPrefixes = async (prefixes) => {
   });
 };
 
-module.exports = { statObject, deleteByPrefixes };
+const deleteObjects = async (paths) => {
+  const bucket = getBucket();
+  const results = await Promise.allSettled(paths.map(path => bucket.file(path).delete({ ignoreNotFound: true })));
+  results.forEach((result, i) => {
+    if (result.status === 'rejected') {
+      logger.warn(`Storage delete failed for ${paths[i]}: ${result.reason?.message}`);
+    }
+  });
+};
+
+module.exports = { statObject, deleteByPrefixes, deleteObjects };

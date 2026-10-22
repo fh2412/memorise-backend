@@ -42,10 +42,22 @@ const validateCompleteUploadSession = [
 
 const validateListMemoryPhotos = [memoryIdParam];
 
+const validateDeletePhotos = [
+  memoryIdParam,
+  body('photoIds').isArray({ min: 1, max: 500 }),
+  body('photoIds.*').isUUID(),
+];
+
+const validateSetCover = [
+  memoryIdParam,
+  body('photoId').isUUID(),
+];
 
 module.exports = {
   validateCreateUploadSession,
   validateRegisterPhoto,
   validateCompleteUploadSession,
   validateListMemoryPhotos,
+  validateDeletePhotos,
+  validateSetCover,
 };

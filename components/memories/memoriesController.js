@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const logger = require('../../middleware/logger');
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
-const { validateMemoryId, validateCreateMemory, validateAddFriendsToMemory, validateUpdateMemory, validateUpdatePictureCount, validateUpdateMemoryLocation, validateIncrementPictureCount, validateUpdateTitlePic, validateUpdateTitle } = require('../../middleware/validation/validateMemory');
+const { validateMemoryId, validateAddFriendsToMemory, validateUpdatePictureCount, validateUpdateTitle } = require('../../middleware/validation/validateMemory');
 const { validateFirebaseUID } = require('../../middleware/validation/validateUsers');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
 const { getAddedMemories,
@@ -14,10 +14,7 @@ const { getAddedMemories,
     getFriendsWithSharedCount,
     getMemoriesMapData,
     addFriendsToMemory,
-    updateMemory,
     updateMemoryPictureCount,
-    updateMemoryLocation,
-    updateTitlePic,
     updateMemoryTitle,
     deleteMemoryAndFriends,
     removeFriendFromMemory, 
@@ -361,28 +358,6 @@ router.post('/share/join', authenticateFirebaseToken, async (req, res, next) => 
     }
 });
 
-/**
- * PUT Update a memory
- * @route PUT /:memoryId
- * @description Update memory details for a specific memory
- */
-router.put('/:memoryId', authenticateFirebaseToken, validateUpdateMemory, handleValidationErrors, async (req, res, next) => {
-    const memoryId = req.params.memoryId;
-    const { title, description, memory_date, memory_end_date } = req.body;
-
-    try {
-        const updateResult = await updateMemory(memoryId, { title, description, memory_date, memory_end_date });
-
-        if (updateResult) {
-            res.json({ message: 'Memory updated successfully' });
-        } else {
-            res.status(404).json({ error: 'Memory not found or no changes made' });
-        }
-    } catch (error) {
-        logger.error(`Controller error; UPDATE PUT /:memoryId ${error.message}`);
-        next(error);
-    }
-});
 
 /**
  * PUT Update the picture count for a memory
@@ -407,55 +382,10 @@ router.put('/picturecount/:memoryId', authenticateFirebaseToken, validateUpdateP
     }
 });
 
-/**
- * Update the location of a memory
- * @route PUT /updateMemoryLocation/:memoryId
- * @description Update the location ID for a specific memory
- */
-router.put('/updateMemoryLocation/:memoryId', authenticateFirebaseToken, validateUpdateMemoryLocation, handleValidationErrors, async (req, res, next) => {
-    const memoryId = req.params.memoryId;
-    const locationId = req.body.locationId;
-
-    try {
-        const updateResult = await updateMemoryLocation(memoryId, locationId);
-
-        if (updateResult) {
-            res.json({ message: 'Memory updated successfully' });
-        } else {
-            res.status(404).json({ error: 'Memory not found or no changes made' });
-        }
-    } catch (error) {
-        logger.error(`Controller error; UPDATE PUT /updateMemoryLocation/:memoryId ${error.message}`);
-        next(error);
-    }
-});
 
 /**
  * Update the title picture of a memory
- * @route PUT /updateTitlePic/:imageId
- * @description Update the title picture for a specific memory
- */
-router.put('/updateTitlePic/:memoryId', authenticateFirebaseToken, validateUpdateTitlePic, handleValidationErrors, async (req, res, next) => {
-    const memoryId = req.params.memoryId;
-    const imageUrl = req.body.imageUrl;
-
-    try {
-        const updateResult = await updateTitlePic(memoryId, imageUrl);
-
-        if (updateResult) {
-            res.json({ message: 'Memory updated successfully' });
-        } else {
-            res.status(404).json({ error: 'Memory not found or no changes made' });
-        }
-    } catch (error) {
-        logger.error(`Controller error; UPDATE PUT /updateTitlePic/:memoryId ${error.message}`);
-        next(error);
-    }
-});
-
-/**
- * Update the title picture of a memory
- * @route PUT /updateTitlePic/:imageId
+ * @route PUT /updateMemoryTitle/:memoryId
  * @description Update the title picture for a specific memory
  */
 router.put('/updateMemoryTitle/:memoryId', authenticateFirebaseToken, validateUpdateTitle, handleValidationErrors, async (req, res, next) => {
