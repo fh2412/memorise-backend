@@ -65,4 +65,5 @@ jobs:
             DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             DB_DATABASE=${{ secrets.DB_NAME }}
             GITHUB_TOKEN=${{ secrets.GHP }}
+            DOWNLOAD_TICKET_SECRET=${{ secrets.DOWNLOAD_TICKET_SECRET }}
             FRONTEND_URL=memorise.online
