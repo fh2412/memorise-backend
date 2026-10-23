@@ -65,8 +65,7 @@ node_modules/
 # dotenv environment variables file
 .env
 
-# config
-config/
+# config#
 
 # Ignore generated credentials from google-github-actions/auth
 gha-creds-*.json
