@@ -6,6 +6,7 @@ const apiLimiter = require('./middleware/rateLimiter');
 const helmetConfig = require('./middleware/helmetConfig');
 const logger = require('./middleware/logger');
 const errorHandler = require('./middleware/errorHandling/errorHandler');
+const { initializeFirebaseAdmin } = require('./config/firebaseAdmin');
 
 // Middleware setup
 app.set('trust proxy', 1); 
@@ -14,6 +15,16 @@ app.use(express.json());
 app.use(helmetConfig);
 
 app.use('/api/', apiLimiter);
+
+async function startApp() {
+  try {
+    await initializeFirebaseAdmin();
+  } catch (error) {
+    logger.error('App initialization failed:', error);
+  }
+}
+
+startApp();
 
 // Define components (separate files for better organization)
 const usersRoutes = require('./components/users/usersController');

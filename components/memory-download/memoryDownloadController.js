@@ -2,8 +2,8 @@ const express = require('express');
 const { body, param } = require('express-validator');
 const router = express.Router();
 const logger = require('../../middleware/logger');
-const authenticateFirebaseToken = require('../../middleware/authenticateFirebaseToken');
-const { handleValidationErrors } = require('../../middleware/validation');
+const authenticateFirebaseToken = require('../../middleware/authMiddleware');
+const handleValidationErrors = require('../../middleware/validationMiddleware');
 const { createDownloadTicket, streamDownload } = require('./memoryDownloadService');
 
 const MAX_PHOTOS = 2000;

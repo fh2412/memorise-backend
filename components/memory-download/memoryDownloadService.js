@@ -1,7 +1,7 @@
-const archiver = require('archiver');
+const { ZipArchive } = require('archiver');
 const db = require('../../config/db');
 const logger = require('../../middleware/logger');
-const { httpError } = require('../../utils/httpError');
+const { httpError } = require('../../middleware/errorHandling/httpError');
 const { getFirebaseAdmin } = require('../../config/firebaseAdmin');
 const { canUserAccessMemoryDb, memoryExistsDb } = require('../memory-uploads/memoryUploadsDatalink');
 const { getMemoryTitleDb, listPhotosForDownloadDb } = require('./memoryDownloadDatalink');
@@ -66,7 +66,7 @@ const streamDownload = async ({ memoryId, ticket, photoIds, res }) => {
   res.setHeader('Content-Disposition', contentDisposition(zipFileName(title)));
   res.setHeader('Cache-Control', 'no-store');
 
-  const archive = archiver('zip', { store: true });
+  const archive = new ZipArchive({ store: true });
   let stopped = false;
   let resolveStopped;
   const stoppedPromise = new Promise(resolve => { resolveStopped = resolve; });
