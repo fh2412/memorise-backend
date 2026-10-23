@@ -9,9 +9,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Use the official lightweight Node.js image.
+# Use the official lightweight Node.js image (same major version as local development).
 # https://hub.docker.com/_/node
-FROM node:18-slim
+FROM node:24-slim
 
 # Create and change to the app directory.
 WORKDIR /usr/src/app
@@ -21,8 +21,8 @@ WORKDIR /usr/src/app
 # Copying this separately prevents re-running npm install on every code change.
 COPY package*.json ./
 
-# Install dependencies.
-RUN npm ci --only=production
+# Install production dependencies only.
+RUN npm ci --omit=dev
 
 # Copy local code to the container image.
 COPY . ./
