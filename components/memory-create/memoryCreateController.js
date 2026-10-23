@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const logger = require('../../middleware/logger');
-const authenticateFirebaseToken = require('../../middleware/authMiddleware');
-const handleValidationErrors = require('../../middleware/validationMiddleware');
+const authenticateFirebaseToken = require('../../middleware/authenticateFirebaseToken');
+const { handleValidationErrors } = require('../../middleware/validation');
 const { validateCreateMemory } = require('./memoryCreateValidators');
 const { createMemoryWithDetails } = require('./memoryCreateService');
 
