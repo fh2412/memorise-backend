@@ -1,5 +1,5 @@
 const logger = require('../../middleware/logger');
-const { httpError } = require('../../utils/httpError');
+const { httpError } = require('../../middleware/errorHandling/httpError');
 const { withTransaction, canUserAccessMemoryDb, lockMemoryDb } = require('../memory-uploads/memoryUploadsDatalink');
 const { findExistingUserIdsDb, findPlaceholdersOfMemoryDb } = require('../memory-create/memoryCreateDatalink');
 const editDl = require('./memoryEditDatalink');

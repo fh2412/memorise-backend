@@ -93,7 +93,7 @@ const fetchAddedMemoriesFromDB = async (userId, ascending, page, pageSize, filte
 const fetchUserAllMemoriesFromDB = async (userId, { ascending, page, pageSize, filter, search, pinnedOnly }) => {
     const orderDirection = ascending ? 'ASC' : 'DESC';
     const offset = page * pageSize;
- 
+
     // Dynamic date filtering
     let dateCondition = '';
     if (filter === 'future') {
@@ -108,12 +108,12 @@ const fetchUserAllMemoriesFromDB = async (userId, { ascending, page, pageSize, f
         dateCondition = ` AND m.memory_date IS NOT NULL
                           AND IFNULL(m.memory_end_date, m.memory_date) < NOW()`;
     }
- 
+
     // Optional filters. The params are pushed in the SAME order as the
     // placeholders appear in the SQL (access -> search -> pinned).
     let optionalConditions = '';
     const optionalParams = [];
- 
+
     if (search) {
         // escape LIKE wildcards so "100%" or "a_b" are matched literally
         // (backslash is MySQL's default LIKE escape character)
@@ -121,7 +121,7 @@ const fetchUserAllMemoriesFromDB = async (userId, { ascending, page, pageSize, f
         optionalConditions += ' AND m.title LIKE ?';
         optionalParams.push(`%${escaped}%`);
     }
- 
+
     if (pinnedOnly) {
         optionalConditions += `
             AND EXISTS (
@@ -130,19 +130,19 @@ const fetchUserAllMemoriesFromDB = async (userId, { ascending, page, pageSize, f
             )`;
         optionalParams.push(userId);
     }
- 
+
     // EXISTS instead of LEFT JOIN + DISTINCT: no duplicate rows possible
     const accessCondition = `
         (m.user_id = ? OR EXISTS (
             SELECT 1 FROM user_has_memory uhm
             WHERE uhm.memory_id = m.memory_id AND uhm.user_id = ?
         ))`;
- 
+
     const countQuery = `
         SELECT COUNT(*) AS total
         FROM memories m
         WHERE ${accessCondition}${dateCondition}${optionalConditions}`;
- 
+
     // memory_id as tie-breaker keeps pagination stable when dates are equal / NULL
     const memoryQuery = `
         SELECT m.memory_id, m.title, m.title_pic, m.memory_date, m.memory_end_date,
@@ -154,7 +154,7 @@ const fetchUserAllMemoriesFromDB = async (userId, { ascending, page, pageSize, f
         WHERE ${accessCondition}${dateCondition}${optionalConditions}
         ORDER BY m.memory_date ${orderDirection}, m.memory_id ${orderDirection}
         LIMIT ? OFFSET ?`;
- 
+
     const crewQuery = `
         SELECT
             participants.memory_id,
@@ -176,17 +176,17 @@ const fetchUserAllMemoriesFromDB = async (userId, { ascending, page, pageSize, f
         INNER JOIN memories AS m ON m.memory_id = participants.memory_id
         INNER JOIN users AS u ON u.user_id = participants.user_id
         ORDER BY participants.memory_id, is_creator DESC, u.name ASC`;
- 
+
     try {
         const [[countResult]] = await db.query(countQuery, [userId, userId, ...optionalParams]);
         const [memoryRows] = await db.query(memoryQuery, [userId, userId, userId, ...optionalParams, pageSize, offset]);
- 
+
         let crewRows = [];
         if (memoryRows.length > 0) {
             const memoryIds = memoryRows.map(r => r.memory_id);
             [crewRows] = await db.query(crewQuery, [memoryIds, memoryIds]);
         }
- 
+
         return { memoryRows, crewRows, total: countResult.total };
     } catch (error) {
         logger.error(`Data Access error; Error fetching all memories: ${error.message}`);
@@ -738,15 +738,35 @@ const createPlaceholderAndAssignToMemory = async (placeholderData, memoryId, cre
 const deletePlaceholderFromMemoryDL = async (placeholderId, memoryId, conn = db) => {
     const queryRelation = 'DELETE FROM placeholder_has_memory WHERE placeholder_id = ? AND memory_id = ?';
     const queryPlaceholder = 'DELETE FROM placeholders WHERE id = ?';
-  
+
     try {
-      await conn.query(queryRelation, [placeholderId, memoryId]);
-      await conn.query(queryPlaceholder, [placeholderId]);
+        await conn.query(queryRelation, [placeholderId, memoryId]);
+        await conn.query(queryPlaceholder, [placeholderId]);
     } catch (error) {
-      logger.error(`Data Access error; Error deleting placeholder from memory (${queryRelation}): ${error.message}`);
-      throw error;
+        logger.error(`Data Access error; Error deleting placeholder from memory (${queryRelation}): ${error.message}`);
+        throw error;
     }
-  };
+};
+
+const createMemoryInDB = async (
+    { creator_id, title, description, location_id, memory_date, memory_end_date, title_pic, activity_id, create_request_id = null },
+    conn = db
+) => {
+    const query = `
+        INSERT INTO memories (user_id, title, text, location_id, memory_date, memory_end_date, title_pic, activity_id, create_request_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    try {
+        const [result] = await conn.query(query, [
+            creator_id, title, description, location_id, memory_date, memory_end_date, title_pic, activity_id, create_request_id,
+        ]);
+        return result.insertId;
+    } catch (error) {
+        logger.error(`Data Access error; Error inserting memory (${query}): ${error.message}`);
+        throw error;
+    }
+};
 
 module.exports = {
     fetchUsersForMemoryFromDB,
@@ -774,5 +794,6 @@ module.exports = {
     createPlaceholderAndAssignToMemory,
     deletePlaceholderFromMemoryDL,
     claimPlaceholderTransactionDL,
-    fetchUnclaimedPlaceholdersForMemory
+    fetchUnclaimedPlaceholdersForMemory,
+    createMemoryInDB,
 }

@@ -208,7 +208,7 @@ const listMemoryPhotosDb = async (conn, memoryId) => {
       p.width, p.height, p.size_bytes, p.mime_type,
       DATE_FORMAT(p.taken_at, '%Y-%m-%dT%H:%i:%s') AS taken_at,
       p.lat, p.lng, p.uploaded_by, p.created_at,
-      (m.title_pic IS NOT NULL AND p.download_url = m.title_pic) AS is_cover
+      (m.title_pic IS NOT NULL AND p.download_url = m.title_pic COLLATE utf8mb4_unicode_ci) AS is_cover
     FROM memory_photos p
     JOIN memories m ON m.memory_id = p.memory_id
     WHERE p.memory_id = ?
@@ -311,7 +311,7 @@ const currentCoverPhotoIdDb = async (conn, memoryId) => {
   const rows = await run(conn, `
     SELECT p.photo_id FROM memory_photos p
     JOIN memories m ON m.memory_id = p.memory_id
-    WHERE p.memory_id = ? AND p.download_url = m.title_pic
+    WHERE p.memory_id = ? AND p.download_url = m.title_pic COLLATE utf8mb4_unicode_ci
     LIMIT 1
   `, [memoryId]);
   return rows[0]?.photo_id ?? null;

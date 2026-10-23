@@ -1,10 +1,10 @@
 const logger = require('../../middleware/logger');
-const { httpError } = require('../../utils/httpError');
+const { httpError } = require('../../middleware/errorHandling/httpError');
 const { withTransaction } = require('../memory-uploads/memoryUploadsDatalink');
 const { reserveQuota, openUploadSession } = require('../memory-uploads/memoryUploadsService');
 const createDl = require('./memoryCreateDatalink');
 const { createMemoryInDB, addUserToMemory, createPlaceholderAndAssignToMemory } = require('../memories/memoriesDataAccess');
-const { insertLocation } = require('../locations/locationsDatalink');
+const { insertLocation } = require('../locations/locationsDataAccess');
 
 const NO_LOCATION_ID = 1;
 const NO_ACTIVITY_ID = 1;
