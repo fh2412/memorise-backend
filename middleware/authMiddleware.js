@@ -1,4 +1,4 @@
-const { getFirebaseAdmin } = require('../config/firebaseAdmin');
+const { getFirebaseAuth } = require('../config/firebaseAdmin');
 const logger = require('./logger');
 
 /**
@@ -25,8 +25,7 @@ const authenticateFirebaseToken = async (req, res, next) => {
     const token = authHeader.split(' ')[1];
 
     try {
-        const admin = getFirebaseAdmin();
-        const decodedToken = await admin.auth().verifyIdToken(token);
+        const decodedToken = await getFirebaseAuth().verifyIdToken(token);
         req.user = decodedToken;
         next(); // Success, continue to the next middleware/route
     } catch (error) {
