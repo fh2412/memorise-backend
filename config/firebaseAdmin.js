@@ -50,7 +50,7 @@ function getFirebaseAdmin() {
     return firebaseApp;
 }
 
-// Service helpers (replacement for the removed admin.auth() / admin.firestore() / admin.storage())
+// Service helpers (replacement for the removed admin.auth() / admin.firestore())
 // Remove the ones you don't use.
 function getFirebaseAuth() {
     const { getAuth } = require('firebase-admin/auth');

@@ -2,16 +2,18 @@ const { ZipArchive } = require('archiver');
 const db = require('../../config/db');
 const logger = require('../../middleware/logger');
 const { httpError } = require('../../middleware/errorHandling/httpError');
-const { getFirebaseAdmin } = require('../../config/firebaseAdmin');
 const { canUserAccessMemoryDb, memoryExistsDb } = require('../memory-uploads/memoryUploadsDatalink');
 const { getMemoryTitleDb, listPhotosForDownloadDb } = require('./memoryDownloadDatalink');
 const { createTicket, verifyTicket, TICKET_TTL_SECONDS } = require('./memoryDownloadTicket');
 const { buildEntryNames, zipFileName, contentDisposition } = require('./memoryDownloadNames');
+const { getStorage } = require('firebase-admin/storage');
+const { initializeApp, getApps, getApp } = require('firebase-admin/app');
 
 const getBucket = () => {
   const name = process.env.FIREBASE_STORAGE_BUCKET;
-  const admin = getFirebaseAdmin();
-  return name ? admin.storage().bucket(name) : admin.storage().bucket();
+  const app = getApps().length ? getApp() : initializeApp();
+  const storage = getStorage(app);
+  return name ? storage.bucket(name) : storage.bucket();
 };
 
 /** Creator + members only (same rule as viewing photos). */

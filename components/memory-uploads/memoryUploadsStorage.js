@@ -1,15 +1,12 @@
-// Firebase Storage access via firebase-admin (server-side verification + cleanup).
-const { getFirebaseAdmin } = require('../../config/firebaseAdmin');
+const { getStorage } = require('firebase-admin/storage');
+const { initializeApp, getApps, getApp } = require('firebase-admin/app');
 const logger = require('../../middleware/logger');
 
-/**
- * ADJUST: if initializeApp() in config/firebaseAdmin has no `storageBucket`,
- * set FIREBASE_STORAGE_BUCKET (e.g. "memorise-xyz.firebasestorage.app").
- */
 const getBucket = () => {
-  const admin = getFirebaseAdmin();
   const name = process.env.FIREBASE_STORAGE_BUCKET;
-  return name ? admin.storage().bucket(name) : admin.storage().bucket();
+  const app = getApps().length ? getApp() : initializeApp();
+  const storage = getStorage(app);
+  return name ? storage.bucket(name) : storage.bucket();
 };
 
 /**
