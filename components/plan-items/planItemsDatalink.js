@@ -112,13 +112,19 @@ const insertEventDb = (conn, { memoryId, userId, action, itemId = null, itemTitl
   VALUES (?, ?, ?, ?, ?)
 `, [memoryId, userId, action, itemId, itemTitle]);
 
-const findEventsDb = (conn, memoryId, limit, beforeId) => run(conn, `
-  SELECT event_id, user_id, action, item_id, item_title, created_at
-  FROM plan_events
-  WHERE memory_id = ? ${beforeId ? 'AND event_id < ?' : ''}
-  ORDER BY event_id DESC
-  LIMIT ?
-`, beforeId ? [memoryId, beforeId, limit] : [memoryId, limit]);
+const findEventsDb = (conn, memoryId, { limit, before = null, after = null }) => {
+  const where = ['memory_id = ?'];
+  const params = [memoryId];
+  if (before != null) { where.push('event_id < ?'); params.push(before); }
+  if (after != null) { where.push('event_id > ?'); params.push(after); }
+  return run(conn, `
+    SELECT event_id, user_id, action, item_id, item_title, created_at
+    FROM plan_events
+    WHERE ${where.join(' AND ')}
+    ORDER BY event_id DESC
+    LIMIT ?
+  `, [...params, limit]);
+};
 
 module.exports = {
   UPDATABLE_COLUMNS,

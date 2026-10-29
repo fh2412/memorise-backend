@@ -15,13 +15,28 @@ const logUnexpected = (fn, error) => {
 const listItems = async (userId, memoryId) => {
   try {
     return await withTransaction(async (conn) => {
-      await requireMembership(conn, memoryId, userId);
+      const membership = await requireMembership(conn, memoryId, userId);
       const rows = await dl.findItemsDb(conn, memoryId);
       const assignees = groupAssignees(await dl.findAssigneesDb(conn, rows.map(r => r.item_id)));
-      return rows.map(r => toApiItem(r, assignees.get(r.item_id)));
+      return {
+        items: rows.map(r => toApiItem(r, assignees.get(r.item_id))),
+        viewer: { userId, isOwner: membership.isCreator },
+      };
     });
   } catch (error) {
     logUnexpected('listItems', error);
+    throw error;
+  }
+};
+
+const listEvents = async (userId, memoryId, { limit = 30, before = null, after = null } = {}) => {
+  try {
+    return await withTransaction(async (conn) => {
+      await requireMembership(conn, memoryId, userId);
+      return dl.findEventsDb(conn, memoryId, { limit, before, after });
+    });
+  } catch (error) {
+    logUnexpected('listEvents', error);
     throw error;
   }
 };
@@ -102,17 +117,6 @@ const deleteItem = async (userId, memoryId, itemId) => {
   }
 };
 
-const listEvents = async (userId, memoryId, { limit = 30, before = null } = {}) => {
-  try {
-    return await withTransaction(async (conn) => {
-      await requireMembership(conn, memoryId, userId);
-      return dl.findEventsDb(conn, memoryId, limit, before);
-    });
-  } catch (error) {
-    logUnexpected('listEvents', error);
-    throw error;
-  }
-};
 
 // ---------- helpers ----------
 

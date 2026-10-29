@@ -8,6 +8,7 @@ const service = require('./planItemsService');
 
 const memoryIdOf = (req) => Number(req.params.memoryId);
 const itemIdOf = (req) => Number(req.params.itemId);
+const num = (v) => (v === undefined ? null : Number(v));
 
 /**
  * GET all plan items of a memory
@@ -17,8 +18,8 @@ const itemIdOf = (req) => Number(req.params.itemId);
 router.get('/items', authenticateFirebaseToken, v.validateListItems, handleValidationErrors,
   async (req, res, next) => {
     try {
-      const items = await service.listItems(req.user.uid, memoryIdOf(req));
-      res.json({ items });
+      const board = await service.listItems(req.user.uid, memoryIdOf(req));
+      res.json(board);
     } catch (error) {
       logger.error(`Controller error; GET /plan/items ${error.message}`);
       next(error);
@@ -82,8 +83,9 @@ router.get('/events', authenticateFirebaseToken, v.validateListEvents, handleVal
   async (req, res, next) => {
     try {
       const events = await service.listEvents(req.user.uid, memoryIdOf(req), {
-        limit: req.query.limit ? Number(req.query.limit) : 30,
-        before: req.query.before ? Number(req.query.before) : null,
+        limit: num(req.query.limit) ?? 30,
+        before: num(req.query.before),
+        after: num(req.query.after),
       });
       res.json({ events });
     } catch (error) {

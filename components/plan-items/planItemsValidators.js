@@ -69,7 +69,13 @@ const validateListEvents = [
   memoryIdParam,
   query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
   query('before').optional().isInt({ min: 1 }).toInt(),
+  query('after').optional().isInt({ min: 0 }).toInt().bail()
+    .custom((_, { req }) => {
+      if (req.query.before !== undefined) throw new Error('Use either before or after');
+      return true;
+    }),
 ];
+
 
 module.exports = {
   validateListItems, validateCreateItem, validatePatchItem, validateDeleteItem, validateListEvents,
