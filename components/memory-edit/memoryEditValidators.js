@@ -1,6 +1,6 @@
 const { body, param } = require('express-validator');
+const { ISO_DATE, isRealDate } = require('../memory-create/memoryCreateValidators');
 
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_CREW = 100;
 
 const isRealDate = (value) => {
@@ -11,6 +11,15 @@ const isRealDate = (value) => {
   }
   return true;
 };
+
+const nullableDay = (field, { required }) => body(field).custom((value) => {
+  if (value === undefined && !required) return true;
+  if (value === null) return true;
+  if (typeof value !== 'string' || !ISO_DATE.test(value)) {
+    throw new Error(`${field} must be YYYY-MM-DD or null`);
+  }
+  return isRealDate(value);
+});
 
 const hasValue = (field) => body(field).exists({ values: 'null' });
 
@@ -53,4 +62,20 @@ const validateUpdateMemoryDetails = [
 
 const validateListPlaceholders = [memoryIdParam];
 
-module.exports = { validateUpdateMemoryDetails, validateListPlaceholders };
+const validateUpdateMemoryDates = [
+  param('memoryId').isInt({ min: 1 }).toInt(),
+  body().custom((b) => {
+    const unknown = Object.keys(b ?? {}).filter(k => k !== 'startDate' && k !== 'endDate');
+    if (unknown.length) throw new Error(`Unknown fields: ${unknown.join(', ')}`);
+    return true;
+  }),
+  nullableDay('startDate', { required: true }),          // null = clear the dates
+  nullableDay('endDate', { required: false }).bail().custom((end, { req }) => {
+    if (end == null) return true;
+    if (req.body.startDate == null) throw new Error('endDate requires startDate');
+    if (end < req.body.startDate) throw new Error('endDate must not be before startDate');
+    return true;
+  }),
+];
+
+module.exports = { validateUpdateMemoryDetails, validateListPlaceholders, validateUpdateMemoryDates };

@@ -33,9 +33,28 @@ const removeUserFromMemoryDb = async (conn, memoryId, userId) => {
   await run(conn, 'DELETE FROM user_has_memory WHERE memory_id = ? AND user_id = ?', [memoryId, userId]);
 };
 
+/** Locks the memory row so concurrent date changes are serialised. */
+const findMemoryDatesForUpdateDb = async (conn, memoryId) => {
+  const rows = await run(conn, `
+    SELECT DATE_FORMAT(memory_date, '%Y-%m-%d')     AS memory_date,
+           DATE_FORMAT(memory_end_date, '%Y-%m-%d') AS memory_end_date
+    FROM memories
+    WHERE memory_id = ?
+    FOR UPDATE
+  `, [memoryId]);
+  return rows[0] ?? null;
+};
+
+const updateMemoryDatesDb = (conn, memoryId, startDate, endDate) => run(conn, `
+  UPDATE memories SET memory_date = ?, memory_end_date = ? WHERE memory_id = ?
+`, [startDate, endDate, memoryId]);
+
+
 module.exports = {
   updateMemoryFieldsDb,
   setMemoryLocationDb,
   listMemoryUserIdsDb,
-  removeUserFromMemoryDb,
+  removeUserFromMemoryDb, 
+  findMemoryDatesForUpdateDb, 
+  updateMemoryDatesDb
 };

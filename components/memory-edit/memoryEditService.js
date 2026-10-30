@@ -5,6 +5,9 @@ const { findExistingUserIdsDb, findPlaceholdersOfMemoryDb } = require('../memory
 const editDl = require('./memoryEditDatalink');
 const { addUserToMemory, createPlaceholderAndAssignToMemory, deletePlaceholderFromMemoryDL } = require('../memories/memoriesDataAccess');
 const { insertLocation } = require('../locations/locationsDataAccess');
+const datesDl = require('./memoryEditDatalink');
+const planDl = require('../plan-items/planItemsDatalink');
+
 
 const NO_LOCATION_ID = 1;
 
@@ -133,4 +136,37 @@ const listPlaceholders = async (memoryId, userId) => {
   }
 };
 
-module.exports = { updateMemoryDetails, listPlaceholders, syncCrew };
+/**
+ * Sets or clears the dates of a memory. Owner only.
+ * Setting dates is what "locks" a plan; clearing them returns it to the planning phase.
+ */
+const updateMemoryDates = async (userId, memoryId, { startDate, endDate }) => {
+  const start = startDate ?? null;
+  const end = start ? (endDate ?? start) : null;
+
+  try {
+    return await withTransaction(async (conn) => {
+      const current = await datesDl.findMemoryDatesForUpdateDb(conn, memoryId);
+      const membership = current ? await planDl.findMembershipDb(conn, memoryId, userId) : null;
+      if (!membership) throw httpError(404, 'Memory not found', 'MEMORY_NOT_FOUND');
+      if (!membership.isCreator) throw httpError(403, 'Only the plan owner can set the dates', 'DATES_OWNER_ONLY');
+
+      const changed = current.memory_date !== start || current.memory_end_date !== end;
+      if (changed) {
+        await datesDl.updateMemoryDatesDb(conn, memoryId, start, end);
+        await planDl.insertEventDb(conn, {
+          memoryId,
+          userId,
+          action: start ? 'dates_set' : 'dates_cleared',
+          itemTitle: start ? `${start}/${end}` : null,   // ISO interval, formatted by the feed
+        });
+      }
+      return { memoryId, startDate: start, endDate: end, changed };
+    });
+  } catch (error) {
+    if (!error.status) logger.error(`Service error; updateMemoryDates: ${error.message}`);
+    throw error;
+  }
+};
+
+module.exports = { updateMemoryDetails, listPlaceholders, syncCrew, updateMemoryDates };
