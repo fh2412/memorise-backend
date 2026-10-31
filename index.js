@@ -55,7 +55,7 @@ app.use('/api/memories', memoryUploadRoutes);
 app.use('/api/memories', memoryDownloadRoutes);
 app.use('/api/memories', memoryMapsRoutes);
 app.use('/api/memories', memoriesRoutes);
-app.use('/memories/:memoryId/plan', memoryPlanRoutes);
+app.use('/api/memories/:memoryId/plan', memoryPlanRoutes);
 app.use('/api/friends', friendsRoutes); 
 app.use('/api/memorystats', memoryStatsRoutes);
 app.use('/api/locations', locationRoutes);

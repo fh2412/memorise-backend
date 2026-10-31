@@ -3,15 +3,6 @@ const { ISO_DATE, isRealDate } = require('../memory-create/memoryCreateValidator
 
 const MAX_CREW = 100;
 
-const isRealDate = (value) => {
-  const [y, m, d] = value.split('-').map(Number);
-  const date = new Date(Date.UTC(y, m - 1, d));
-  if (date.getUTCFullYear() !== y || date.getUTCMonth() !== m - 1 || date.getUTCDate() !== d) {
-    throw new Error('Invalid date');
-  }
-  return true;
-};
-
 const nullableDay = (field, { required }) => body(field).custom((value) => {
   if (value === undefined && !required) return true;
   if (value === null) return true;

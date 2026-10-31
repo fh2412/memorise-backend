@@ -3,7 +3,7 @@ const router = express.Router();
 const logger = require('../../middleware/logger');
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const handleValidationErrors = require('../../middleware/validationMiddleware');
-const { validateUpdateMemoryDetails, validateListPlaceholders } = require('./memoryEditValidators');
+const { validateUpdateMemoryDetails, validateListPlaceholders, validateUpdateMemoryDates } = require('./memoryEditValidators');
 const { updateMemoryDetails, listPlaceholders, updateMemoryDates  } = require('./memoryEditService');
 
 /**
