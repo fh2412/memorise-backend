@@ -22,6 +22,7 @@ const {
     fetchMemoriesSearchDataFromDB,
     createPlaceholderAndAssignToMemory,
     deletePlaceholderFromMemoryDL,
+    isCrewMemberDb,
     claimPlaceholderTransactionDL,
     fetchUnclaimedPlaceholdersForMemory,
 } = require('./memoriesDataAccess');
@@ -139,53 +140,51 @@ const getUserPlannedMemories = async (userId) => {
     }
 };
 
-const getSinglePlannedMemory = async (memoryId) => {
+const getSinglePlannedMemory = async (memoryId, userId) => {
     try {
-        const flatRows = await fetchSinglePlannedMemoryFromDB(memoryId);
-        
-        if (flatRows.length === 0) {
-            return null;
-        }
-
-        const memoriesMap = flatRows.reduce((acc, row) => {
-            if (!acc[row.memory_id]) {
-                acc[row.memory_id] = {
-                    memory_id: row.memory_id,
-                    title: row.title,
-                    memory_date: row.memory_date ? new Date(row.memory_date) : null,
-                    memory_end_date: row.memory_end_date ? new Date(row.memory_end_date) : null,
-                    crew_members: []
-                };
+      // 404 for non-members: don't reveal that the memory exists
+      if (!(await isCrewMemberDb(memoryId, userId))) return null;
+  
+      const rows = await fetchSinglePlannedMemoryFromDB(memoryId);
+      if (rows.length === 0) return null;
+      const first = rows[0];
+  
+      return {
+        memory_id: first.memory_id,
+        title: first.title,
+        memory_date: first.memory_date,          // 'YYYY-MM-DD' | null
+        memory_end_date: first.memory_end_date,  // 'YYYY-MM-DD' | null
+        location: first.location_id
+          ? {
+              location_id: first.location_id,
+              lat: Number(first.location_lat),
+              lng: Number(first.location_lng),
+              city: first.location_city ?? '',
+              country: first.location_country ?? '',
+              countryCode: first.location_country_code ?? '',
             }
-
-            if (row.crew_user_id) {
-                acc[row.memory_id].crew_members.push({
-                    user_id: row.crew_user_id,
-                    name: row.crew_name,
-                    email: row.crew_email,
-                    dob: row.crew_dob ? new Date(row.crew_dob) : null,
-                    gender: row.crew_gender,
-                    profilepic: row.crew_profilepic,
-                    profilepic_thumb: row.crew_profilepic_thumb,
-                    country: row.crew_country,
-                    color: row.crew_color,
-                    isCreator: Boolean(row.is_creator),
-                    isPlaceholder: Boolean(row.is_placeholder), // Extract placeholder status
-                    sharedMemoriesCount: 0,
-                    status: row.is_placeholder ? 'offline' : 'online' // Give placeholders a default status
-                });
-            }
-
-            return acc;
-        }, {});
-
-        return memoriesMap[memoryId] || null;
-
+          : null,
+        crew_members: rows.filter(r => r.crew_user_id).map(row => ({
+          user_id: row.crew_user_id,
+          name: row.crew_name,
+          email: row.crew_email,
+          dob: row.crew_dob ? new Date(row.crew_dob) : null,
+          gender: row.crew_gender,
+          profilepic: row.crew_profilepic,
+          profilepic_thumb: row.crew_profilepic_thumb,
+          country: row.crew_country,
+          color: row.crew_color,
+          isCreator: Boolean(row.is_creator),
+          isPlaceholder: Boolean(row.is_placeholder),
+          sharedMemoriesCount: 0,
+          status: row.is_placeholder ? 'offline' : 'online',
+        })),
+      };
     } catch (error) {
-        logger.error(`Service error; Error in getSinglePlannedMemory: ${error.message}`);
-        throw error;
+      logger.error(`Service error; Error in getSinglePlannedMemory: ${error.message}`);
+      throw error;
     }
-};
+  };
 
 const getMemoriesSearchData = async (userId, includeShared) => {
     try {

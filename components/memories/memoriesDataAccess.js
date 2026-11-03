@@ -237,59 +237,61 @@ const fetchUserPlannedMemoriesFromDB = async (userId) => {
 
 const fetchSinglePlannedMemoryFromDB = async (memoryId) => {
     const queryText = `
-        SELECT 
-            m.memory_id, 
-            m.title, 
-            m.memory_date, 
-            m.memory_end_date,
-            crew.user_id AS crew_user_id,
-            crew.name AS crew_name,
-            crew.email AS crew_email,
-            crew.dob AS crew_dob,
-            crew.gender AS crew_gender,
-            crew.profilepic AS crew_profilepic,
-            crew.profilepic_thumb AS crew_profilepic_thumb,
-            crew.country AS crew_country,
-            crew.is_creator,
-            crew.is_placeholder
-        FROM memories AS m
-        INNER JOIN (
-            -- 1. Real Friends
-            SELECT 
-                uhm.memory_id, u.user_id, u.name, u.email, u.dob, u.gender, 
-                u.profilepic, u.profilepic_thumb, u.country, 
-                FALSE AS is_creator, FALSE AS is_placeholder
-            FROM user_has_memory uhm
-            JOIN users u ON uhm.user_id = u.user_id
-            WHERE uhm.status = 'friend'
-
-            UNION ALL
-
-            -- 2. Memory Creator
-            SELECT 
-                m_creator.memory_id, u.user_id, u.name, u.email, u.dob, u.gender, 
-                u.profilepic, u.profilepic_thumb, u.country, 
-                TRUE AS is_creator, FALSE AS is_placeholder
-            FROM memories m_creator
-            JOIN users u ON m_creator.user_id = u.user_id
-
-            UNION ALL
-
-            -- 3. Placeholders
-            SELECT 
-                phm.memory_id, p.id AS user_id, p.name, NULL as email, NULL AS dob, NULL AS gender, 
-                NULL AS profilepic, NULL AS profilepic_thumb, NULL AS country, 
-                FALSE AS is_creator, TRUE AS is_placeholder
-            FROM placeholder_has_memory phm
-            JOIN placeholders p ON phm.placeholder_id = p.id
-            
-        ) AS crew ON m.memory_id = crew.memory_id
-        WHERE m.memory_id = ? 
-        AND (m.memory_date IS NULL OR m.memory_date > NOW());
-    `;
+      SELECT
+        m.memory_id,
+        m.title,
+        DATE_FORMAT(m.memory_date, '%Y-%m-%d')     AS memory_date,
+        DATE_FORMAT(m.memory_end_date, '%Y-%m-%d') AS memory_end_date,
+        l.location_id,
+        l.latitude      AS location_lat,
+        l.longitude     AS location_lng,
+        l.locality      AS location_city,
+        l.country       AS location_country,
+        l.alpha_2_codes AS location_country_code,
+        crew.user_id AS crew_user_id,
+        crew.name AS crew_name,
+        crew.email AS crew_email,
+        crew.dob AS crew_dob,
+        crew.gender AS crew_gender,
+        crew.profilepic AS crew_profilepic,
+        crew.profilepic_thumb AS crew_profilepic_thumb,
+        crew.country AS crew_country,
+        crew.is_creator,
+        crew.is_placeholder
+      FROM memories AS m
+      LEFT JOIN location l
+        ON l.location_id = m.location_id AND m.location_id <> 1
+      INNER JOIN (
+        SELECT uhm.memory_id, u.user_id, u.name, u.email, u.dob, u.gender,
+               u.profilepic, u.profilepic_thumb, u.country,
+               FALSE AS is_creator, FALSE AS is_placeholder
+        FROM user_has_memory uhm
+        JOIN users u ON uhm.user_id = u.user_id
+        WHERE uhm.status = 'friend' AND uhm.memory_id = ?
+  
+        UNION ALL
+  
+        SELECT mc.memory_id, u.user_id, u.name, u.email, u.dob, u.gender,
+               u.profilepic, u.profilepic_thumb, u.country,
+               TRUE AS is_creator, FALSE AS is_placeholder
+        FROM memories mc
+        JOIN users u ON mc.user_id = u.user_id
+        WHERE mc.memory_id = ?
+  
+        UNION ALL
+  
+        SELECT phm.memory_id, p.id AS user_id, p.name, NULL, NULL, NULL,
+               NULL, NULL, NULL,
+               FALSE AS is_creator, TRUE AS is_placeholder
+        FROM placeholder_has_memory phm
+        JOIN placeholders p ON phm.placeholder_id = p.id
+        WHERE phm.memory_id = ?
+      ) AS crew ON m.memory_id = crew.memory_id
+      WHERE m.memory_id = ?`;
+    // No date filter here: the workspace must keep working while the trip is live.
 
     try {
-        const [result] = await db.query(queryText, [memoryId]);
+        const [result] = await db.query(queryText, [memoryId, memoryId, memoryId, memoryId]);
         return result;
     } catch (error) {
         logger.error(`Database DAL error; Error in fetchSinglePlannedMemoryFromDB: ${error.message}`);
@@ -726,6 +728,23 @@ const createMemoryInDB = async (
     }
 };
 
+const isCrewMemberDb = async (memoryId, userId) => {
+    const query = `
+      SELECT 1 FROM memories m
+      WHERE m.memory_id = ?
+        AND (m.user_id = ?
+             OR EXISTS (SELECT 1 FROM user_has_memory uhm
+                        WHERE uhm.memory_id = m.memory_id AND uhm.user_id = ?)
+      LIMIT 1`;
+    try {
+        const [rows] = await db.query(query, [memoryId, userId, userId]);
+        return rows.length > 0;
+    } catch (error) {
+        logger.error(`Database DAL error; Error in isCrewMemberDb: ${error.message}`);
+        throw error;
+    }
+};
+
 module.exports = {
     fetchUsersForMemoryFromDB,
     fetchAddedMemoriesFromDB,
@@ -744,6 +763,7 @@ module.exports = {
     deleteMemoryById,
     deleteFriendFromMemory,
     getOrCreateShareToken,
+    isCrewMemberDb,
     fetchMemoryByShareToken,
     checkUserMemoryMembership,
     addUserToMemoryViaToken,

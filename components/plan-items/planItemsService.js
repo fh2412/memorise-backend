@@ -1,6 +1,7 @@
 const logger = require('../../middleware/logger');
 const { httpError } = require('../../middleware/errorHandling/httpError');
 const { withTransaction } = require('../memory-uploads/memoryUploadsDatalink');
+const { attachPollData } = require('../plan-polls/planPollsReader');
 const dl = require('./planItemsDatalink');
 
 const CREATABLE_TYPES = new Set(['note', 'idea', 'todo', 'link']);
@@ -18,10 +19,8 @@ const listItems = async (userId, memoryId) => {
       const membership = await requireMembership(conn, memoryId, userId);
       const rows = await dl.findItemsDb(conn, memoryId);
       const assignees = groupAssignees(await dl.findAssigneesDb(conn, rows.map(r => r.item_id)));
-      return {
-        items: rows.map(r => toApiItem(r, assignees.get(r.item_id))),
-        viewer: { userId, isOwner: membership.isCreator },
-      };
+      const items = await attachPollData(conn, rows.map(r => toApiItem(r, assignees.get(r.item_id))), userId);
+      return { items, viewer: { userId, isOwner: membership.isCreator } };
     });
   } catch (error) {
     logUnexpected('listItems', error);
@@ -52,7 +51,7 @@ const createItem = async (userId, memoryId, input) => {
       if (assignees.length) await dl.replaceAssigneesDb(conn, itemId, assignees);
       await dl.insertEventDb(conn, { memoryId, userId, action: 'item_created', itemId, itemTitle: input.title });
 
-      return loadItem(conn, memoryId, itemId);
+      return loadItem(conn, memoryId, itemId, userId);
     });
   } catch (error) {
     logUnexpected('createItem', error);
@@ -66,7 +65,14 @@ const updateItem = async (userId, memoryId, itemId, patch) => {
       await requireMembership(conn, memoryId, userId);
       const current = await requireItem(conn, memoryId, itemId, { forUpdate: true });
       const fields = pick(patch, dl.UPDATABLE_COLUMNS);
-
+      if (current.type === 'poll') {
+        if ('status' in fields && fields.status !== current.status) {
+          throw httpError(400, 'Use the poll endpoints to decide or reopen a poll', 'POLL_STATUS_LOCKED');
+        }
+        if (fields.category === 'dates') {
+          throw httpError(400, 'Polls cannot be in the dates category', 'POLL_CATEGORY_DATES');
+        }
+      }
       if (fields.type && fields.type !== current.type && !CREATABLE_TYPES.has(current.type)) {
         throw httpError(400, `A ${current.type} cannot change its type`, 'ITEM_TYPE_LOCKED');
       }
@@ -89,7 +95,7 @@ const updateItem = async (userId, memoryId, itemId, patch) => {
         });
       }
 
-      return loadItem(conn, memoryId, itemId);
+      return loadItem(conn, memoryId, itemId, userId);
     });
   } catch (error) {
     logUnexpected('updateItem', error);
@@ -133,10 +139,11 @@ const requireItem = async (conn, memoryId, itemId, opts) => {
   return item;
 };
 
-const loadItem = async (conn, memoryId, itemId) => {
+const loadItem = async (conn, memoryId, itemId, viewerId) => {
   const row = await requireItem(conn, memoryId, itemId);
   const assignees = await dl.findAssigneesDb(conn, [itemId]);
-  return toApiItem(row, assignees.map(a => a.user_id));
+  const [item] = await attachPollData(conn, [toApiItem(row, assignees.map(a => a.user_id))], viewerId);
+  return item;
 };
 
 /** Dedupes and ensures every assignee is crew. Placeholders can't be assigned (no user_id). */
@@ -190,4 +197,4 @@ const groupAssignees = (rows) => {
 
 const toApiItem = (row, assignees = []) => ({ ...row, payload: parseJson(row.payload), assignees });
 
-module.exports = { listItems, createItem, updateItem, deleteItem, listEvents };
+module.exports = { listItems, createItem, updateItem, deleteItem, listEvents, requireMembership, loadItem };
