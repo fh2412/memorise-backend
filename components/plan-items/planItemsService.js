@@ -3,6 +3,8 @@ const { httpError } = require('../../middleware/errorHandling/httpError');
 const { withTransaction } = require('../memory-uploads/memoryUploadsDatalink');
 const { attachPollData } = require('../plan-polls/planPollsReader');
 const dl = require('./planItemsDatalink');
+const { attachSocialData } = require('../plan-comments/planSocialReader');
+const { findMilestoneStatesDb } = require('../plan-progress/planProgressDatalink');
 
 const CREATABLE_TYPES = new Set(['note', 'idea', 'todo', 'link']);
 const LAYOUT_ONLY = new Set(['board_x', 'board_y', 'color']); // dragging cards doesn't spam the feed
@@ -19,8 +21,12 @@ const listItems = async (userId, memoryId) => {
       const membership = await requireMembership(conn, memoryId, userId);
       const rows = await dl.findItemsDb(conn, memoryId);
       const assignees = groupAssignees(await dl.findAssigneesDb(conn, rows.map(r => r.item_id)));
-      const items = await attachPollData(conn, rows.map(r => toApiItem(r, assignees.get(r.item_id))), userId);
-      return { items, viewer: { userId, isOwner: membership.isCreator } };
+      let items = rows.map(r => toApiItem(r, assignees.get(r.item_id)));
+      items = await attachPollData(conn, items, userId);
+      items = await attachSocialData(conn, items, userId);
+      const milestones = (await findMilestoneStatesDb(conn, [memoryId]))
+        .map(m => ({ milestone: m.milestone, state: m.state }));
+      return { items, viewer: { userId, isOwner: membership.isCreator }, milestones };
     });
   } catch (error) {
     logUnexpected('listItems', error);
@@ -49,7 +55,15 @@ const createItem = async (userId, memoryId, input) => {
 
       const itemId = await dl.insertItemDb(conn, memoryId, userId, input);
       if (assignees.length) await dl.replaceAssigneesDb(conn, itemId, assignees);
-      await dl.insertEventDb(conn, { memoryId, userId, action: 'item_created', itemId, itemTitle: input.title });
+
+      await dl.insertEventDb(conn, {
+        memoryId, userId, action: 'item_created', itemId, itemTitle: input.title,
+      });
+      for (const targetUserId of assignees) {
+        await dl.insertEventDb(conn, {
+          memoryId, userId, action: 'item_assigned', itemId, itemTitle: input.title, targetUserId,
+        });
+      }
 
       return loadItem(conn, memoryId, itemId, userId);
     });
@@ -65,6 +79,7 @@ const updateItem = async (userId, memoryId, itemId, patch) => {
       await requireMembership(conn, memoryId, userId);
       const current = await requireItem(conn, memoryId, itemId, { forUpdate: true });
       const fields = pick(patch, dl.UPDATABLE_COLUMNS);
+
       if (current.type === 'poll') {
         if ('status' in fields && fields.status !== current.status) {
           throw httpError(400, 'Use the poll endpoints to decide or reopen a poll', 'POLL_STATUS_LOCKED');
@@ -83,16 +98,19 @@ const updateItem = async (userId, memoryId, itemId, patch) => {
 
       await dl.updateItemDb(conn, memoryId, itemId, fields);
 
-      const assigneesChanged = patch.assignees !== undefined;
-      if (assigneesChanged) {
-        await dl.replaceAssigneesDb(conn, itemId, await normalizeAssignees(conn, memoryId, patch.assignees));
+      let added = [];
+      let removed = [];
+      if (patch.assignees !== undefined) {
+        const before = (await dl.findAssigneesDb(conn, [itemId])).map(a => a.user_id);
+        const after = await normalizeAssignees(conn, memoryId, patch.assignees);
+        added = after.filter(id => !before.includes(id));
+        removed = before.filter(id => !after.includes(id));
+        if (added.length || removed.length) await dl.replaceAssigneesDb(conn, itemId, after);
       }
 
-      const action = eventFor(current, fields, assigneesChanged);
-      if (action) {
-        await dl.insertEventDb(conn, {
-          memoryId, userId, action, itemId, itemTitle: fields.title ?? current.title,
-        });
+      const itemTitle = fields.title ?? current.title;
+      for (const event of eventsFor(current, fields, added, removed)) {
+        await dl.insertEventDb(conn, { memoryId, userId, itemId, itemTitle, ...event });
       }
 
       return loadItem(conn, memoryId, itemId, userId);
@@ -142,7 +160,8 @@ const requireItem = async (conn, memoryId, itemId, opts) => {
 const loadItem = async (conn, memoryId, itemId, viewerId) => {
   const row = await requireItem(conn, memoryId, itemId);
   const assignees = await dl.findAssigneesDb(conn, [itemId]);
-  const [item] = await attachPollData(conn, [toApiItem(row, assignees.map(a => a.user_id))], viewerId);
+  let [item] = await attachPollData(conn, [toApiItem(row, assignees.map(a => a.user_id))], viewerId);
+  [item] = await attachSocialData(conn, [item], viewerId);
   return item;
 };
 

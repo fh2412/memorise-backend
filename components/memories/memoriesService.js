@@ -3,7 +3,6 @@ const {
     fetchAddedMemoriesFromDB,
     fetchUserAllMemoriesFromDB,
     fetchSinglePlannedMemoryFromDB,
-    fetchUserPlannedMemoriesFromDB,
     fetchMemoryByIdFromDB,
     fetchMemoryFriendsFromDB,
     fetchMemoryDetailFriends,
@@ -93,49 +92,6 @@ const getUserAllMemories = async (userId, { ascending, page, pageSize, filter, s
         };
     } catch (error) {
         logger.error(`Service error; Error in getUserAllMemories: ${error.message}`);
-        throw error;
-    }
-};
-
-
-
-
-const getUserPlannedMemories = async (userId) => {
-    try {
-        const flatRows = await fetchUserPlannedMemoriesFromDB(userId);
-        
-        const memoriesMap = flatRows.reduce((acc, row) => {
-            if (!acc[row.memory_id]) {
-                acc[row.memory_id] = {
-                    memory_id: row.memory_id,
-                    title: row.title,
-                    memory_date: row.memory_date ? new Date(row.memory_date) : null,
-                    memory_end_date: row.memory_end_date ? new Date(row.memory_end_date) : null,
-                    crew_members: []
-                };
-            }
-
-            if (row.crew_user_id) {
-                acc[row.memory_id].crew_members.push({
-                    user_id: row.crew_user_id,
-                    name: row.crew_name,
-                    email: row.crew_email,
-                    dob: row.crew_dob ? new Date(row.crew_dob) : null,
-                    gender: row.crew_gender,
-                    profilepic: row.crew_profilepic,
-                    profilepic_thumb: row.crew_profilepic_thumb,
-                    country: row.crew_country,
-                    isCreator: row.is_creator,
-                    sharedMemoriesCount: 0 
-                });
-            }
-
-            return acc;
-        }, {});
-        return Object.values(memoriesMap);
-
-    } catch (error) {
-        logger.error(`Service error; Error in getUserPlannedMemories: ${error.message}`);
         throw error;
     }
 };
@@ -444,7 +400,6 @@ const removePlaceholderFromMemory = async (placeholderId, memoryId) => {
 module.exports = {
     getUsersForMemory,
     getAddedMemories,
-    getUserPlannedMemories,
     getSinglePlannedMemory,
     getUserAllMemories,
     getMemoriesSearchData,

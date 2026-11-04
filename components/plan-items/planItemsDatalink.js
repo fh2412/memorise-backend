@@ -107,10 +107,12 @@ const deleteItemDb = async (conn, memoryId, itemId) => {
   return result.affectedRows;
 };
 
-const insertEventDb = (conn, { memoryId, userId, action, itemId = null, itemTitle = null }) => run(conn, `
-  INSERT INTO plan_events (memory_id, user_id, action, item_id, item_title)
-  VALUES (?, ?, ?, ?, ?)
-`, [memoryId, userId, action, itemId, itemTitle]);
+const insertEventDb = (conn, {
+  memoryId, userId, action, itemId = null, itemTitle = null, targetUserId = null,
+}) => run(conn, `
+  INSERT INTO plan_events (memory_id, user_id, target_user_id, action, item_id, item_title)
+  VALUES (?, ?, ?, ?, ?, ?)
+`, [memoryId, userId, targetUserId, action, itemId, itemTitle]);
 
 const findEventsDb = (conn, memoryId, { limit, before = null, after = null }) => {
   const where = ['memory_id = ?'];
@@ -118,12 +120,23 @@ const findEventsDb = (conn, memoryId, { limit, before = null, after = null }) =>
   if (before != null) { where.push('event_id < ?'); params.push(before); }
   if (after != null) { where.push('event_id > ?'); params.push(after); }
   return run(conn, `
-    SELECT event_id, user_id, action, item_id, item_title, created_at
+  SELECT event_id, user_id, target_user_id, action, item_id, item_title, created_at
     FROM plan_events
     WHERE ${where.join(' AND ')}
     ORDER BY event_id DESC
     LIMIT ?
   `, [...params, limit]);
+};
+
+const coalesceEventsDb = async (conn, { memoryId, userId, itemId, actions, minutes }) => {
+  const rows = await run(conn, `
+    SELECT event_id FROM plan_events
+    WHERE memory_id = ? AND user_id = ? AND item_id <=> ? AND action IN (${inList(actions)})
+      AND created_at > NOW() - INTERVAL ? MINUTE
+  `, [memoryId, userId, itemId, ...actions, minutes]);
+  if (rows.length === 0) return;
+  const ids = rows.map(r => r.event_id);
+  await run(conn, `DELETE FROM plan_events WHERE event_id IN (${inList(ids)})`, ids);
 };
 
 module.exports = {
@@ -139,4 +152,5 @@ module.exports = {
   deleteItemDb,
   insertEventDb,
   findEventsDb,
+  coalesceEventsDb,
 };

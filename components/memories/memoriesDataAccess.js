@@ -194,47 +194,6 @@ const fetchUserAllMemoriesFromDB = async (userId, { ascending, page, pageSize, f
     }
 };
 
-const fetchUserPlannedMemoriesFromDB = async (userId) => {
-    const queryText = `
-        SELECT 
-            m.memory_id, 
-            m.title, 
-            m.memory_date, 
-            m.memory_end_date,
-            u.user_id AS crew_user_id,
-            u.name AS crew_name,
-            u.email AS crew_email,
-            u.dob AS crew_dob,
-            u.gender AS crew_gender,
-            u.profilepic AS crew_profilepic,
-            u.profilepic_thumb AS crew_profilepic_thumb,
-            u.country AS crew_country,
-            (u.user_id = m.user_id) AS is_creator
-        FROM memories AS m
-        INNER JOIN (
-            SELECT memory_id, user_id FROM user_has_memory WHERE status = 'friend'
-            UNION
-            SELECT memory_id, user_id FROM memories
-        ) AS participants ON m.memory_id = participants.memory_id
-        INNER JOIN users AS u ON participants.user_id = u.user_id
-        WHERE m.memory_id IN (
-            SELECT memory_id FROM memories WHERE user_id = ?
-            UNION
-            SELECT memory_id FROM user_has_memory WHERE user_id = ?
-        ) AND
-        (m.memory_date IS NULL OR m.memory_date > NOW())
-        ORDER BY m.memory_date ASC;
-    `;
-
-    try {
-        const [result] = await db.query(queryText, [userId, userId]);
-        return result;
-    } catch (error) {
-        logger.error(`Database DAL error; Error in fetchUserPlannedMemoriesFromDB: ${error.message}`);
-        throw error;
-    }
-};
-
 const fetchSinglePlannedMemoryFromDB = async (memoryId) => {
     const queryText = `
       SELECT
@@ -749,7 +708,6 @@ module.exports = {
     fetchUsersForMemoryFromDB,
     fetchAddedMemoriesFromDB,
     fetchUserAllMemoriesFromDB,
-    fetchUserPlannedMemoriesFromDB,
     fetchSinglePlannedMemoryFromDB,
     fetchMemoryByIdFromDB,
     fetchMemoryFriendsFromDB,

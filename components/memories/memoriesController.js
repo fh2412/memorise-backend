@@ -7,7 +7,6 @@ const { validateFirebaseUID } = require('../../middleware/validation/validateUse
 const handleValidationErrors = require('../../middleware/validationMiddleware');
 const { getAddedMemories,
     getUserAllMemories,
-    getUserPlannedMemories,
     getSinglePlannedMemory,
     getMemoryById,
     getMemoryFriends,
@@ -71,24 +70,6 @@ router.get('/all/:userId', authenticateFirebaseToken, validateFirebaseUID, handl
         res.json(result);
     } catch (error) {
         logger.error(`Controller error; ALL MEMORIES GET /all/:userId ${error.message}`);
-        next(error);
-    }
-});
-
-
-
-/**
- * GET all PLANNED memories of a user
- * @route GET /planned/:userId
- */
-router.get('/planned/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
-    const { userId } = req.params;
-
-    try {
-        const result = await getUserPlannedMemories(userId);
-        res.json(result);
-    } catch (error) {
-        logger.error(`Controller error; GET /planned/:userId - ${error.message}`);
         next(error);
     }
 });
