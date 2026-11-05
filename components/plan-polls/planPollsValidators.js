@@ -126,4 +126,5 @@ const validateSetDestination = [
 module.exports = {
   validateCreatePoll, validateUpdatePollSettings, validateVote, validateAddOption,
   validateUpdateOption, validateOptionParams, validatePollParams, validateDecide, validateSetDestination,
+  assertLocation,
 };

@@ -5,6 +5,8 @@ const { attachPollData } = require('../plan-polls/planPollsReader');
 const dl = require('./planItemsDatalink');
 const { attachSocialData } = require('../plan-comments/planSocialReader');
 const { findMilestoneStatesDb } = require('../plan-progress/planProgressDatalink');
+const { attachBookingData } = require('../plan-bookings/planBookingsReader');
+const { linkPayloadFromCache } = require('../link-preview/linkPreviewCache');
 
 const CREATABLE_TYPES = new Set(['note', 'idea', 'todo', 'link']);
 const LAYOUT_ONLY = new Set(['board_x', 'board_y', 'color']); // dragging cards doesn't spam the feed
@@ -24,8 +26,10 @@ const listItems = async (userId, memoryId) => {
       let items = rows.map(r => toApiItem(r, assignees.get(r.item_id)));
       items = await attachPollData(conn, items, userId);
       items = await attachSocialData(conn, items, userId);
-      const milestones = (await findMilestoneStatesDb(conn, [memoryId]))
-        .map(m => ({ milestone: m.milestone, state: m.state }));
+      items = await attachPollData(conn, items, userId);
+      items = await attachBookingData(conn, items);
+      items = await attachSocialData(conn, items, userId);
+      const milestones = (await findMilestoneStatesDb(conn, [memoryId])).map(m => ({ milestone: m.milestone, state: m.state }));
       return { items, viewer: { userId, isOwner: membership.isCreator }, milestones };
     });
   } catch (error) {
@@ -51,6 +55,9 @@ const createItem = async (userId, memoryId, input) => {
     return await withTransaction(async (conn) => {
       await requireMembership(conn, memoryId, userId);
       assertLinkHasUrl(input.type, input.payload);
+      if (input.type === 'link') {
+        input = { ...input, payload: await linkPayloadFromCache(conn, input.payload.url) };
+      }
       const assignees = await normalizeAssignees(conn, memoryId, input.assignees);
 
       const itemId = await dl.insertItemDb(conn, memoryId, userId, input);
@@ -88,6 +95,12 @@ const updateItem = async (userId, memoryId, itemId, patch) => {
           throw httpError(400, 'Polls cannot be in the dates category', 'POLL_CATEGORY_DATES');
         }
       }
+      if (current.type === 'booking') {
+        const locked = ['status', 'category', 'type', 'payload'].filter(k => k in fields);
+        if (locked.length) {
+          throw httpError(400, 'Use the booking endpoint to change booking details', 'BOOKING_FIELDS_LOCKED');
+        }
+      }
       if (fields.type && fields.type !== current.type && !CREATABLE_TYPES.has(current.type)) {
         throw httpError(400, `A ${current.type} cannot change its type`, 'ITEM_TYPE_LOCKED');
       }
@@ -95,6 +108,9 @@ const updateItem = async (userId, memoryId, itemId, patch) => {
         fields.type ?? current.type,
         'payload' in fields ? fields.payload : parseJson(current.payload),
       );
+      if ((fields.type ?? current.type) === 'link' && 'payload' in fields) {
+        fields.payload = await linkPayloadFromCache(conn, fields.payload.url);
+      }
 
       await dl.updateItemDb(conn, memoryId, itemId, fields);
 
@@ -161,6 +177,7 @@ const loadItem = async (conn, memoryId, itemId, viewerId) => {
   const row = await requireItem(conn, memoryId, itemId);
   const assignees = await dl.findAssigneesDb(conn, [itemId]);
   let [item] = await attachPollData(conn, [toApiItem(row, assignees.map(a => a.user_id))], viewerId);
+  [item] = await attachBookingData(conn, [item]);
   [item] = await attachSocialData(conn, [item], viewerId);
   return item;
 };

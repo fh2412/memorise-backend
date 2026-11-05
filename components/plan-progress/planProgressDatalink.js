@@ -9,11 +9,18 @@ const findMemoryFactsDb = (conn, ids) => run(conn, `
 `, ids);
 
 const findDecidedCategoriesDb = (conn, ids) => run(conn, `
-  SELECT DISTINCT i.memory_id, i.category
-  FROM plan_items i
-  JOIN plan_polls p ON p.item_id = i.item_id
-  WHERE i.memory_id IN (${inList(ids)}) AND i.type = 'poll' AND p.decided_option_id IS NOT NULL
-`, ids);
+  SELECT DISTINCT memory_id, category FROM (
+    SELECT i.memory_id, i.category
+    FROM plan_items i
+    JOIN plan_polls p ON p.item_id = i.item_id
+    WHERE i.memory_id IN (${inList(ids)}) AND i.type = 'poll' AND p.decided_option_id IS NOT NULL
+    UNION
+    SELECT i.memory_id, b.kind AS category
+    FROM plan_items i
+    JOIN plan_bookings b ON b.item_id = i.item_id
+    WHERE i.memory_id IN (${inList(ids)}) AND b.status = 'booked' AND b.kind IN ('stay', 'transport')
+  ) AS completed
+`, [...ids, ...ids]);
 
 const findTodoCountsDb = (conn, ids) => run(conn, `
   SELECT memory_id, COUNT(*) AS total, SUM(status = 'done') AS done
