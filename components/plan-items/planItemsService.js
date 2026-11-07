@@ -9,7 +9,7 @@ const { attachBookingData } = require('../plan-bookings/planBookingsReader');
 const { linkPayloadFromCache } = require('../link-preview/linkPreviewCache');
 
 const CREATABLE_TYPES = new Set(['note', 'idea', 'todo', 'link']);
-const LAYOUT_ONLY = new Set(['board_x', 'board_y', 'color']); // dragging cards doesn't spam the feed
+const LAYOUT_ONLY = new Set(['board_x', 'board_y', 'color']);
 
 const logUnexpected = (fn, error) => {
   if (!error.status) logger.error(`Service error; ${fn}: ${error.message}`);
@@ -125,8 +125,9 @@ const updateItem = async (userId, memoryId, itemId, patch) => {
       }
 
       const itemTitle = fields.title ?? current.title;
-      for (const event of eventsFor(current, fields, added, removed)) {
-        await dl.insertEventDb(conn, { memoryId, userId, itemId, itemTitle, ...event });
+      const action = eventFor(current, fields, added.length > 0 || removed.length > 0);
+      if (action) {
+        await dl.insertEventDb(conn, { memoryId, userId, itemId, itemTitle, action });
       }
 
       return loadItem(conn, memoryId, itemId, userId);
@@ -233,4 +234,4 @@ const groupAssignees = (rows) => {
 
 const toApiItem = (row, assignees = []) => ({ ...row, payload: parseJson(row.payload), assignees });
 
-module.exports = { listItems, createItem, updateItem, deleteItem, listEvents, requireMembership, loadItem };
+module.exports = { listItems, createItem, updateItem, deleteItem, listEvents, requireMembership, loadItem, parseJson, assertLinkHasUrl, logUnexpected, pick, requireItem, normalizeAssignees, eventFor };

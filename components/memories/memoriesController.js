@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { param } = require('express-validator');
 const logger = require('../../middleware/logger');
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const { validateMemoryId, validateAddFriendsToMemory, validateUpdatePictureCount, validateUpdateTitle } = require('../../middleware/validation/validateMemory');

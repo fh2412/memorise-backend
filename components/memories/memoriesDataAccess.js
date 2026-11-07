@@ -693,7 +693,7 @@ const isCrewMemberDb = async (memoryId, userId) => {
       WHERE m.memory_id = ?
         AND (m.user_id = ?
              OR EXISTS (SELECT 1 FROM user_has_memory uhm
-                        WHERE uhm.memory_id = m.memory_id AND uhm.user_id = ?)
+                        WHERE uhm.memory_id = m.memory_id AND uhm.user_id = ?))
       LIMIT 1`;
     try {
         const [rows] = await db.query(query, [memoryId, userId, userId]);

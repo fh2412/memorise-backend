@@ -1,3 +1,11 @@
+
+const { withTransaction } = require('../memory-uploads/memoryUploadsDatalink');
+const { requireMembership, parseJson, loadItem, pick, assertLinkHasUrl, logUnexpected, requireItem, normalizeAssignees, eventFor } = require('../plan-items/planItemsService');
+const { httpError } = require('../../middleware/errorHandling/httpError');
+const dl = require('./planCommentsDatalink');
+
+const CREATABLE_TYPES = new Set(['note', 'idea', 'todo', 'link']);
+
 const updateItem = async (userId, memoryId, itemId, patch) => {
     try {
       return await withTransaction(async (conn) => {
@@ -34,7 +42,7 @@ const updateItem = async (userId, memoryId, itemId, patch) => {
         }
   
         const itemTitle = fields.title ?? current.title;
-        for (const event of eventsFor(current, fields, added, removed)) {
+        for (const event of eventFor(current, fields, added, removed)) {
           await dl.insertEventDb(conn, { memoryId, userId, itemId, itemTitle, ...event });
         }
   
@@ -45,3 +53,5 @@ const updateItem = async (userId, memoryId, itemId, patch) => {
       throw error;
     }
   };
+
+  module.exports = { updateItem };
