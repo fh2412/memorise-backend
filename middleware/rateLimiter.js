@@ -18,4 +18,12 @@ const apiLimiter = rateLimit({
   }
 });
 
-module.exports = apiLimiter;
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 30,                // 30 requests per IP per window
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { message: 'Too many requests, please try again later.' },
+});
+
+module.exports = {apiLimiter, authLimiter};
