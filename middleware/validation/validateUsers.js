@@ -78,4 +78,12 @@ const validateUserUpdate = [
     .withMessage('Instagram cannot exceed 50 characters'),
 ];
 
-module.exports = { validateFirebaseUID, validateUserEmail, validateUserPassword, validateProfilePicUrl, validateUserUpdate };
+const validateDisplayName = body('displayName')
+    .optional({ values: 'null' })
+    .isString().withMessage('displayName must be a string')
+    .bail()
+    .trim()
+    .isLength({ min: 1, max: 100 }).withMessage('displayName must be 1-100 characters')
+    .matches(/^[^\p{Cc}]*$/u).withMessage('displayName contains invalid characters');
+
+module.exports = { validateFirebaseUID, validateUserEmail, validateDisplayName, validateUserPassword, validateProfilePicUrl, validateUserUpdate };

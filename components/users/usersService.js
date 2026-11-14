@@ -1,4 +1,4 @@
-const { fetchAllUsers, fetchUserById, fetchUserMemories, fetchUserCountry, createFirebaseUser, fetchUserStorageData, searchUsersData, generateCustomToken, saveUserInDatabase, updateUserData, updateUserProfilePicData, deleteUserData, updateMobileUserData } = require('./usersDataAccess');
+const { fetchAllUsers, fetchUserById, fetchUserMemories, fetchUserCountry, fetchUserStorageData, searchUsersData, updateUserData, updateUserProfilePicData, deleteUserData, updateMobileUserData } = require('./usersDataAccess');
 const logger = require('../../middleware/logger');
 
 

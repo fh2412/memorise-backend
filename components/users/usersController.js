@@ -3,8 +3,10 @@ const handleValidationErrors = require('../../middleware/validationMiddleware');
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const router = express.Router();
 const logger = require('../../middleware/logger');
-const { getAllUsers, getUserById, getUserMemories, getUserCountry, searchUsers, postCreateUser, updateUser, updateUserProfilePic, getUserStorageData, deleteUser, updateMobileUser } = require('./usersService');
-const { validateFirebaseUID, validateUserEmail, validateUserPassword, validateProfilePicUrl, validateUserUpdate } = require('../../middleware/validation/validateUsers');
+const { authLimiter } = require('../../middleware/rateLimiter');
+const { getAllUsers, getUserById, getUserMemories, getUserCountry, searchUsers, updateUser, updateUserProfilePic, getUserStorageData, deleteUser, updateMobileUser } = require('./usersService');
+const { syncCurrentUser } = require('./userSyncService');
+const { validateFirebaseUID, validateDisplayName, validateProfilePicUrl, validateUserUpdate } = require('../../middleware/validation/validateUsers');
 
 /**
  * GET all users
@@ -133,26 +135,26 @@ router.get('/userStorageData/:userId', authenticateFirebaseToken, validateFireba
  * @route POST /
  * @description Creates a new user in the MySQL database and associates it with a Firebase UID
  */
-router.post('/', validateUserEmail, validateUserPassword, handleValidationErrors, async (req, res) => {
-    const { email, displayName, password } = req.body;
-    logger.info(req.body);
-    try {
-        const { firebaseUid, token } = await postCreateUser(email, displayName, password);
-        res.status(201).json({
-            message: 'User created successfully',
-            firebaseUid,
-            token,
-        });
-    } catch (error) {
-        logger.error(`Controller error; USERS POST /: ${error.message}`);
+router.post(
+    '/me',
+    authLimiter,
+    authenticateFirebaseToken,
+    validateDisplayName,
+    handleValidationErrors,
+    async (req, res) => {
+        const { uid, email = null, name = null } = req.user; // verified token claims
+        const displayName = req.body.displayName ?? name;
 
-        if (error.code === 'auth/email-already-exists') {
-            return res.status(400).json({ message: 'Email is already in use in Firebase' });
+        try {
+            const { isNewUser, user } = await syncCurrentUser({ uid, email, displayName });
+            if (isNewUser) logger.info(`New user created: ${uid} (${req.user.firebase?.sign_in_provider})`);
+            res.status(isNewUser ? 201 : 200).json({ isNewUser, user });
+        } catch (error) {
+            logger.error(`Controller error; USERS POST /me (uid ${uid}): ${error.message}`); // no body / PII logging
+            res.status(500).json({ message: 'Internal Server Error' });
         }
-
-        res.status(500).json({ message: 'Internal Server Error' });
     }
-});
+);
 
 /**
  * PUT new userdata

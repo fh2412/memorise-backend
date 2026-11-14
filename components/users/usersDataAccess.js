@@ -93,30 +93,6 @@ const searchUsersData = async (userId, searchTerm) => {
     }
 };
 
-const createFirebaseUser = async (email, displayName, password) => {
-    logger.info(email);
-    return await getFirebaseAuth().createUser({
-        email,
-        displayName,
-        password,
-    });
-};
-
-const generateCustomToken = async (uid) => {
-    return await getFirebaseAuth().createCustomToken(uid);
-};
-
-const saveUserInDatabase = async (uid, email) => {
-    const query = `INSERT INTO users (user_id, email, name) VALUES (?, ?, ?)`;
-
-    try {
-        await db.query(query, [uid, email, 'N A']);
-    } catch (error) {
-        logger.error(`Data Access error; Error creating users (${query}): ${error.message}`);
-        throw error;
-    }
-};
-
 const updateUserData = async (userId, { name, bio, dob, gender, country, country_cca2, username, instagram }) => {
     const query = `
       UPDATE users 
@@ -176,9 +152,6 @@ module.exports = {
     fetchUserMemories,
     fetchUserCountry,
     searchUsersData,
-    createFirebaseUser,
-    generateCustomToken,
-    saveUserInDatabase,
     updateUserData,
     updateUserProfilePicData,
     deleteUserData,
