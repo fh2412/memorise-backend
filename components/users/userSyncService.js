@@ -1,5 +1,5 @@
 const db = require('../../config/db');
-const logger = require('../middleware/logger');
+const logger = require('../../middleware/logger');
 
 const DEFAULT_NAME = 'Memorise User';
 const MAX_NAME_LENGTH = 100;
