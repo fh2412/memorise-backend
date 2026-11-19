@@ -7,6 +7,7 @@ const { attachSocialData } = require('../plan-comments/planSocialReader');
 const { findMilestoneStatesDb } = require('../plan-progress/planProgressDatalink');
 const { attachBookingData } = require('../plan-bookings/planBookingsReader');
 const { linkPayloadFromCache } = require('../link-preview/linkPreviewCache');
+const { clearIfFromPoll } = require('../plan-destination/planDestinationWriter');
 
 const CREATABLE_TYPES = new Set(['note', 'idea', 'todo', 'link']);
 const LAYOUT_ONLY = new Set(['board_x', 'board_y', 'color']);
@@ -26,9 +27,7 @@ const listItems = async (userId, memoryId) => {
       let items = rows.map(r => toApiItem(r, assignees.get(r.item_id)));
       items = await attachPollData(conn, items, userId);
       items = await attachSocialData(conn, items, userId);
-      items = await attachPollData(conn, items, userId);
       items = await attachBookingData(conn, items);
-      items = await attachSocialData(conn, items, userId);
       const milestones = (await findMilestoneStatesDb(conn, [memoryId])).map(m => ({ milestone: m.milestone, state: m.state }));
       return { items, viewer: { userId, isOwner: membership.isCreator }, milestones };
     });
@@ -138,7 +137,6 @@ const updateItem = async (userId, memoryId, itemId, patch) => {
   }
 };
 
-/** Allowed for the item's creator and the memory's creator (owner). */
 const deleteItem = async (userId, memoryId, itemId) => {
   try {
     await withTransaction(async (conn) => {
@@ -149,6 +147,9 @@ const deleteItem = async (userId, memoryId, itemId) => {
         throw httpError(403, 'Only the item creator or the plan owner can delete this item', 'ITEM_DELETE_FORBIDDEN');
       }
 
+      if (current.type === 'poll') {
+        await clearIfFromPoll(conn, { memoryId, userId, pollItemId: itemId });
+      }
       await dl.deleteItemDb(conn, memoryId, itemId);
       await dl.insertEventDb(conn, { memoryId, userId, action: 'item_deleted', itemId, itemTitle: current.title });
     });

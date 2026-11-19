@@ -1,11 +1,12 @@
 const { run, inList } = require('../plan-shared/planDb');
 
 const findMemoryFactsDb = (conn, ids) => run(conn, `
-  SELECT memory_id,
-         (memory_date IS NOT NULL) AS has_dates,
-         (location_id IS NOT NULL AND location_id <> 1) AS has_location
-  FROM memories
-  WHERE memory_id IN (${inList(ids)})
+  SELECT m.memory_id,
+         (m.memory_date IS NOT NULL) AS has_dates,
+         ((m.location_id IS NOT NULL AND m.location_id <> 1)
+           OR EXISTS (SELECT 1 FROM plan_destination d WHERE d.memory_id = m.memory_id)) AS has_location
+  FROM memories m
+  WHERE m.memory_id IN (${inList(ids)})
 `, ids);
 
 const findDecidedCategoriesDb = (conn, ids) => run(conn, `
@@ -13,7 +14,7 @@ const findDecidedCategoriesDb = (conn, ids) => run(conn, `
     SELECT i.memory_id, i.category
     FROM plan_items i
     JOIN plan_polls p ON p.item_id = i.item_id
-    WHERE i.memory_id IN (${inList(ids)}) AND i.type = 'poll' AND p.decided_option_id IS NOT NULL
+    WHERE i.memory_id IN (${inList(ids)}) AND i.type = 'poll' AND p.decided_option_id IS NOT NULL AND i.category <> 'destination'
     UNION
     SELECT i.memory_id, b.kind AS category
     FROM plan_items i

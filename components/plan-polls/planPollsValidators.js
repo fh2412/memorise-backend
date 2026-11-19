@@ -117,14 +117,9 @@ const validateDecide = [
   locationRule('location'),
 ];
 
-const validateSetDestination = [
-  memoryIdParam, itemIdParam,
-  onlyFields(['location']),
-  body('location').exists({ values: 'null' }).withMessage('location is required').bail().custom(assertLocation),
-];
 
 module.exports = {
   validateCreatePoll, validateUpdatePollSettings, validateVote, validateAddOption,
-  validateUpdateOption, validateOptionParams, validatePollParams, validateDecide, validateSetDestination,
+  validateUpdateOption, validateOptionParams, validatePollParams, validateDecide,
   assertLocation,
 };

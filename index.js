@@ -40,6 +40,7 @@ const linkPreviewRoutes = require('./components/link-preview/linkPreviewControll
 const planBookingsRoutes = require('./components/plan-bookings/planBookingsController');
 const planProgressRoutes = require('./components/plan-progress/planProgressController')
 const planCommentsRoutes = require('./components/plan-comments/planCommentsController')
+const planDestinationRoutes = require('./components/plan-destination/planDestinationController');
 const memoryPlanAvailabilityRoutes = require('./components/plan-availability/planAvailabilityController');
 const memoryPlanPollsRoutes = require('./components/plan-polls/planPollsController');
 const friendsRoutes = require('./components/friends/friendsController');
@@ -70,6 +71,7 @@ app.use('/api/memories/:memoryId/plan', planProgressRoutes);
 app.use('/api/memories/:memoryId/plan/availability', memoryPlanAvailabilityRoutes);
 app.use('/api/memories/:memoryId/plan/polls', memoryPlanPollsRoutes);
 app.use('/api/memories/:memoryId/plan/items/:itemId', planCommentsRoutes);
+app.use('/api/memories/:memoryId/plan/destination', planDestinationRoutes);
 app.use('/api/friends', friendsRoutes); 
 app.use('/api/memorystats', memoryStatsRoutes);
 app.use('/api/locations', locationRoutes);

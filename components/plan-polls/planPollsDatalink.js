@@ -130,9 +130,6 @@ const setDecisionDb = (conn, itemId, optionId, userId) => run(conn, `
   WHERE item_id = ?
 `, [optionId, userId, optionId, itemId]);
 
-const updateMemoryLocationDb = (conn, memoryId, locationId) => run(conn,
-  'UPDATE memories SET location_id = ? WHERE memory_id = ?', [locationId, memoryId]);
-
 const findRecentEventIdsDb = async (conn, { memoryId, userId, itemId, actions, minutes }) => {
   const rows = await run(conn, `
     SELECT event_id FROM plan_events

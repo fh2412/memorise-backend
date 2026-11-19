@@ -37,6 +37,7 @@ const listMyPlans = async (userId) => {
         title: p.title,
         memory_date: p.memory_date,
         memory_end_date: p.memory_end_date,
+        destination_label: p.destination_label ?? null,
         is_owner: toBool(p.is_owner),
         location: p.city || p.country ? { city: p.city ?? '', country: p.country ?? '' } : null,
         last_activity_at: p.last_activity_at,

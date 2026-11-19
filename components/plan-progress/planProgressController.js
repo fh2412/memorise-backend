@@ -12,10 +12,13 @@ const validateSetMilestone = [
     .withMessage('Dates are completed by locking them in the date finder'),
   onlyFields(['state']),
   body('state').exists().withMessage('state is required').bail()
-    .custom((v) => {
-      if (v !== null && v !== 'done' && v !== 'skipped') throw new Error("state must be 'done', 'skipped' or null");
-      return true;
-    }),
+  .custom((v, { req }) => {
+    if (v !== null && v !== 'done' && v !== 'skipped') throw new Error("state must be 'done', 'skipped' or null");
+    if (req.params.milestone === 'destination' && v === 'done') {
+      throw new Error('Set a destination instead of marking it as done');
+    }
+    return true;
+  }),
 ];
 
 /**

@@ -10,9 +10,11 @@ const findMyActivePlansDb = (conn, userId) => run(conn, `
          LEFT(m.memory_end_date, 10) AS memory_end_date,
          (m.user_id = ?) AS is_owner,
          l.locality AS city, l.country AS country,
+         COALESCE(pd.label, NULLIF(l.locality, ''), NULLIF(l.country, '')) AS destination_label,
          (SELECT MAX(e.created_at) FROM plan_events e WHERE e.memory_id = m.memory_id) AS last_activity_at
   FROM memories m
   LEFT JOIN location l ON l.location_id = m.location_id AND m.location_id <> 1
+  LEFT JOIN plan_destination pd ON pd.memory_id = m.memory_id
   WHERE (m.user_id = ?
          OR EXISTS (SELECT 1 FROM user_has_memory uhm
                     WHERE uhm.memory_id = m.memory_id AND uhm.user_id = ?))

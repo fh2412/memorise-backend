@@ -99,16 +99,6 @@ router.post('/:itemId/decide', authenticateFirebaseToken, v.validateDecide, hand
   }));
 
 /**
- * PUT location of a decided destination poll → writes the memory's location
- * @route PUT /memories/:memoryId/plan/polls/:itemId/destination
- */
-router.put('/:itemId/destination', authenticateFirebaseToken, v.validateSetDestination, handleValidationErrors,
-  handle('PUT /plan/polls/:itemId/destination', async (req, res) => {
-    const { memoryId, itemId } = ids(req);
-    res.json({ item: await service.setDestination(req.user.uid, memoryId, itemId, req.body) });
-  }));
-
-/**
  * POST undo the decision – owner / poll creator
  * @route POST /memories/:memoryId/plan/polls/:itemId/reopen
  */

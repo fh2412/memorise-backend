@@ -25,6 +25,7 @@ const {
     claimPlaceholderTransactionDL,
     fetchUnclaimedPlaceholdersForMemory,
 } = require('./memoriesDataAccess');
+const { loadDestinations } = require('../plan-destination/planDestinationReader');
 const logger = require('../../middleware/logger');
 
 const getUsersForMemory = async (memoryId) => {
@@ -104,22 +105,14 @@ const getSinglePlannedMemory = async (memoryId, userId) => {
       const rows = await fetchSinglePlannedMemoryFromDB(memoryId);
       if (rows.length === 0) return null;
       const first = rows[0];
-  
+      const destination = (await loadDestinations(db, [Number(memoryId)])).get(Number(memoryId)) ?? null;
+
       return {
         memory_id: first.memory_id,
         title: first.title,
         memory_date: first.memory_date,          // 'YYYY-MM-DD' | null
         memory_end_date: first.memory_end_date,  // 'YYYY-MM-DD' | null
-        location: first.location_id
-          ? {
-              location_id: first.location_id,
-              lat: Number(first.location_lat),
-              lng: Number(first.location_lng),
-              city: first.location_city ?? '',
-              country: first.location_country ?? '',
-              countryCode: first.location_country_code ?? '',
-            }
-          : null,
+        location: destination,
         crew_members: rows.filter(r => r.crew_user_id).map(row => ({
           user_id: row.crew_user_id,
           name: row.crew_name,

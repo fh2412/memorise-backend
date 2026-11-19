@@ -42,6 +42,7 @@ const listLive = async (userId, today) => {
           title_pic: m.title_pic,
           memory_date: m.memory_date,
           memory_end_date: m.memory_end_date,
+          destination_label: p.destination_label ?? null,
           phase: 'live',
           is_owner: toBool(m.is_owner),
           location: m.city || m.country ? { city: m.city ?? '', country: m.country ?? '' } : null,

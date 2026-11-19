@@ -272,19 +272,6 @@ const decidePoll = (userId, memoryId, itemId, { optionId, location }) =>
     return { item: await loadItem(conn, memoryId, itemId, userId), needsLocation };
   });
 
-/** Sets the location for an already decided destination poll whose winner had none. */
-const setDestination = (userId, memoryId, itemId, { location }) =>
-  withPoll('setDestination', userId, memoryId, itemId, async (conn, { poll, canManage }) => {
-    assertCanManage(canManage);
-    if (poll.category !== 'destination') throw httpError(400, 'Not a destination poll', 'POLL_NOT_DESTINATION');
-    if (poll.decided_option_id == null) throw httpError(409, 'Decide the poll first', 'POLL_NOT_DECIDED');
-
-    await dl.updateOptionDb(conn, itemId, poll.decided_option_id, { location });
-    const option = await dl.findOptionDb(conn, itemId, poll.decided_option_id);
-    await writeDestination(conn, memoryId, userId, itemId, location, option.label);
-    return loadItem(conn, memoryId, itemId, userId);
-  });
-
 /** Undoes the decision. The memory's location is intentionally left as it is. */
 const reopenPoll = (userId, memoryId, itemId) =>
   withPoll('reopenPoll', userId, memoryId, itemId, async (conn, { poll, canManage }) => {
