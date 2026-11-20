@@ -1,9 +1,9 @@
 const logger = require('../../middleware/logger');
 const { httpError } = require('../../middleware/errorHandling/httpError');
 const { withTransaction } = require('../memory-uploads/memoryUploadsDatalink');
-const { insertLocation } = require('../locations/locationsDataAccess');
 const planDl = require('../plan-items/planItemsDatalink');
 const { requireMembership, loadItem } = require('../plan-items/planItemsService');
+const { applyDestination, clearIfFromPoll } = require('../plan-destination/planDestinationWriter');
 const { toLocation } = require('./planPollsReader');
 const dl = require('./planPollsDatalink');
 
@@ -61,24 +61,6 @@ const assertUniqueLabel = (options, label, exceptOptionId = null) => {
   if (options.some(o => o.option_id !== exceptOptionId && normLabel(o.label) === wanted)) {
     throw httpError(409, 'This option already exists', 'POLL_DUPLICATE_OPTION');
   }
-};
-
-/**
- * Always inserts a NEW location row and points the memory at it:
- * row 1 is the shared "no location" row and rows can be shared (e.g. activities).
- */
-const writeDestination = async (conn, memoryId, userId, itemId, loc, label) => {
-  const locationId = await insertLocation({
-    latitude: loc.lat,
-    longitude: loc.lng,
-    country: loc.country ?? '',
-    city: loc.city ?? '',
-    countryCode: loc.countryCode ?? '',
-  }, conn);
-  await dl.updateMemoryLocationDb(conn, memoryId, locationId);
-  await planDl.insertEventDb(conn, {
-    memoryId, userId, action: 'destination_set', itemId, itemTitle: loc.city || label,
-  });
 };
 
 // ---------- create ----------
@@ -246,8 +228,10 @@ const deleteOption = (userId, memoryId, itemId, optionId) =>
 // ---------- decision ----------
 
 /**
- * Picks the winner. Destination polls write the memory's location if the winner has one
- * (or one is sent along); otherwise needsLocation = true and the client asks for it.
+ * Picks the winner. A destination poll always becomes the plan's destination:
+ *  - winner (or the location sent along) has coordinates → name + pin
+ *  - otherwise → name only, needsLocation = true (header shows "Pick on map")
+ * The destination remembers this poll, so reopening / deleting it clears it again.
  */
 const decidePoll = (userId, memoryId, itemId, { optionId, location }) =>
   withPoll('decidePoll', userId, memoryId, itemId, async (conn, { poll, canManage }) => {
@@ -265,14 +249,19 @@ const decidePoll = (userId, memoryId, itemId, { optionId, location }) =>
     let needsLocation = false;
     if (poll.category === 'destination') {
       const loc = location ?? toLocation(option);
-      if (loc) await writeDestination(conn, memoryId, userId, itemId, loc, option.label);
-      else needsLocation = true;
+      await applyDestination(conn, {
+        memoryId, userId, itemId,
+        label: option.label,
+        location: loc ?? null,      // null: name only – old coordinates would be wrong for the new place
+        sourcePollId: itemId,
+      });
+      needsLocation = !loc;
     }
 
     return { item: await loadItem(conn, memoryId, itemId, userId), needsLocation };
   });
 
-/** Undoes the decision. The memory's location is intentionally left as it is. */
+/** Undoes the decision. A destination that came from this poll is cleared as well. */
 const reopenPoll = (userId, memoryId, itemId) =>
   withPoll('reopenPoll', userId, memoryId, itemId, async (conn, { poll, canManage }) => {
     assertCanManage(canManage);
@@ -281,10 +270,13 @@ const reopenPoll = (userId, memoryId, itemId) =>
     await dl.setDecisionDb(conn, itemId, null, null);
     await planDl.updateItemDb(conn, memoryId, itemId, { status: 'open' });
     await planDl.insertEventDb(conn, { memoryId, userId, action: 'poll_reopened', itemId, itemTitle: poll.title });
+    if (poll.category === 'destination') {
+      await clearIfFromPoll(conn, { memoryId, userId, pollItemId: itemId });
+    }
     return loadItem(conn, memoryId, itemId, userId);
   });
 
 module.exports = {
   createPoll, updatePollSettings, setMyVotes, addOption, updateOption, deleteOption,
-  decidePoll, setDestination, reopenPoll,
+  decidePoll, reopenPoll,
 };

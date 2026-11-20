@@ -2,6 +2,7 @@ const logger = require('../../middleware/logger');
 const { withTransaction } = require('../memory-uploads/memoryUploadsDatalink');
 const { groupBy, toBool } = require('../plan-shared/planDb');
 const { computeProgress } = require('../plan-progress/planProgressReader');
+const { planPhase } = require('../plan-shared/phase');
 const dl = require('./planOverviewDatalink');
 
 /** Creator first; a creator who is also in user_has_memory appears once. */
@@ -22,10 +23,10 @@ const toCrew = (rows) => {
   return [...byKey.values()].sort((a, b) => Number(b.isCreator) - Number(a.isCreator));
 };
 
-const listMyPlans = async (userId) => {
+const listMyPlans = async (userId, today) => {
   try {
     return await withTransaction(async (conn) => {
-      const plans = await dl.findMyActivePlansDb(conn, userId);
+      const plans = await dl.findMyActivePlansDb(conn, userId, today);
       if (plans.length === 0) return [];
 
       const ids = plans.map(p => p.memory_id);
@@ -37,8 +38,9 @@ const listMyPlans = async (userId) => {
         title: p.title,
         memory_date: p.memory_date,
         memory_end_date: p.memory_end_date,
-        destination_label: p.destination_label ?? null,
+        phase: planPhase(p.memory_date, p.memory_end_date, today),   // NEW
         is_owner: toBool(p.is_owner),
+        destination_label: p.destination_label ?? null,
         location: p.city || p.country ? { city: p.city ?? '', country: p.country ?? '' } : null,
         last_activity_at: p.last_activity_at,
         crew_members: toCrew(crew.get(p.memory_id) ?? []),
@@ -51,4 +53,4 @@ const listMyPlans = async (userId) => {
   }
 };
 
-module.exports = { listMyPlans };
+module.exports = { listMyPlans, toCrew };

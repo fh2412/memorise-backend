@@ -54,6 +54,8 @@ const feedbackRoutes = require('./components/feedback');
 const billingRoutes = require('./components/billing/billingController');
 const inviteRoutes = require('./components/invitations/invitationsController');
 const ogPreviewRouter = require('./components/og-preview-route');
+const liveRoutes = require('./components/live-memories/liveMemoriesController');
+const planExpensesRoutes = require('./components/plan-expenses/planExpensesController');
 
 
 app.use('/api/users', usersRoutes);
@@ -72,6 +74,7 @@ app.use('/api/memories/:memoryId/plan/availability', memoryPlanAvailabilityRoute
 app.use('/api/memories/:memoryId/plan/polls', memoryPlanPollsRoutes);
 app.use('/api/memories/:memoryId/plan/items/:itemId', planCommentsRoutes);
 app.use('/api/memories/:memoryId/plan/destination', planDestinationRoutes);
+app.use('/api/memories/:memoryId/plan/expenses', planExpensesRoutes);
 app.use('/api/friends', friendsRoutes); 
 app.use('/api/memorystats', memoryStatsRoutes);
 app.use('/api/locations', locationRoutes);
@@ -82,6 +85,7 @@ app.use('/api/bookmarking', bookmarkingRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/invite', inviteRoutes);
+app.use('/api/live', liveRoutes);
 app.use('/og', ogPreviewRouter);
 
 app.get('/health', (req, res) => {

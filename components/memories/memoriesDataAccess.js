@@ -49,20 +49,16 @@ const fetchAddedMemoriesFromDB = async (userId, ascending, page, pageSize, filte
 
     if (filter === 'future') {
         // 1. Future: Hasn't started yet OR the start date is explicitly NULL
-        dateCondition = ' AND (memories.memory_date > NOW() OR memories.memory_date IS NULL)';
+        dateCondition = ' AND (memories.memory_date > CURDATE() OR memories.memory_date IS NULL)';
     }
     else if (filter === 'active') {
-        // 2. Active: It has started, and either hasn't ended yet OR is happening today (if no end date exists)
-        dateCondition = ` AND memories.memory_date <= NOW() 
-                          AND (
-                              memories.memory_end_date >= NOW() 
-                              OR (memories.memory_end_date IS NULL AND DATE(memories.memory_date) = CURRENT_DATE())
-                          )`;
+        dateCondition = ` AND m.memory_date <= CURDATE()
+                          AND COALESCE(m.memory_end_date, m.memory_date) >= CURDATE()`;
     }
     else if (filter === 'past') {
         // 3. Past: Must have a valid start date, and the end date (or start date if no end date exists) is in the past
         dateCondition = ` AND memories.memory_date IS NOT NULL 
-                          AND IFNULL(memories.memory_end_date, memories.memory_date) < NOW()`;
+                          AND IFNULL(memories.memory_end_date, memories.memory_date) < CURDATE()`;
     }
 
     if (dateCondition) {
@@ -97,16 +93,13 @@ const fetchUserAllMemoriesFromDB = async (userId, { ascending, page, pageSize, f
     // Dynamic date filtering
     let dateCondition = '';
     if (filter === 'future') {
-        dateCondition = ' AND (m.memory_date > NOW() OR m.memory_date IS NULL)';
+        dateCondition = ' AND (m.memory_date > CURDATE() OR m.memory_date IS NULL)';
     } else if (filter === 'active') {
-        dateCondition = ` AND m.memory_date <= NOW()
-                          AND (
-                              m.memory_end_date >= NOW()
-                              OR (m.memory_end_date IS NULL AND DATE(m.memory_date) = CURRENT_DATE())
-                          )`;
+        dateCondition = ` AND m.memory_date <= CURDATE()
+                          AND COALESCE(m.memory_end_date, m.memory_date) >= CURDATE()`;
     } else if (filter === 'past') {
         dateCondition = ` AND m.memory_date IS NOT NULL
-                          AND IFNULL(m.memory_end_date, m.memory_date) < NOW()`;
+                          AND IFNULL(m.memory_end_date, m.memory_date) < CURDATE()`;
     }
 
     // Optional filters. The params are pushed in the SAME order as the
