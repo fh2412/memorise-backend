@@ -27,6 +27,7 @@ const {
 } = require('./memoriesDataAccess');
 const { loadDestinations } = require('../plan-destination/planDestinationReader');
 const logger = require('../../middleware/logger');
+const db = require('../../config/db');
 
 const getUsersForMemory = async (memoryId) => {
     try {
@@ -112,7 +113,7 @@ const getSinglePlannedMemory = async (memoryId, userId) => {
         title: first.title,
         memory_date: first.memory_date,          // 'YYYY-MM-DD' | null
         memory_end_date: first.memory_end_date,  // 'YYYY-MM-DD' | null
-        location: destination,
+        destination: destination,
         crew_members: rows.filter(r => r.crew_user_id).map(row => ({
           user_id: row.crew_user_id,
           name: row.crew_name,

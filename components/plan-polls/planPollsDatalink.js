@@ -147,6 +147,5 @@ const deleteEventsByIdDb = async (conn, eventIds) => {
 module.exports = {
   findPollsDb, findPollForUpdateDb, findOptionsDb, findOptionDb, findVotesDb,
   insertPollDb, insertOptionDb, updateOptionDb, deleteOptionDb, replaceMyVotesDb,
-  updatePollSettingsDb, setDecisionDb, updateMemoryLocationDb,
-  findRecentEventIdsDb, deleteEventsByIdDb,
+  updatePollSettingsDb, setDecisionDb, findRecentEventIdsDb, deleteEventsByIdDb,
 };
