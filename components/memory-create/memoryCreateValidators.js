@@ -63,4 +63,4 @@ const validateCreateMemory = [
   body('upload.expectedBytes').if(hasValue('upload')).isInt({ min: 1, max: MAX_FILES * MAX_FILE_BYTES }).toInt(),
 ];
 
-module.exports = { validateCreateMemory };
+module.exports = { validateCreateMemory, ISO_DATE, isRealDate };

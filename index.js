@@ -28,12 +28,21 @@ startApp();
 
 // Define components (separate files for better organization)
 const usersRoutes = require('./components/users/usersController');
+const planRoutes = require('./components/plan-overview/planOverviewController');
 const memoryCreateRoutes = require('./components/memory-create/memoryCreateController');
 const memoryEditRoutes = require('./components/memory-edit/memoryEditController');
 const memoryUploadRoutes = require('./components/memory-uploads/memoryUploadsController');
 const memoryMapsRoutes = require('./components/memory-map/memoryMapController');
 const memoryDownloadRoutes = require('./components/memory-download/memoryDownloadController');
 const memoriesRoutes = require('./components/memories/memoriesController');
+const memoryPlanRoutes = require('./components/plan-items/planItemsController');
+const linkPreviewRoutes = require('./components/link-preview/linkPreviewController');
+const planBookingsRoutes = require('./components/plan-bookings/planBookingsController');
+const planProgressRoutes = require('./components/plan-progress/planProgressController')
+const planCommentsRoutes = require('./components/plan-comments/planCommentsController')
+const planDestinationRoutes = require('./components/plan-destination/planDestinationController');
+const memoryPlanAvailabilityRoutes = require('./components/plan-availability/planAvailabilityController');
+const memoryPlanPollsRoutes = require('./components/plan-polls/planPollsController');
 const friendsRoutes = require('./components/friends/friendsController');
 const memoryStatsRoutes = require('./components/memorystats/memoryStatsController');
 const locationRoutes = require('./components/locations/locationsController');
@@ -45,15 +54,27 @@ const feedbackRoutes = require('./components/feedback');
 const billingRoutes = require('./components/billing/billingController');
 const inviteRoutes = require('./components/invitations/invitationsController');
 const ogPreviewRouter = require('./components/og-preview-route');
+const liveRoutes = require('./components/live-memories/liveMemoriesController');
+const planExpensesRoutes = require('./components/plan-expenses/planExpensesController');
 
 
 app.use('/api/users', usersRoutes);
+app.use('/api/plans', planRoutes);
 app.use('/api/memories', memoryCreateRoutes);
 app.use('/api/memories', memoryEditRoutes);
 app.use('/api/memories', memoryUploadRoutes);
 app.use('/api/memories', memoryDownloadRoutes);
 app.use('/api/memories', memoryMapsRoutes);
 app.use('/api/memories', memoriesRoutes);
+app.use('/api/memories/:memoryId/plan', memoryPlanRoutes);
+app.use('/api/memories/:memoryId/plan', linkPreviewRoutes);
+app.use('/api/memories/:memoryId/plan/bookings', planBookingsRoutes);
+app.use('/api/memories/:memoryId/plan', planProgressRoutes);
+app.use('/api/memories/:memoryId/plan/availability', memoryPlanAvailabilityRoutes);
+app.use('/api/memories/:memoryId/plan/polls', memoryPlanPollsRoutes);
+app.use('/api/memories/:memoryId/plan/items/:itemId', planCommentsRoutes);
+app.use('/api/memories/:memoryId/plan/destination', planDestinationRoutes);
+app.use('/api/memories/:memoryId/plan/expenses', planExpensesRoutes);
 app.use('/api/friends', friendsRoutes); 
 app.use('/api/memorystats', memoryStatsRoutes);
 app.use('/api/locations', locationRoutes);
@@ -64,6 +85,7 @@ app.use('/api/bookmarking', bookmarkingRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/invite', inviteRoutes);
+app.use('/api/live', liveRoutes);
 app.use('/og', ogPreviewRouter);
 
 app.get('/health', (req, res) => {

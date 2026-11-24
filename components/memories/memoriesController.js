@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { param } = require('express-validator');
 const logger = require('../../middleware/logger');
 const authenticateFirebaseToken = require('../../middleware/authMiddleware');
 const { validateMemoryId, validateAddFriendsToMemory, validateUpdatePictureCount, validateUpdateTitle } = require('../../middleware/validation/validateMemory');
@@ -7,7 +8,6 @@ const { validateFirebaseUID } = require('../../middleware/validation/validateUse
 const handleValidationErrors = require('../../middleware/validationMiddleware');
 const { getAddedMemories,
     getUserAllMemories,
-    getUserPlannedMemories,
     getSinglePlannedMemory,
     getMemoryById,
     getMemoryFriends,
@@ -16,7 +16,7 @@ const { getAddedMemories,
     updateMemoryPictureCount,
     updateMemoryTitle,
     deleteMemoryAndFriends,
-    removeFriendFromMemory, 
+    removeFriendFromMemory,
     generateShareLink,
     validateShareToken,
     joinMemoryViaToken,
@@ -35,7 +35,7 @@ router.get('/addedMemories/:userId', authenticateFirebaseToken, validateFirebase
     const page = parseInt(req.query.page) || 0;
     const pageSize = parseInt(req.query.pageSize) || 9;
     const filter = req.query.filter; // 'past', 'active', or 'future'
-    
+
     try {
         const result = await getAddedMemories(userId, ascending, page, pageSize, filter);
         res.json(result);
@@ -65,7 +65,7 @@ router.get('/all/:userId', authenticateFirebaseToken, validateFirebaseUID, handl
         ? req.query.search.trim().slice(0, MAX_SEARCH_LENGTH)
         : '';
     const pinnedOnly = req.query.pinnedOnly === 'true';
- 
+
     try {
         const result = await getUserAllMemories(userId, { ascending, page, pageSize, filter, search, pinnedOnly });
         res.json(result);
@@ -75,44 +75,21 @@ router.get('/all/:userId', authenticateFirebaseToken, validateFirebaseUID, handl
     }
 });
 
-
-
-/**
- * GET all PLANNED memories of a user
- * @route GET /planned/:userId
- */
-router.get('/planned/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
-    const { userId } = req.params;
-
-    try {
-        const result = await getUserPlannedMemories(userId);
-        res.json(result);
-    } catch (error) {
-        logger.error(`Controller error; GET /planned/:userId - ${error.message}`);
-        next(error);
-    }
-});
-
 /**
  * GET details of a specific PLANNED memory
  * @route GET /memories/planning/:memoryId
  */
-router.get('/planning/:memoryId', authenticateFirebaseToken, handleValidationErrors, async (req, res, next) => {
-    const { memoryId } = req.params;
-
-    try {
-        const result = await getSinglePlannedMemory(memoryId);
-        
-        if (!result) {
-            return res.status(404).json({ message: 'Planned memory not found' });
+router.get('/planning/:memoryId', authenticateFirebaseToken, param('memoryId').isInt({ min: 1 }).toInt(), handleValidationErrors,
+    async (req, res, next) => {
+        try {
+            const result = await getSinglePlannedMemory(req.params.memoryId, req.user.uid);
+            if (!result) return res.status(404).json({ message: 'Planned memory not found' });
+            res.json(result);
+        } catch (error) {
+            logger.error(`Controller error; GET /memories/planning/:memoryId - ${error.message}`);
+            next(error);
         }
-        
-        res.json(result);
-    } catch (error) {
-        logger.error(`Controller error; GET /memories/planning/:memoryId - ${error.message}`);
-        next(error);
-    }
-});
+    });
 
 
 /**
@@ -124,7 +101,7 @@ router.get('/planning/:memoryId', authenticateFirebaseToken, handleValidationErr
 router.get('/searchData/:userId', authenticateFirebaseToken, validateFirebaseUID, handleValidationErrors, async (req, res, next) => {
     const userId = req.params.userId;
     const includeShared = req.query.includeShared === 'true';
-    
+
     try {
         const memories = await getMemoriesSearchData(userId, includeShared);
         res.json(memories);
@@ -139,11 +116,11 @@ router.get('/searchData/:userId', authenticateFirebaseToken, validateFirebaseUID
  * @route GET /memories/:memoryId/member/:userId
  * @description Check if a specific user is a member of a memory
  */
-router.get('/:memoryId/member/:userId', 
-    authenticateFirebaseToken, 
-    validateMemoryId, 
-    validateFirebaseUID, 
-    handleValidationErrors, 
+router.get('/:memoryId/member/:userId',
+    authenticateFirebaseToken,
+    validateMemoryId,
+    validateFirebaseUID,
+    handleValidationErrors,
     async (req, res, next) => {
         const { memoryId, userId } = req.params;
 
@@ -240,20 +217,20 @@ router.post('/addFriendsToMemory', authenticateFirebaseToken, validateAddFriends
  * @route POST /addPlaceholdersToMemory
  */
 router.post(
-  '/addPlaceholdersToMemory',
-  authenticateFirebaseToken,
-  handleValidationErrors,
-  async (req, res, next) => {
-    const { placeholders, memoryId } = req.body;
-    const createdBy = req.user.uid;
-    try {
-      const results = await addPlaceholdersToMemory(placeholders, memoryId, createdBy);
-      res.json({ success: true, placeholders: results });
-    } catch (error) {
-      logger.error(`Controller error; POST /addPlaceholdersToMemory ${error.message}`);
-      next(error);
+    '/addPlaceholdersToMemory',
+    authenticateFirebaseToken,
+    handleValidationErrors,
+    async (req, res, next) => {
+        const { placeholders, memoryId } = req.body;
+        const createdBy = req.user.uid;
+        try {
+            const results = await addPlaceholdersToMemory(placeholders, memoryId, createdBy);
+            res.json({ success: true, placeholders: results });
+        } catch (error) {
+            logger.error(`Controller error; POST /addPlaceholdersToMemory ${error.message}`);
+            next(error);
+        }
     }
-  }
 );
 
 /**
@@ -261,19 +238,19 @@ router.post(
  * @route POST /memories/:memoryId/share
  * @description Generate a shareable link for a memory
  */
-router.post('/:memoryId/share', 
-    authenticateFirebaseToken, 
-    validateMemoryId, 
-    handleValidationErrors, 
+router.post('/:memoryId/share',
+    authenticateFirebaseToken,
+    validateMemoryId,
+    handleValidationErrors,
     async (req, res, next) => {
         const { memoryId } = req.params;
         const userId = req.user.uid;
 
         try {
             const result = await generateShareLink(memoryId, userId);
-            
+
             const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
-            
+
             // Return both direct link and OG preview link
             res.json({
                 shareLink: `${frontendUrl}/og/memory/${result.shareToken}`,
@@ -287,7 +264,7 @@ router.post('/:memoryId/share',
             if (error.message === 'User does not have permission to share this memory') {
                 return res.status(403).json({ message: error.message });
             }
-            
+
             logger.error(`Controller error; POST /:memoryId/share ${error.message}`);
             next(error);
         }
@@ -430,20 +407,20 @@ router.delete('/:memoryId/:userId', authenticateFirebaseToken, validateMemoryId,
  * @route DELETE /deletePlaceholderFromMemory
  */
 router.delete(
-  '/deletePlaceholderFromMemory',
-  authenticateFirebaseToken,
-  handleValidationErrors,
-  async (req, res, next) => {
-    const { placeholderId, memoryId } = req.body;
+    '/deletePlaceholderFromMemory',
+    authenticateFirebaseToken,
+    handleValidationErrors,
+    async (req, res, next) => {
+        const { placeholderId, memoryId } = req.body;
 
-    try {
-      await removePlaceholderFromMemory(placeholderId, memoryId);
-      res.json({ success: true });
-    } catch (error) {
-      logger.error(`Controller error; DELETE /deletePlaceholderFromMemory ${error.message}`);
-      next(error);
+        try {
+            await removePlaceholderFromMemory(placeholderId, memoryId);
+            res.json({ success: true });
+        } catch (error) {
+            logger.error(`Controller error; DELETE /deletePlaceholderFromMemory ${error.message}`);
+            next(error);
+        }
     }
-  }
 );
 
 module.exports = router;
